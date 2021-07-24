@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            Dollchan Extension Tools
-// @version         21.7.7-1
+// @version         21.7.9
 // @namespace       http://www.freedollchan.org/scripts/*
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
@@ -29,8 +29,8 @@
 (function deMainFuncInner(deWindow, prestoStorage, FormData, scrollTo, localData) {
 'use strict';
 
-const version = '21.7.7-1';
-const commit = '5b4069f';
+const version = '21.7.9';
+const commit = 'f3e6a77';
 
 /* ==[ DefaultCfg.js ]========================================================================================
                                                 DEFAULT CONFIG
@@ -10413,15 +10413,31 @@ class Captcha {
 =========================================================================================================== */
 
 class Tip {
-	construcor() {
+	constructor() {
 		this.node = null;
 		this.timeout = null;
 		this.delay = 300;
+		this.css = `
+			position: absolute;
+			background-color: #000;
+			font-size: 11px;
+			line-height: 13px;
+			padding: 3px 6px;
+			z-index: 100000;
+			word-wrap: break-word;
+			white-space: pre-line;
+			max-width: 400px;
+			color: #fff;
+			text-align: center;
+		`;
 		this.init();
 	}
 	init() {
-		document.addEventListener('mouseover', this.onMouseOver, !1),
-		document.addEventListener('mouseout', this.onMouseOut, !1);
+		let e;
+		(e = document.createElement('style')).setAttribute('type', 'text/css');
+		e.textContent = `#de-tooltip {${ this.css }}`;
+		e.id = 'de-tooltip-style';
+		document.head.appendChild(e);
 	}
 	onMouseOver(e) {
 		let t, n, o;
@@ -10441,7 +10457,7 @@ class Tip {
 	show(e, t, n) {
 		let o, a, i, l, r;
 		a = e.getBoundingClientRect(),
-		(o = document.createElement('div')).id = 'tooltip',
+		(o = document.createElement('div')).id = 'de-tooltip',
 		t ? o.innerHTML = t : o.textContent = e.getAttribute('data-tip'),
 		n || (n = 'top'),
 		o.className = 'tip-' + n,
@@ -10467,21 +10483,29 @@ class Tip {
 class IDColor {
 	constructor() {
 		// super();
-		this.css = 'padding: 0 5px; border-radius: 6px; font-size: 0.8em;';
+		this.css = 'padding: 0 5px; border-radius: 6px; font-size: 0.8em; cursor: pointer;';
 		this.ids = {};
 		this.init();
 	}
 	init() {
 		let e;
 		(e = document.createElement('style')).setAttribute('type', 'text/css');
-		e.textContent = '.posteruid span {' + this.css + '}';
-		e.id = 'id-style';
+		e.textContent = `${ aib.qPosterId } {${ this.css }}`;
+		e.id = 'de-id-style';
 		document.head.appendChild(e);
+	}
+	hash(e) {
+		let t, a, i = 0;
+		for(t = 0,
+		a = e.length; t < a; ++t) {
+			i = (i << 5) - i + e.charCodeAt(t);
+		}
+		return i;
 	}
 	compute(e) {
 		let t, a;
 		return t = [],
-		a = $.hash(e),
+		a = this.hash(e),
 		t[0] = a >> 24 & 255,
 		t[1] = a >> 16 & 255,
 		t[2] = a >> 8 & 255,
@@ -10491,7 +10515,7 @@ class IDColor {
 	}
 	apply(e) {
 		let t;
-		t = this.ids[e.textContent] || this.compute(e.textContent),
+		t = this.ids[e.textContent] || this.compute(e.textContent.replace(/id:*/i, '')),
 		e.style.cssText = '    background-color: rgb(' + t[0] + ',' + t[1] + ',' + t[2] + ');    color: ' + (t[3] ? 'black;' : 'white;');
 	}
 	applyRemote(e) {
@@ -10944,39 +10968,47 @@ class Post extends AbstractPost {
 			this._getFullMsg(this.trunc, true);
 		}
 
-		if(this.posterId && thr.IDColors) {
-			thr.IDColors.apply(el.querySelector('.postInfo .posteruid span'));
+		const posterIdEl = $q(aib.qPosterId, this.el);
+		if(posterIdEl && thr.IDColors) {
+			thr.IDColors.apply(posterIdEl);
 		}
-		if(this.posterId && typeof thr.Tip !== 'undefined') {
-			const postIdEl = el.querySelector('.postInfo .posteruid span');
-			postIdEl.addEventListener('mouseover', e => {
-				let a, i, n, o, r;
-				const t = e.target.textContent;
-				for(o = 0,
-				n = $.qsa('.postInfo .hand'),
-				a = 0; i = n[a]; ++a) {
-					i.textContent === t && ++o;
-				}
-				r = o + ' post' + (o != 1 ? 's' : '') + ' by this ID';
-				thr.Tip.show(e.target, r);
-			}, true);
-			postIdEl.addEventListener('mouseout', e => {
-				thr.Tip.hide();
-			}, true);
-			postIdEl.addEventListener('click', e => {
+		if(posterIdEl) {
+			posterIdEl.addEventListener('click', e => {
 				const isAdd = !HighlightedPosts.has(this.posterId);
 				if(isAdd) {
 					HighlightedPosts.set(this.posterId, this.thr.num);
 				} else {
 					HighlightedPosts.removeStorage(this.posterId);
 				}
-				let a, i, n, o, r;
-				for(o = 0, n = $.qsa('.postInfo .hand'), a = 0; i = n[a]; ++a) {
-					if(i.textContent === this.posterId) {
-						i.closest('.post').classList.toggle('de-highlighted', isAdd);
+				const allPosts = $Q(aib.qRPost, thr.el);
+				for(let i = 0; i < allPosts.length; i++) {
+					const post = allPosts[i];
+					const posterIdEl = $q(aib.qPosterId, post);
+					if(posterIdEl.textContent === this.posterId) {
+						post.classList.toggle('de-highlighted', isAdd);
 					}
 				}
 			}, true);
+
+			if(typeof thr.Tip !== 'undefined') {
+				posterIdEl.addEventListener('mouseover', e => {
+					const t = e.target.textContent;
+					let o = 0;
+					const allPosts = $Q(aib.qRPost, thr.el);
+					for(let i = 0; i < allPosts.length; i++) {
+						const post = allPosts[i];
+						const posterIdEl = $q(aib.qPosterId, post);
+						if(posterIdEl.textContent === t) {
+							o++;
+						}
+					}
+					console.log(thr.Tip);
+					thr.Tip.show(e.target, o + ' post' + (o !== 1 ? 's' : '') + ' by this ID');
+				}, true);
+				posterIdEl.addEventListener('mouseout', e => {
+					thr.Tip.hide();
+				}, true);
+			}
 		}
 
 		el.addEventListener('mouseover', this, true);
@@ -11462,8 +11494,8 @@ Post.Сontent = class PostContent extends TemporaryContent {
 		return value;
 	}
 	get posterId() {
-		const pID = $q(aib.qPostID, this.el);
-		const value = pID ? pID.textContent.trim().replace(/\s/g, ' ') : '';
+		const pIdEl = $q(aib.qPosterId, this.el);
+		const value = pIdEl ? pIdEl.textContent.trim().replace(/\s/g, ' ') : '';
 		Object.defineProperty(this, 'posterId', { value });
 		return value;
 	}
@@ -15454,7 +15486,7 @@ class BaseBoard {
 		this.qImgInfo = '.filesize';
 		this.qOmitted = '.omittedposts';
 		this.qOPost = '.oppost';
-		this.qPostID = '.posteruid span';
+		this.qPosterId = '.postInfo .posteruid span, .poster_hash';
 		this.qPages = 'table[border="1"] > tbody > tr > td:nth-child(2) > a:last-of-type';
 		this.qPostHeader = '.de-post-btns';
 		this.qPostImg = '.thumb, .ca_thumb, img[src*="thumb"], img[src*="/spoiler"], img[src^="blob:"]';

@@ -11460,7 +11460,7 @@ Post.Сontent = class PostContent extends TemporaryContent {
 		return value;
 	}
 	get posterId() {
-		const pID = $q(aib.qPostID, this.el);
+		const pID = $q(aib.qPosterId, this.el);
 		const value = pID ? pID.textContent.trim().replace(/\s/g, ' ') : '';
 		Object.defineProperty(this, 'posterId', { value });
 		return value;
@@ -15452,7 +15452,7 @@ class BaseBoard {
 		this.qImgInfo = '.filesize';
 		this.qOmitted = '.omittedposts';
 		this.qOPost = '.oppost';
-		this.qPostID = '.posteruid span';
+		this.qPosterId = '.posteruid span';
 		this.qPages = 'table[border="1"] > tbody > tr > td:nth-child(2) > a:last-of-type';
 		this.qPostHeader = '.de-post-btns';
 		this.qPostImg = '.thumb, .ca_thumb, img[src*="thumb"], img[src*="/spoiler"], img[src^="blob:"]';

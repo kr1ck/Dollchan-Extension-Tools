@@ -3,15 +3,31 @@
 =========================================================================================================== */
 
 class Tip {
-	construcor() {
+	constructor() {
 		this.node = null;
 		this.timeout = null;
 		this.delay = 300;
+		this.css = `
+			position: absolute;
+			background-color: #000;
+			font-size: 11px;
+			line-height: 13px;
+			padding: 3px 6px;
+			z-index: 100000;
+			word-wrap: break-word;
+			white-space: pre-line;
+			max-width: 400px;
+			color: #fff;
+			text-align: center;
+		`;
 		this.init();
 	}
 	init() {
-		document.addEventListener('mouseover', this.onMouseOver, !1),
-		document.addEventListener('mouseout', this.onMouseOut, !1);
+		let e;
+		(e = document.createElement('style')).setAttribute('type', 'text/css');
+		e.textContent = `#de-tooltip {${ this.css }}`;
+		e.id = 'de-tooltip-style';
+		document.head.appendChild(e);
 	}
 	onMouseOver(e) {
 		let t, n, o;
@@ -31,7 +47,7 @@ class Tip {
 	show(e, t, n) {
 		let o, a, i, l, r;
 		a = e.getBoundingClientRect(),
-		(o = document.createElement('div')).id = 'tooltip',
+		(o = document.createElement('div')).id = 'de-tooltip',
 		t ? o.innerHTML = t : o.textContent = e.getAttribute('data-tip'),
 		n || (n = 'top'),
 		o.className = 'tip-' + n,

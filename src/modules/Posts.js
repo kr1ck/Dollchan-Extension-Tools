@@ -442,39 +442,47 @@ class Post extends AbstractPost {
 			this._getFullMsg(this.trunc, true);
 		}
 
-		if(this.posterId && thr.IDColors) {
-			thr.IDColors.apply(el.querySelector('.postInfo .posteruid span'));
+		const posterIdEl = $q(aib.qPosterId, this.el);
+		if(posterIdEl && thr.IDColors) {
+			thr.IDColors.apply(posterIdEl);
 		}
-		if(this.posterId && typeof thr.Tip !== 'undefined') {
-			const postIdEl = el.querySelector('.postInfo .posteruid span');
-			postIdEl.addEventListener('mouseover', e => {
-				let a, i, n, o, r;
-				const t = e.target.textContent;
-				for(o = 0,
-				n = $.qsa('.postInfo .hand'),
-				a = 0; i = n[a]; ++a) {
-					i.textContent === t && ++o;
-				}
-				r = o + ' post' + (o != 1 ? 's' : '') + ' by this ID';
-				thr.Tip.show(e.target, r);
-			}, true);
-			postIdEl.addEventListener('mouseout', e => {
-				thr.Tip.hide();
-			}, true);
-			postIdEl.addEventListener('click', e => {
+		if(posterIdEl) {
+			posterIdEl.addEventListener('click', e => {
 				const isAdd = !HighlightedPosts.has(this.posterId);
 				if(isAdd) {
 					HighlightedPosts.set(this.posterId, this.thr.num);
 				} else {
 					HighlightedPosts.removeStorage(this.posterId);
 				}
-				let a, i, n, o, r;
-				for(o = 0, n = $.qsa('.postInfo .hand'), a = 0; i = n[a]; ++a) {
-					if(i.textContent === this.posterId) {
-						i.closest('.post').classList.toggle('de-highlighted', isAdd);
+				const allPosts = $Q(aib.qRPost, thr.el);
+				for(let i = 0; i < allPosts.length; i++) {
+					const post = allPosts[i];
+					const posterIdEl = $q(aib.qPosterId, post);
+					if(posterIdEl.textContent === this.posterId) {
+						post.classList.toggle('de-highlighted', isAdd);
 					}
 				}
 			}, true);
+
+			if(typeof thr.Tip !== 'undefined') {
+				posterIdEl.addEventListener('mouseover', e => {
+					const t = e.target.textContent;
+					let o = 0;
+					const allPosts = $Q(aib.qRPost, thr.el);
+					for(let i = 0; i < allPosts.length; i++) {
+						const post = allPosts[i];
+						const posterIdEl = $q(aib.qPosterId, post);
+						if(posterIdEl.textContent === t) {
+							o++;
+						}
+					}
+					console.log(thr.Tip);
+					thr.Tip.show(e.target, o + ' post' + (o !== 1 ? 's' : '') + ' by this ID');
+				}, true);
+				posterIdEl.addEventListener('mouseout', e => {
+					thr.Tip.hide();
+				}, true);
+			}
 		}
 
 		el.addEventListener('mouseover', this, true);
@@ -960,8 +968,8 @@ Post.Сontent = class PostContent extends TemporaryContent {
 		return value;
 	}
 	get posterId() {
-		const pID = $q(aib.qPostID, this.el);
-		const value = pID ? pID.textContent.trim().replace(/\s/g, ' ') : '';
+		const pIdEl = $q(aib.qPosterId, this.el);
+		const value = pIdEl ? pIdEl.textContent.trim().replace(/\s/g, ' ') : '';
 		Object.defineProperty(this, 'posterId', { value });
 		return value;
 	}

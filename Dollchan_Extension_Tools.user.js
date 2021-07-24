@@ -19642,7 +19642,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "posterId",
       get: function get() {
-        var pID = $q(aib.qPostID, this.el);
+        var pID = $q(aib.qPosterId, this.el);
         var value = pID ? pID.textContent.trim().replace(/\s/g, ' ') : '';
         Object.defineProperty(this, 'posterId', {
           value: value
@@ -25118,7 +25118,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       this.qImgInfo = '.filesize';
       this.qOmitted = '.omittedposts';
       this.qOPost = '.oppost';
-      this.qPostID = '.posteruid span';
+      this.qPosterId = '.posteruid span';
       this.qPages = 'table[border="1"] > tbody > tr > td:nth-child(2) > a:last-of-type';
       this.qPostHeader = '.de-post-btns';
       this.qPostImg = '.thumb, .ca_thumb, img[src*="thumb"], img[src*="/spoiler"], img[src^="blob:"]';
