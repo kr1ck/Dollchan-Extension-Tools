@@ -273,7 +273,7 @@ class Pview extends AbstractPost {
 				for(let i = 0; i < allPosts.length; i++) {
 					const post = allPosts[i];
 					const posterIdEl = $q(aib.qPosterId, post);
-					if(posterIdEl.textContent === posterId) {
+					if(posterIdEl && posterIdEl.textContent === posterId) {
 						post.classList.toggle('de-highlighted', isAdd);
 					}
 				}

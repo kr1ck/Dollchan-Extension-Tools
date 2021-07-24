@@ -30,7 +30,7 @@
 'use strict';
 
 const version = '21.7.11';
-const commit = '72f455e';
+const commit = 'e815ca9';
 
 /* ==[ DefaultCfg.js ]========================================================================================
                                                 DEFAULT CONFIG
@@ -11897,7 +11897,7 @@ class Pview extends AbstractPost {
 				for(let i = 0; i < allPosts.length; i++) {
 					const post = allPosts[i];
 					const posterIdEl = $q(aib.qPosterId, post);
-					if(posterIdEl.textContent === posterId) {
+					if(posterIdEl && posterIdEl.textContent === posterId) {
 						post.classList.toggle('de-highlighted', isAdd);
 					}
 				}
