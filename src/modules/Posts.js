@@ -428,7 +428,7 @@ class Post extends AbstractPost {
 		if(isHighlighted) {
 			this.el.classList.add('de-highlighted');
 		}
-		const isOpsPost = thr.opPosterId === this.posterId;
+		const isOpsPost = thr.opPosterId && thr.opPosterId === this.posterId;
 		el.classList.add(isOp ? 'de-oppost' : 'de-reply');
 		this.sage = aib.getSage(el);
 		this.btns = $aEnd(this._pref = $q(aib.qPostRef, el),
