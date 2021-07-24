@@ -426,7 +426,7 @@ class Post extends AbstractPost {
 		}
 		const isHighlighted = HighlightedPosts.has(this.posterId);
 		if(isHighlighted) {
-			this.el.classList.add('de-highlighted');
+			this.wrap.classList.add('de-highlighted');
 		}
 		const isOpsPost = thr.opPosterId && thr.opPosterId === this.posterId;
 		el.classList.add(isOp ? 'de-oppost' : 'de-reply');
@@ -448,13 +448,14 @@ class Post extends AbstractPost {
 		}
 		if(posterIdEl) {
 			posterIdEl.addEventListener('click', e => {
+				console.log('clock0');
 				const isAdd = !HighlightedPosts.has(this.posterId);
 				if(isAdd) {
 					HighlightedPosts.set(this.posterId, this.thr.num);
 				} else {
 					HighlightedPosts.removeStorage(this.posterId);
 				}
-				const allPosts = $Q(aib.qRPost, thr.el);
+				const allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', document.body);
 				for(let i = 0; i < allPosts.length; i++) {
 					const post = allPosts[i];
 					const posterIdEl = $q(aib.qPosterId, post);

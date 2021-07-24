@@ -30,7 +30,7 @@
 'use strict';
 
 const version = '21.7.10';
-const commit = 'c0b3c61';
+const commit = 'dbcdf29';
 
 /* ==[ DefaultCfg.js ]========================================================================================
                                                 DEFAULT CONFIG
@@ -10952,7 +10952,7 @@ class Post extends AbstractPost {
 		}
 		const isHighlighted = HighlightedPosts.has(this.posterId);
 		if(isHighlighted) {
-			this.el.classList.add('de-highlighted');
+			this.wrap.classList.add('de-highlighted');
 		}
 		const isOpsPost = thr.opPosterId && thr.opPosterId === this.posterId;
 		el.classList.add(isOp ? 'de-oppost' : 'de-reply');
@@ -10974,13 +10974,14 @@ class Post extends AbstractPost {
 		}
 		if(posterIdEl) {
 			posterIdEl.addEventListener('click', e => {
+				console.log('clock0');
 				const isAdd = !HighlightedPosts.has(this.posterId);
 				if(isAdd) {
 					HighlightedPosts.set(this.posterId, this.thr.num);
 				} else {
 					HighlightedPosts.removeStorage(this.posterId);
 				}
-				const allPosts = $Q(aib.qRPost, thr.el);
+				const allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', document.body);
 				for(let i = 0; i < allPosts.length; i++) {
 					const post = allPosts[i];
 					const posterIdEl = $q(aib.qPosterId, post);
@@ -11850,9 +11851,12 @@ class Pview extends AbstractPost {
 		const pv = this.el = post.el.cloneNode(true);
 		pByEl.set(pv, this);
 		const isMyPost = MyPosts.has(num);
+		const isHighlighted = HighlightedPosts.has(post.posterId);
 		const isOpsPost = post.thr.opPosterId && post.thr.opPosterId === post.posterId;
-		pv.className = `${ aib.cReply } de-pview${
-			post.isViewed ? ' de-viewed' : '' }${ isMyPost ? ' de-mypost' : '' }` +
+		pv.className = `${ aib.cReply } de-pview` +
+			`${ post.isViewed ? ' de-viewed' : '' }` +
+			`${ isMyPost ? ' de-mypost' : '' }` +
+			`${ isHighlighted ? ' de-highlighted' : '' }` +
 			`${ post.el.classList.contains('de-mypost-reply') ? ' de-mypost-reply' : '' }`;
 		$show(pv);
 		$each($Q('.de-post-hiddencontent', pv), el => el.classList.remove('de-post-hiddencontent'));
@@ -11876,6 +11880,46 @@ class Pview extends AbstractPost {
 			(post.sage ? '<svg class="de-btn-sage"><use xlink:href="#de-symbol-post-sage"/></svg>' : '') +
 			'<svg class="de-btn-stick"><use xlink:href="#de-symbol-post-stick"/></svg>' +
 			'<span class="de-post-counter' + pCountHtml;
+
+		const { thr, posterId } = post;
+		const posterIdEl = $q(aib.qPosterId, pv);
+		if(posterIdEl) {
+			posterIdEl.addEventListener('click', e => {
+				const isAdd = !HighlightedPosts.has(post.posterId);
+				if(isAdd) {
+					HighlightedPosts.set(post.posterId, post.thr.num);
+				} else {
+					HighlightedPosts.removeStorage(post.posterId);
+				}
+				const allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', document.body);
+				for(let i = 0; i < allPosts.length; i++) {
+					const post = allPosts[i];
+					const posterIdEl = $q(aib.qPosterId, post);
+					if(posterIdEl.textContent === posterId) {
+						post.classList.toggle('de-highlighted', isAdd);
+					}
+				}
+			}, true);
+
+			if(typeof thr.Tip !== 'undefined') {
+				posterIdEl.addEventListener('mouseover', e => {
+					const t = e.target.textContent;
+					let o = 0;
+					const allPosts = $Q(aib.qRPost, thr.el);
+					for(let i = 0; i < allPosts.length; i++) {
+						const post = allPosts[i];
+						const posterIdEl = $q(aib.qPosterId, post);
+						if(posterIdEl.textContent === t) {
+							o++;
+						}
+					}
+					thr.Tip.show(e.target, o + ' post' + (o !== 1 ? 's' : '') + ' by this ID');
+				}, true);
+				posterIdEl.addEventListener('mouseout', e => {
+					thr.Tip.hide();
+				}, true);
+			}
+		}
 		if(isCached) {
 			if(isOp) {
 				this.remoteThr = post.thr;
