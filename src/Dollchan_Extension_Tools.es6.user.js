@@ -30,7 +30,7 @@
 'use strict';
 
 const version = '21.7.10';
-const commit = '7840cd6';
+const commit = 'c0b3c61';
 
 /* ==[ DefaultCfg.js ]========================================================================================
                                                 DEFAULT CONFIG
@@ -11002,7 +11002,6 @@ class Post extends AbstractPost {
 							o++;
 						}
 					}
-					console.log(thr.Tip);
 					thr.Tip.show(e.target, o + ' post' + (o !== 1 ? 's' : '') + ' by this ID');
 				}, true);
 				posterIdEl.addEventListener('mouseout', e => {

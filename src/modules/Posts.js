@@ -476,7 +476,6 @@ class Post extends AbstractPost {
 							o++;
 						}
 					}
-					console.log(thr.Tip);
 					thr.Tip.show(e.target, o + ' post' + (o !== 1 ? 's' : '') + ' by this ID');
 				}, true);
 				posterIdEl.addEventListener('mouseout', e => {
