@@ -30,7 +30,7 @@
 'use strict';
 
 const version = '21.7.10';
-const commit = 'eb3af09';
+const commit = '7840cd6';
 
 /* ==[ DefaultCfg.js ]========================================================================================
                                                 DEFAULT CONFIG
@@ -11851,7 +11851,7 @@ class Pview extends AbstractPost {
 		const pv = this.el = post.el.cloneNode(true);
 		pByEl.set(pv, this);
 		const isMyPost = MyPosts.has(num);
-		const isOpsPost = thr.opPosterId && thr.opPosterId === this.posterId;
+		const isOpsPost = post.thr.opPosterId && post.thr.opPosterId === post.posterId;
 		pv.className = `${ aib.cReply } de-pview${
 			post.isViewed ? ' de-viewed' : '' }${ isMyPost ? ' de-mypost' : '' }` +
 			`${ post.el.classList.contains('de-mypost-reply') ? ' de-mypost-reply' : '' }`;
