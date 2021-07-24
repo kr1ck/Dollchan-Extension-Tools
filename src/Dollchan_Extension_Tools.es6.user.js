@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            Dollchan Extension Tools
-// @version         21.7.7-0
+// @version         21.7.7-1
 // @namespace       http://www.freedollchan.org/scripts/*
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
@@ -29,8 +29,8 @@
 (function deMainFuncInner(deWindow, prestoStorage, FormData, scrollTo, localData) {
 'use strict';
 
-const version = '21.7.7-0';
-const commit = 'e158448';
+const version = '21.7.7-1';
+const commit = '5b4069f';
 
 /* ==[ DefaultCfg.js ]========================================================================================
                                                 DEFAULT CONFIG
@@ -10944,7 +10944,10 @@ class Post extends AbstractPost {
 			this._getFullMsg(this.trunc, true);
 		}
 
-		if(typeof thr.Tip !== 'undefined') {
+		if(this.posterId && thr.IDColors) {
+			thr.IDColors.apply(el.querySelector('.postInfo .posteruid span'));
+		}
+		if(this.posterId && typeof thr.Tip !== 'undefined') {
 			const postIdEl = el.querySelector('.postInfo .posteruid span');
 			postIdEl.addEventListener('mouseover', e => {
 				let a, i, n, o, r;
@@ -10975,7 +10978,6 @@ class Post extends AbstractPost {
 				}
 			}, true);
 		}
-		thr.IDColors?.apply(el.querySelector('.postInfo .posteruid span'));
 
 		el.addEventListener('mouseover', this, true);
 	}

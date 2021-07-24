@@ -442,7 +442,10 @@ class Post extends AbstractPost {
 			this._getFullMsg(this.trunc, true);
 		}
 
-		if(typeof thr.Tip !== 'undefined') {
+		if(this.posterId && thr.IDColors) {
+			thr.IDColors.apply(el.querySelector('.postInfo .posteruid span'));
+		}
+		if(this.posterId && typeof thr.Tip !== 'undefined') {
 			const postIdEl = el.querySelector('.postInfo .posteruid span');
 			postIdEl.addEventListener('mouseover', e => {
 				let a, i, n, o, r;
@@ -473,7 +476,6 @@ class Post extends AbstractPost {
 				}
 			}, true);
 		}
-		thr.IDColors?.apply(el.querySelector('.postInfo .posteruid span'));
 
 		el.addEventListener('mouseover', this, true);
 	}
