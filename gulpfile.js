@@ -17,9 +17,10 @@ const watchedPaths = [
 	'Dollchan_Extension_Tools.meta.js'
 ];
 
-// Updates commit version in Wrap.js module
+// Updates version and commit version in Wrap.js module
 gulp.task('updatecommit', cb => {
 	let stdout, stderr;
+	const pjson = require('./package.json');
 	const git = spawn('git', ['rev-parse', 'HEAD']);
 	git.stdout.on('data', data => (stdout = String(data)));
 	git.stderr.on('data', data => (stderr = String(data)));
@@ -28,6 +29,7 @@ gulp.task('updatecommit', cb => {
 			throw new Error(`Git error:\n${ stdout ? `${ stdout }\n` : '' }${ stderr }`);
 		}
 		gulp.src('src/modules/Wrap.js')
+			.pipe(replace(/^const version = '[^']*';$/m, `const version = '${ pjson.version }';`))
 			.pipe(replace(/^const commit = '[^']*';$/m, `const commit = '${ stdout.trim().substr(0, 7) }';`))
 			.pipe(gulp.dest('src/modules'))
 			.on('end', cb);
