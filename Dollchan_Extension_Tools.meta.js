@@ -6,7 +6,7 @@
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
 // @description     Doing some profit for imageboards
 // @icon            https://raw.github.com/kr1ck/Dollchan-Extension-Tools/master/Icon.png
-// @updateURL       https://raw.github.com/kr1ck/Dollchan-Extension-Tools/master/Dollchan_Extension_Tools.user.js
+// @updateURL       https://raw.github.com/kr1ck/Dollchan-Extension-Tools/master/src/Dollchan_Extension_Tools.es6.user.js
 // @nocompat        Chrome
 // @run-at          document-start
 // @grant           GM_getValue

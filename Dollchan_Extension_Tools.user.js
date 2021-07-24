@@ -5,8 +5,8 @@
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
 // @description     Doing some profit for imageboards
-// @icon            https://raw.github.com/SthephanShinkufag/Dollchan-Extension-Tools/master/Icon.png
-// @updateURL       https://raw.github.com/SthephanShinkufag/Dollchan-Extension-Tools/master/Dollchan_Extension_Tools.meta.js
+// @icon            https://raw.github.com/kr1ck/Dollchan-Extension-Tools/master/Icon.png
+// @updateURL       https://raw.github.com/kr1ck/Dollchan-Extension-Tools/master/src/Dollchan_Extension_Tools.es6.user.js
 // @nocompat        Chrome
 // @run-at          document-start
 // @grant           GM_getValue
@@ -5508,7 +5508,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
   var _marked = regeneratorRuntime.mark(getFormElements);
 
   var version = '21.7.6.0';
-  var commit = '19c4044';
+  var commit = '19b3ac6';
 
   var defaultCfg = {
     disabled: 0,
@@ -5562,7 +5562,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     maskVisib: 7,
     linksNavig: 1,
     linksOver: 100,
-    linksOut: 1500,
+    linksOut: 100,
     markViewed: 0,
     strikeHidd: 0,
     removeHidd: 0,
@@ -5873,6 +5873,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       sel: ['Скрывать выделенное', 'Hide selected text', 'Ховати виділене'],
       name: ['Скрывать по имени', 'Hide by name', 'Ховати по імені'],
       trip: ['Скрывать по трипкоду', 'Hide by tripcode', 'Ховати по тріпкоду'],
+      uid: ['Скрывать по ID', 'Hide by ID', 'Ховати по ID'],
       img: ['Скрывать по размеру картинки', 'Hide by image size', 'Ховати по розміру зображення'],
       imgn: ['Скрывать по имени картинки', 'Hide by image name', 'Ховати по імені зображення'],
       ihash: ['Скрывать схожие картинки', 'Hide by similar images', 'Ховати подібні зображення'],
@@ -7929,6 +7930,44 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
     return MyPostsClass;
   }(PostsStorage))();
+  var HighlightedPosts = new ( function (_PostsStorage4) {
+    _inherits(HighlightedPostsClass, _PostsStorage4);
+
+    var _super4 = _createSuper(HighlightedPostsClass);
+
+    function HighlightedPostsClass() {
+      var _this10;
+
+      _classCallCheck(this, HighlightedPostsClass);
+
+      _this10 = _super4.call(this);
+      _this10.storageName = 'de-highlighted';
+      return _this10;
+    }
+
+    _createClass(HighlightedPostsClass, [{
+      key: "hideHidden",
+      value: function hideHidden(post, num) {
+        var uHideData = HighlightedPosts.get(num);
+
+        if (!uHideData) {
+          post.setUserVisib(true);
+        } else {
+          post.setUserVisib(!!uHideData, false);
+        }
+      }
+    }, {
+      key: "_readStorage",
+      value: function _readStorage() {
+        PostsStorage._migrateOld(this.storageName, 'de-threads-new'); 
+
+
+        return _get(_getPrototypeOf(HighlightedPostsClass.prototype), "_readStorage", this).call(this);
+      }
+    }]);
+
+    return HighlightedPostsClass;
+  }(PostsStorage))();
 
   function sendStorageEvent(name, value) {
     locStorage[name] = typeof value === 'string' ? value : JSON.stringify(value);
@@ -7960,6 +7999,10 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
         case '__de-mypost':
           MyPosts.purge();
+          return;
+
+        case '__de-highlighted':
+          HighlightedPosts.purge();
           return;
 
         case '__de-webmvolume':
@@ -8078,7 +8121,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       $id('de-main').remove();
     },
     handleEvent: function handleEvent(e) {
-      var _this10 = this;
+      var _this11 = this;
 
       if ('isTrusted' in e && !e.isTrusted) {
         return;
@@ -8238,18 +8281,18 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
               }
 
               this._menuTO = setTimeout(function () {
-                _this10._menu = addMenu(el);
+                _this11._menu = addMenu(el);
 
-                _this10._menu.onover = function () {
-                  return clearTimeout(_this10._hideTO);
+                _this11._menu.onover = function () {
+                  return clearTimeout(_this11._hideTO);
                 };
 
-                _this10._menu.onout = function () {
-                  return _this10._prepareToHide(null);
+                _this11._menu.onout = function () {
+                  return _this11._prepareToHide(null);
                 };
 
-                _this10._menu.onremove = function () {
-                  return _this10._menu = null;
+                _this11._menu.onremove = function () {
+                  return _this11._menu = null;
                 };
               }, Cfg.linksOver);
           }
@@ -8346,11 +8389,11 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       return "<a id=\"de-panel-".concat(id, "\" class=\"de-abtn de-panel-button\" title=\"").concat(title || Lng.panelBtn[id][lang], "\" href=\"").concat(href || '#', "\">\n\t\t\t<svg class=\"de-panel-svg\">\n\t\t\t").concat(id !== 'audio-off' ? "\n\t\t\t\t<use xlink:href=\"#de-symbol-panel-".concat(useId || id, "\"/>") : "\n\t\t\t\t<use class=\"de-use-audio-off\" xlink:href=\"#de-symbol-panel-audio-off\"/>\n\t\t\t\t<use class=\"de-use-audio-on\" xlink:href=\"#de-symbol-panel-audio-on\"/>", "\n\t\t\t</svg>\n\t\t</a>");
     },
     _prepareToHide: function _prepareToHide(rt) {
-      var _this11 = this;
+      var _this12 = this;
 
       if (!Cfg.expandPanel && !$q('.de-win-active') && (!rt || !this._el.contains(rt.farthestViewportElement || rt))) {
         this._hideTO = setTimeout(function () {
-          return $hide(_this11._buttons);
+          return $hide(_this12._buttons);
         }, 500);
       }
     }
@@ -9609,7 +9652,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
   var CfgWindow = {
     initCfgWindow: function initCfgWindow(body) {
-      var _this12 = this;
+      var _this13 = this;
 
       body.addEventListener('click', this);
       body.addEventListener('mouseover', this);
@@ -9667,7 +9710,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       })); 
 
       !nav.isPresto && div.appendChild($btn(Lng.file[lang], Lng.fileImpExp[lang], function () {
-        var list = _this12._getList([Lng.panelBtn.cfg[lang] + ' ' + Lng.allDomains[lang], Lng.panelBtn.fav[lang], Lng.hidPostThr[lang] + " (".concat(aib.dm, ")"), Lng.myPosts[lang] + " (".concat(aib.dm, ")")]); 
+        var list = _this13._getList([Lng.panelBtn.cfg[lang] + ' ' + Lng.allDomains[lang], Lng.panelBtn.fav[lang], Lng.hidPostThr[lang] + " (".concat(aib.dm, ")"), Lng.myPosts[lang] + " (".concat(aib.dm, ")")]); 
 
 
         $popup('cfg-file', "<b>".concat(Lng.fileImpExp[lang], ":</b><hr><!--\n\t\t\t\t--><div class=\"de-list\">").concat(Lng.fileToData[lang], ":<div class=\"de-depend\"><!--\n\t\t\t\t\t--><input type=\"file\" accept=\".json\" id=\"de-import-file\"></div></div><hr><!--\n\t\t\t\t--><div class=\"de-list\"><a id=\"de-export-file\" href=\"#\">").concat(Lng.dataToFile[lang], ":<!--\n\t\t\t\t--><div class=\"de-depend\">").concat(list, "</div></div>")); 
@@ -9845,7 +9888,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       })); 
 
       div.appendChild($btn(Lng.reset[lang] + '…', Lng.resetCfg[lang], function () {
-        return $popup('cfg-reset', "<b>".concat(Lng.resetData[lang], ":</b><hr>") + "<div class=\"de-list\"><b>".concat(aib.dm, ":</b>").concat(_this12._getList([Lng.panelBtn.cfg[lang], Lng.hidPostThr[lang], Lng.myPosts[lang]]), "</div><hr>") + "<div class=\"de-list\"><b>".concat(Lng.allDomains[lang], ":</b>").concat(_this12._getList([Lng.panelBtn.cfg[lang], Lng.panelBtn.fav[lang]]), "</div><hr>")).appendChild($btn(Lng.clear[lang], '', function (e) {
+        return $popup('cfg-reset', "<b>".concat(Lng.resetData[lang], ":</b><hr>") + "<div class=\"de-list\"><b>".concat(aib.dm, ":</b>").concat(_this13._getList([Lng.panelBtn.cfg[lang], Lng.hidPostThr[lang], Lng.myPosts[lang]]), "</div><hr>") + "<div class=\"de-list\"><b>".concat(Lng.allDomains[lang], ":</b>").concat(_this13._getList([Lng.panelBtn.cfg[lang], Lng.panelBtn.fav[lang]]), "</div><hr>")).appendChild($btn(Lng.clear[lang], '', function (e) {
           var els = $Q('input[type="checkbox"]', e.target.parentNode);
 
           for (var i = 1, len = els.length; i < len; ++i) {
@@ -10646,7 +10689,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     _createClass(Menu, [{
       key: "handleEvent",
       value: function handleEvent(e) {
-        var _this13 = this;
+        var _this14 = this;
 
         var isOverEvent = false;
 
@@ -10681,7 +10724,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                   }
                 } else if (!rt || rt !== this.parentEl && !this.parentEl.contains(rt)) {
                   this._closeTO = setTimeout(function () {
-                    return _this13.removeMenu();
+                    return _this14.removeMenu();
                   }, 75);
 
                   if (this.onout) {
@@ -10851,19 +10894,19 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       }
     },
     enableHotKeys: function enableHotKeys() {
-      var _this14 = this;
+      var _this15 = this;
 
       if (!this.enabled) {
         this.enabled = true;
         this._paused = false;
         Promise.resolve(this.readKeys()).then(function (keys) {
-          if (_this14.enabled) {
+          if (_this15.enabled) {
             var _keys = _slicedToArray(keys, 5);
 
-            _this14.gKeys = _keys[2];
-            _this14.ntKeys = _keys[3];
-            _this14.tKeys = _keys[4];
-            doc.addEventListener('keydown', _this14, true);
+            _this15.gKeys = _keys[2];
+            _this15.ntKeys = _keys[3];
+            _this15.tKeys = _keys[4];
+            doc.addEventListener('keydown', _this15, true);
           }
         });
       }
@@ -11157,7 +11200,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       this._paused = true;
     },
     readKeys: function readKeys() {
-      var _this15 = this;
+      var _this16 = this;
 
       return _asyncToGenerator( regeneratorRuntime.mark(function _callee6() {
         var str, keys, tKeys, mapFunc;
@@ -11176,7 +11219,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                   break;
                 }
 
-                return _context8.abrupt("return", _this15.getDefaultKeys());
+                return _context8.abrupt("return", _this16.getDefaultKeys());
 
               case 5:
                 try {
@@ -11188,11 +11231,11 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                   break;
                 }
 
-                return _context8.abrupt("return", _this15.getDefaultKeys());
+                return _context8.abrupt("return", _this16.getDefaultKeys());
 
               case 8:
-                if (keys[0] !== _this15.version) {
-                  tKeys = _this15.getDefaultKeys();
+                if (keys[0] !== _this16.version) {
+                  tKeys = _this16.getDefaultKeys();
 
                   switch (keys[0]) {
                     case 1:
@@ -11219,7 +11262,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                       keys[2][18] = tKeys[2][18];
                   }
 
-                  keys[0] = _this15.version;
+                  keys[0] = _this16.version;
                   setStored('DESU_keys', JSON.stringify(keys));
                 }
 
@@ -11622,7 +11665,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     isLoading: false,
     popupId: null,
     downloadThread: function downloadThread(imgOnly) {
-      var _this16 = this;
+      var _this17 = this;
 
       var progress,
           counter,
@@ -11635,7 +11678,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
       var count = els.length;
       this._thrPool = new TasksPool(4, function (num, data) {
-        return _this16.loadImgData(data[0]).then(function (imgData) {
+        return _this17.loadImgData(data[0]).then(function (imgData) {
           var _data4 = _slicedToArray(data, 4),
               url = _data4[0],
               fName = _data4[1],
@@ -11663,13 +11706,13 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
               $popup('err-files', Lng.loadErrors[lang] + warnings);
 
               if (imgOnly) {
-                return _this16.getDataFromImg(el).then(function (data) {
+                return _this17.getDataFromImg(el).then(function (data) {
                   return tar.addFile(thumbName, data);
                 }, emptyFn);
               }
             }
 
-            return imgOnly ? null : _this16.getDataFromImg(el).then(function (data) {
+            return imgOnly ? null : _this17.getDataFromImg(el).then(function (data) {
               el.src = thumbName;
               tar.addFile(thumbName, data);
             }, function () {
@@ -11703,7 +11746,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         var title = Thread.first.op.title.trim().replace(/[/\\:*?"<>|]/g, '');
         downloadBlob(tar.get(), "".concat(docName).concat(imgOnly ? '-images' : '').concat(title ? ' - ' + title : '', ".tar"));
         closePopup('load-files');
-        _this16._thrPool = tar = warnings = count = current = imgOnly = progress = counter = null;
+        _this17._thrPool = tar = warnings = count = current = imgOnly = progress = counter = null;
       });
       els.forEach(function (el) {
         var parentLink = $parent(el, 'A');
@@ -11711,7 +11754,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         if (parentLink) {
           var url = parentLink.href;
 
-          _this16._thrPool.runTask([url, parentLink.getAttribute('download') || getFileName(url), el, parentLink]);
+          _this17._thrPool.runTask([url, parentLink.getAttribute('download') || getFileName(url), el, parentLink]);
         }
       });
 
@@ -11769,7 +11812,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
           files.push(fName);
 
-          _this16._thrPool.runTask([url, fName, el, null]);
+          _this17._thrPool.runTask([url, fName, el, null]);
 
           count++;
         });
@@ -11820,7 +11863,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       });
     },
     preloadImages: function preloadImages(data) {
-      var _this17 = this;
+      var _this18 = this;
 
       if (!Cfg.preLoadImgs && !Cfg.openImgs && !isPreImg) {
         return;
@@ -11838,7 +11881,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           return console.error('File detector error:', "line: ".concat(err.lineno, " - ").concat(err.message));
         });
         preloadPool = new TasksPool(mReqs, function (num, data) {
-          return _this17.loadImgData(data[0]).then(function (imageData) {
+          return _this18.loadImgData(data[0]).then(function (imageData) {
             var _data5 = _slicedToArray(data, 6),
                 url = _data5[0],
                 parentLink = _data5[1],
@@ -11871,24 +11914,24 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
               if (rarJpgFinder) {
                 rarJpgFinder.runWorker(imageData.buffer, [imageData.buffer], function (info) {
-                  return _this17._addImgFileIcon(nameLink, fName, info);
+                  return _this18._addImgFileIcon(nameLink, fName, info);
                 });
               }
             }
 
-            if (_this17.popupId) {
-              $popup(_this17.popupId, "".concat(Lng.loadImage[lang], ": ").concat(cImg, "/").concat(len), true);
+            if (_this18.popupId) {
+              $popup(_this18.popupId, "".concat(Lng.loadImage[lang], ": ").concat(cImg, "/").concat(len), true);
             }
 
             cImg++;
           });
         }, function () {
-          _this17.isLoading = false;
+          _this18.isLoading = false;
 
-          if (_this17.afterFn) {
-            _this17.afterFn();
+          if (_this18.afterFn) {
+            _this18.afterFn();
 
-            _this17.afterFn = _this17.popupId = null;
+            _this18.afterFn = _this18.popupId = null;
           }
 
           if (rarJpgFinder) {
@@ -12052,25 +12095,25 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     _createClass(DateTime, [{
       key: "genRFunc",
       value: function genRFunc(rPattern) {
-        var _this18 = this;
+        var _this19 = this;
 
         return function (dtime) {
-          return rPattern.replace('_o', (_this18.diff < 0 ? '' : '+') + _this18.diff).replace('_s', function () {
-            return _this18.pad2(dtime.getSeconds());
+          return rPattern.replace('_o', (_this19.diff < 0 ? '' : '+') + _this19.diff).replace('_s', function () {
+            return _this19.pad2(dtime.getSeconds());
           }).replace('_i', function () {
-            return _this18.pad2(dtime.getMinutes());
+            return _this19.pad2(dtime.getMinutes());
           }).replace('_h', function () {
-            return _this18.pad2(dtime.getHours());
+            return _this19.pad2(dtime.getHours());
           }).replace('_d', function () {
-            return _this18.pad2(dtime.getDate());
+            return _this19.pad2(dtime.getDate());
           }).replace('_w', function () {
-            return _this18.arrW[dtime.getDay()];
+            return _this19.arrW[dtime.getDay()];
           }).replace('_n', function () {
-            return _this18.pad2(dtime.getMonth() + 1);
+            return _this19.pad2(dtime.getMonth() + 1);
           }).replace('_m', function () {
-            return _this18.arrM[dtime.getMonth()];
+            return _this19.arrM[dtime.getMonth()];
           }).replace('_M', function () {
-            return _this18.arrFM[dtime.getMonth()];
+            return _this19.arrFM[dtime.getMonth()];
           }).replace('_y', function () {
             return ('' + dtime.getFullYear()).substring(2);
           }).replace('_Y', function () {
@@ -12118,7 +12161,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "fix",
       value: function fix(txt) {
-        var _this19 = this;
+        var _this20 = this;
 
         if (this.disabled || !this.genDateTime && !this.getRPattern(txt)) {
           return txt;
@@ -12130,7 +12173,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           for (var i = 0; i < 7; ++i) {
             var a = i + 1 < 1 || arguments.length <= i + 1 ? undefined : arguments[i + 1];
 
-            switch (_this19.pattern[i]) {
+            switch (_this20.pattern[i]) {
               case 's':
                 second = a;
                 break;
@@ -12162,8 +12205,8 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           }
 
           var dtime = new Date(year.length === 2 ? '20' + year : year, month, day, hour, minute, second || 0);
-          dtime.setHours(dtime.getHours() + _this19.diff);
-          return _this19.genDateTime(dtime);
+          dtime.setHours(dtime.getHours() + _this20.diff);
+          return _this20.genDateTime(dtime);
         });
       }
     }], [{
@@ -12998,7 +13041,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       return "".concat(url).concat(url.includes('?') ? '&' : '?', "nocache=").concat(Math.random());
     },
     runCachedAjax: function runCachedAjax(url, useCache) {
-      var _this20 = this;
+      var _this21 = this;
 
       var _ref14 = this._data.get(url) || {},
           hasCacheControl = _ref14.hasCacheControl,
@@ -13008,7 +13051,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       return $ajax(ajaxURL, useCache && params || {
         useTimeout: true
       }, aib._4chan).then(function (xhr) {
-        return _this20.saveData(url, xhr) ? xhr : $ajax(_this20.fixURL(url), useCache && params, aib._4chan);
+        return _this21.saveData(url, xhr) ? xhr : $ajax(_this21.fixURL(url), useCache && params, aib._4chan);
       });
     },
     saveData: function saveData(url, xhr) {
@@ -13166,7 +13209,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
   var Pages = {
     addPage: function addPage() {
-      var _this21 = this;
+      var _this22 = this;
 
       var needThreads = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
       var pageNum = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : DelForm.last.pageNum + 1;
@@ -13185,7 +13228,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
             while (1) {
               switch (_context10.prev = _context10.next) {
                 case 0:
-                  newForm = _this21._addForm(formEl, pageNum);
+                  newForm = _this22._addForm(formEl, pageNum);
 
                   if (!newForm.firstThr) {
                     _context10.next = 16;
@@ -13197,12 +13240,12 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                     break;
                   }
 
-                  return _context10.abrupt("return", _this21._updateForms(DelForm.last));
+                  return _context10.abrupt("return", _this22._updateForms(DelForm.last));
 
                 case 4:
                   $hide(newForm.el);
                   _context10.next = 7;
-                  return _this21._updateForms(DelForm.last);
+                  return _this22._updateForms(DelForm.last);
 
                 case 7:
                   firstForm = DelForm.first;
@@ -13228,18 +13271,18 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                   firstForm.next = firstForm.lastThr.next = null;
                   newForm.el.remove();
 
-                  _this21._endAdding();
+                  _this22._endAdding();
 
                   if (needThreads) {
-                    _this21.addPage(needThreads, pageNum + 1);
+                    _this22.addPage(needThreads, pageNum + 1);
                   }
 
                   return _context10.abrupt("return", CancelablePromise.reject(new CancelError()));
 
                 case 16:
-                  _this21._endAdding();
+                  _this22._endAdding();
 
-                  _this21.addPage();
+                  _this22.addPage();
 
                   return _context10.abrupt("return", CancelablePromise.reject(new CancelError()));
 
@@ -13255,17 +13298,17 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           return _ref15.apply(this, arguments);
         };
       }()).then(function () {
-        return _this21._endAdding();
+        return _this22._endAdding();
       })["catch"](function (err) {
         if (!(err instanceof CancelError)) {
           $popup('add-page', getErrorMessage(err));
 
-          _this21._endAdding();
+          _this22._endAdding();
         }
       });
     },
     loadPages: function loadPages(count) {
-      var _this22 = this;
+      var _this23 = this;
 
       return _asyncToGenerator( regeneratorRuntime.mark(function _callee9() {
         var _iterator5, _step5, form, i, len, first;
@@ -13276,10 +13319,10 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
               case 0:
                 $popup('load-pages', Lng.loading[lang], true);
 
-                if (_this22._addingPromise) {
-                  _this22._addingPromise.cancelPromise();
+                if (_this23._addingPromise) {
+                  _this23._addingPromise.cancelPromise();
 
-                  _this22._endAdding();
+                  _this23._endAdding();
                 }
 
                 PviewsCache.purge();
@@ -13333,7 +13376,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                 }
 
                 _context11.prev = 23;
-                _context11.t0 = _this22;
+                _context11.t0 = _this23;
                 _context11.next = 27;
                 return ajaxLoad(aib.getPageUrl(aib.b, i));
 
@@ -13367,7 +13410,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                 DelForm.first = first.next;
                 first.el.remove();
                 _context11.next = 44;
-                return _this22._updateForms(DelForm.first);
+                return _this23._updateForms(DelForm.first);
 
               case 44:
                 closePopup('load-pages');
@@ -14696,11 +14739,11 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     _createClass(SpellsRunner, [{
       key: "endSpells",
       value: function endSpells() {
-        var _this23 = this;
+        var _this24 = this;
 
         if (this._endPromise) {
           this._endPromise.then(function () {
-            return _this23._savePostsHelper();
+            return _this24._savePostsHelper();
           });
         } else {
           this._savePostsHelper();
@@ -14709,13 +14752,13 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "runSpells",
       value: function runSpells(post) {
-        var _this24 = this;
+        var _this25 = this;
 
         var res = new SpellsInterpreter(post, this._spells).runInterpreter();
 
         if (res instanceof Promise) {
           res = res.then(function (val) {
-            return _this24._checkRes(post, val);
+            return _this25._checkRes(post, val);
           });
           this._endPromise = this._endPromise ? this._endPromise.then(function () {
             return res;
@@ -14831,7 +14874,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     _createClass(SpellsInterpreter, [{
       key: "runInterpreter",
       value: function runInterpreter() {
-        var _this25 = this;
+        var _this26 = this;
 
         var rv, stopCheck;
 
@@ -14872,7 +14915,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
               this._ctx.push(len, scope, ++i, isNegScope);
 
               return val.then(function (v) {
-                return _this25._asyncContinue(v);
+                return _this26._asyncContinue(v);
               });
             }
 
@@ -15448,7 +15491,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
   var PostForm = function () {
     function PostForm(form) {
-      var _this26 = this;
+      var _this27 = this;
 
       var oeForm = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
       var ignoreForm = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
@@ -15530,7 +15573,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       if (Cfg.addSageBtn && this.mail) {
         PostForm.hideField($parent(this.mail, 'LABEL') || this.mail);
         setTimeout(function () {
-          return _this26.toggleSage();
+          return _this27.toggleSage();
         }, 0);
       }
 
@@ -15568,14 +15611,14 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "sageBtn",
       get: function get() {
-        var _this27 = this;
+        var _this28 = this;
 
         var value = $aEnd(this.subm, '<span id="de-sagebtn"><svg class="de-btn-sage">' + '<use xlink:href="#de-symbol-post-sage"/></svg></span>');
 
         value.onclick = function () {
           toggleCfg('sageReply');
 
-          _this27.toggleSage();
+          _this28.toggleSage();
         };
 
         Object.defineProperty(this, 'sageBtn', {
@@ -15870,7 +15913,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "_initAjaxPosting",
       value: function _initAjaxPosting() {
-        var _this28 = this;
+        var _this29 = this;
 
         var el;
 
@@ -15881,7 +15924,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         this.form.onsubmit = function (e) {
           $pd(e);
           $popup('upload', Lng.sending[lang], true);
-          html5Submit(_this28.form, _this28.subm, true).then(checkUpload)["catch"](function (err) {
+          html5Submit(_this29.form, _this29.subm, true).then(checkUpload)["catch"](function (err) {
             return $popup('upload', getErrorMessage(err));
           });
         };
@@ -15889,7 +15932,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "_initCaptcha",
       value: function _initCaptcha() {
-        var _this29 = this;
+        var _this30 = this;
 
         var capEl = $q('input[type="text"][name*="aptcha"], *[id*="captcha"], *[class*="captcha"]', this.form);
 
@@ -15901,9 +15944,9 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         this.cap = new Captcha(capEl, this.tNum);
 
         var updCapFn = function updCapFn() {
-          _this29.cap.addCaptcha();
+          _this30.cap.addCaptcha();
 
-          _this29.cap.updateOutdated();
+          _this30.cap.updateOutdated();
         };
 
         this.txta.addEventListener('focus', updCapFn);
@@ -15913,13 +15956,13 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         }
 
         this.form.addEventListener('click', function () {
-          return _this29.cap.addCaptcha();
+          return _this30.cap.addCaptcha();
         }, true);
       }
     }, {
       key: "_initFileInputs",
       value: function _initFileInputs() {
-        var _this30 = this;
+        var _this31 = this;
 
         var fileEl = $q(aib.qFormFile, this.form);
 
@@ -15935,29 +15978,29 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
         deWindow.addEventListener('load', function () {
           return setTimeout(function () {
-            return !_this30.files.filesCount && _this30.files.clearInputs();
+            return !_this31.files.filesCount && _this31.files.clearInputs();
           }, 0);
         });
       }
     }, {
       key: "_initSubmit",
       value: function _initSubmit() {
-        var _this31 = this;
+        var _this32 = this;
 
         this.subm.addEventListener('click', function (e) {
-          if (Cfg.warnSubjTrip && _this31.subj && /#.|##./.test(_this31.subj.value)) {
+          if (Cfg.warnSubjTrip && _this32.subj && /#.|##./.test(_this32.subj.value)) {
             $pd(e);
             $popup('upload', Lng.subjHasTrip[lang]);
             return;
           }
 
-          var val = _this31.txta.value;
+          var val = _this32.txta.value;
 
           if (Spells.outreps) {
             val = Spells.outReplace(val);
           }
 
-          if (_this31.tNum && pByNum.get(_this31.tNum).subj === 'Dollchan Extension Tools') {
+          if (_this32.tNum && pByNum.get(_this32.tNum).subj === 'Dollchan Extension Tools') {
             var temp = "\n\n".concat(PostForm._wrapText(aib.markupTags[5], "".concat('-'.repeat(50), "\n").concat(nav.ua, "\nv").concat(version, ".").concat(commit).concat(nav.isESNext ? '.es6' : '', " [").concat(nav.scriptHandler, "]"))[1]);
 
             if (!val.includes(temp)) {
@@ -15965,22 +16008,22 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
             }
           }
 
-          _this31.txta.value = val;
+          _this32.txta.value = val;
 
-          _this31.toggleSage();
+          _this32.toggleSage();
 
           if (Cfg.ajaxPosting) {
             $popup('upload', Lng.checking[lang], true);
           }
 
-          if (_this31.video && (val = _this31.video.value) && (val = val.match(Videos.ytReg))) {
-            _this31.video.value = 'http://www.youtube.com/watch?v=' + val[1];
+          if (_this32.video && (val = _this32.video.value) && (val = val.match(Videos.ytReg))) {
+            _this32.video.value = 'http://www.youtube.com/watch?v=' + val[1];
           }
 
-          if (_this31.isQuick) {
-            $hide(_this31.pForm);
-            $hide(_this31.qArea);
-            $after(_this31._pBtn[+_this31.isBottom], _this31.pForm);
+          if (_this32.isQuick) {
+            $hide(_this32.pForm);
+            $hide(_this32.qArea);
+            $after(_this32._pBtn[+_this32.isBottom], _this32.pForm);
           }
 
           updater.pauseUpdater();
@@ -15989,7 +16032,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "_initTextarea",
       value: function _initTextarea() {
-        var _this32 = this;
+        var _this33 = this;
 
         var el = this.txta;
 
@@ -16019,7 +16062,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
               var item = _step20.value;
 
               if (item.kind === 'file') {
-                var inputs = _this32.files._inputs;
+                var inputs = _this33.files._inputs;
 
                 for (var i = 0, len = inputs.length; i < len; ++i) {
                   var input = inputs[i];
@@ -16085,7 +16128,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "_makeHideableContainer",
       value: function _makeHideableContainer() {
-        var _this33 = this;
+        var _this34 = this;
 
         this.pForm = $add('<div id="de-pform" class="de-win-body"></div>');
 
@@ -16102,11 +16145,11 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         this._pBtn = [this.pArea[0].firstChild, this.pArea[1].firstChild];
 
         this._pBtn[0].firstElementChild.onclick = function (e) {
-          return _this33.showMainReply(false, e);
+          return _this34.showMainReply(false, e);
         };
 
         this._pBtn[1].firstElementChild.onclick = function (e) {
-          return _this33.showMainReply(true, e);
+          return _this34.showMainReply(true, e);
         };
 
         this.qArea = $add("<div style=\"display: none; ".concat(Cfg.replyWinX, "; ").concat(Cfg.replyWinY, "; z-index: ").concat(++topWinZ, ";\" id=\"de-win-reply\" class=\"").concat(aib.cReply + (Cfg.replyWinDrag ? ' de-win' : ' de-win-inpost'), "\"></div>"));
@@ -16116,7 +16159,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "_makeWindow",
       value: function _makeWindow() {
-        var _this34 = this;
+        var _this35 = this;
 
         makeDraggable('reply', this.qArea, $aBegin(this.qArea, "<div class=\"de-win-head\">\n\t\t\t<span class=\"de-win-title\"></span>\n\t\t\t<span class=\"de-win-buttons\">\n\t\t\t\t<svg class=\"de-win-btn-clear\"><use xlink:href=\"#de-symbol-unavail\"/></svg>\n\t\t\t\t<svg class=\"de-win-btn-toggle\"><use xlink:href=\"#de-symbol-win-arrow\"/></svg>\n\t\t\t\t<svg class=\"de-win-btn-close\"><use xlink:href=\"#de-symbol-win-close\"/></svg>\n\t\t\t</span>\n\t\t</div>\n\t\t<div class=\"de-resizer de-resizer-top\"></div>\n\t\t<div class=\"de-resizer de-resizer-left\"></div>\n\t\t<div class=\"de-resizer de-resizer-right\"></div>\n\t\t<div class=\"de-resizer de-resizer-bottom\"></div>"));
         var buttons = $q('.de-win-buttons', this.qArea);
@@ -16147,11 +16190,11 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         clearBtn.onclick = function () {
           saveCfg('sageReply', 0);
 
-          _this34.toggleSage();
+          _this35.toggleSage();
 
-          _this34.files.clearInputs();
+          _this35.files.clearInputs();
 
-          [_this34.txta, _this34.name, _this34.mail, _this34.subj, _this34.video, _this34.cap && _this34.cap.textEl].forEach(function (el) {
+          [_this35.txta, _this35.name, _this35.mail, _this35.subj, _this35.video, _this35.cap && _this35.cap.textEl].forEach(function (el) {
             return el && (el.value = '');
           });
         };
@@ -16160,17 +16203,17 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           toggleCfg('replyWinDrag');
 
           if (Cfg.replyWinDrag) {
-            _this34.qArea.className = aib.cReply + ' de-win';
-            updateWinZ(_this34.qArea.style);
+            _this35.qArea.className = aib.cReply + ' de-win';
+            updateWinZ(_this35.qArea.style);
           } else {
-            _this34.qArea.className = aib.cReply + ' de-win-inpost';
+            _this35.qArea.className = aib.cReply + ' de-win-inpost';
 
-            _this34.txta.focus();
+            _this35.txta.focus();
           }
         };
 
         closeBtn.onclick = function () {
-          return _this34.closeReply();
+          return _this35.closeReply();
         };
       }
     }, {
@@ -17298,7 +17341,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "handleEvent",
       value: function handleEvent(e) {
-        var _this35 = this;
+        var _this36 = this;
 
         var el = e.target;
         var thumb = this._thumb;
@@ -17319,17 +17362,17 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                   for (var i = 0; i < allowedLen; ++i) {
                     FileInput._readDroppedFile(inpArray[curInpIdx + i], el.files[i]).then(function () {
                       if (! --j) {
-                        _this35._removeFileHelper();
+                        _this36._removeFileHelper();
                       }
                     });
 
-                    _this35._parent._files[curInpIdx + i] = el.files[i];
+                    _this36._parent._files[curInpIdx + i] = el.files[i];
                   }
                 })();
               } else {
                 if (filesLen > 0) {
                   setTimeout(function () {
-                    return _this35._onFileChange(false);
+                    return _this36._onFileChange(false);
                   }, 20);
                   this._parent._files[curInpIdx] = el.files[0];
                 } else {
@@ -17421,18 +17464,18 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                   var file = this._input.files[0];
                   readFile(file).then(function (_ref27) {
                     var data = _ref27.data;
-                    _this35.imgFile = {
+                    _this36.imgFile = {
                       data: data,
                       name: newName,
                       type: file.type,
                       isConstName: true
                     };
 
-                    _this35._removeFileHelper(); 
+                    _this36._removeFileHelper(); 
 
 
                     if (FileInput._isThumbMode) {
-                      _this35._addThumbTitle(newName, data.byteLength);
+                      _this36._addThumbTitle(newName, data.byteLength);
                     }
                   });
                   return;
@@ -17544,23 +17587,23 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "_addRarJpeg",
       value: function _addRarJpeg() {
-        var _this36 = this;
+        var _this37 = this;
 
         var el = this._parent.rarInput;
 
         el.onchange = function (e) {
-          $hide(_this36._btnRar);
-          var myBtn = _this36._rarMsg = $aBegin(_this36._utils, '<span><svg class="de-wait"><use xlink:href="#de-symbol-wait"/></svg></span>');
+          $hide(_this37._btnRar);
+          var myBtn = _this37._rarMsg = $aBegin(_this37._utils, '<span><svg class="de-wait"><use xlink:href="#de-symbol-wait"/></svg></span>');
           var file = e.target.files[0];
           readFile(file).then(function (_ref28) {
             var data = _ref28.data;
 
-            if (_this36._rarMsg === myBtn) {
+            if (_this37._rarMsg === myBtn) {
               myBtn.className = 'de-file-rarmsg';
-              var origFileName = _this36.imgFile ? _this36.imgFile.name : _this36._input.files[0].name;
+              var origFileName = _this37.imgFile ? _this37.imgFile.name : _this37._input.files[0].name;
               myBtn.title = origFileName + ' + ' + file.name;
               myBtn.textContent = getFileExt(origFileName) + ' + ' + getFileExt(file.name);
-              _this36.extraFile = data;
+              _this37.extraFile = data;
             }
           });
         };
@@ -17575,7 +17618,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "_addUrlFile",
       value: function _addUrlFile(url) {
-        var _this37 = this;
+        var _this38 = this;
 
         var file = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
@@ -17595,7 +17638,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           }
 
           closePopup('file-loading');
-          _this37._isTxtEditable = _this37._isTxtEditName = false;
+          _this38._isTxtEditable = _this38._isTxtEditName = false;
           var name = file ? file.name : getFileName(url);
           var type = file && file.type || getFileType(name);
 
@@ -17628,7 +17671,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
             }
           }
 
-          _this37.imgFile = {
+          _this38.imgFile = {
             data: data.buffer,
             name: name,
             type: type || getFileType(name)
@@ -17636,19 +17679,19 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
           if (!file) {
             file = new Blob([data], {
-              type: _this37.imgFile.type
+              type: _this38.imgFile.type
             });
             file.name = name;
           }
 
-          _this37._parent._files[_this37._parent._inputs.indexOf(_this37)] = file;
-          DollchanAPI.notify('filechange', _this37._parent._files);
+          _this38._parent._files[_this38._parent._inputs.indexOf(_this38)] = file;
+          DollchanAPI.notify('filechange', _this38._parent._files);
 
           if (FileInput._isThumbMode) {
-            $hide(_this37._txtWrap);
+            $hide(_this38._txtWrap);
           }
 
-          _this37._onFileChange(true);
+          _this38._onFileChange(true);
         });
       }
     }, {
@@ -17757,7 +17800,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "_showFileThumb",
       value: function _showFileThumb() {
-        var _this38 = this;
+        var _this39 = this;
 
         var imgFile = this.imgFile;
 
@@ -17773,8 +17816,8 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           readFile(file).then(function (_ref29) {
             var data = _ref29.data;
 
-            if (_this38._input.files[0] === file) {
-              _this38._addNewThumb(data, file.name, file.type, file.size);
+            if (_this39._input.files[0] === file) {
+              _this39._addNewThumb(data, file.name, file.type, file.size);
             }
           });
         }
@@ -17904,18 +17947,18 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "initCapPromise",
       value: function initCapPromise() {
-        var _this39 = this;
+        var _this40 = this;
 
         var initPromise = aib.captchaInit ? aib.captchaInit(this) : null;
 
         if (initPromise) {
           initPromise.then(function () {
-            return _this39.showCaptcha();
+            return _this40.showCaptcha();
           }, function (err) {
             if (err instanceof AjaxError) {
-              _this39._setUpdateError(err);
+              _this40._setUpdateError(err);
             } else {
-              _this39.hasCaptcha = false;
+              _this40.hasCaptcha = false;
             }
           });
         } else if (this.hasCaptcha) {
@@ -17925,14 +17968,14 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "initImage",
       value: function initImage(img) {
-        var _this40 = this;
+        var _this41 = this;
 
         img.title = Lng.refresh[lang];
         img.alt = Lng.loading[lang];
         img.style.cssText = 'vertical-align: text-bottom; border: none; cursor: pointer;';
 
         img.onclick = function () {
-          return _this40.refreshCaptcha(true);
+          return _this41.refreshCaptcha(true);
         };
       }
     }, {
@@ -17992,7 +18035,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "refreshCaptcha",
       value: function refreshCaptcha(isFocus) {
-        var _this41 = this;
+        var _this42 = this;
 
         var isErr = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var tNum = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.tNum;
@@ -18016,9 +18059,9 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
           if (updatePromise) {
             updatePromise.then(function () {
-              return _this41._updateTextEl(isFocus);
+              return _this42._updateTextEl(isFocus);
             }, function (err) {
-              return _this41._setUpdateError(err);
+              return _this42._setUpdateError(err);
             });
           }
         } else if (this._isRecap) {
@@ -18079,16 +18122,16 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "_setUpdateError",
       value: function _setUpdateError(e) {
-        var _this42 = this;
+        var _this43 = this;
 
         if (e) {
           this.parentEl = e.toString();
           this.isAdded = false;
 
           this.parentEl.onclick = function () {
-            _this42.parentEl.onclick = null;
+            _this43.parentEl.onclick = null;
 
-            _this42.addCaptcha();
+            _this43.addCaptcha();
           };
 
           $show(this.parentEl);
@@ -18119,6 +18162,93 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }]);
 
     return Captcha;
+  }();
+
+
+  var Tip = function () {
+    function Tip() {
+      _classCallCheck(this, Tip);
+    }
+
+    _createClass(Tip, [{
+      key: "construcor",
+      value: function construcor() {
+        this.node = null;
+        this.timeout = null;
+        this.delay = 300;
+        this.init();
+      }
+    }, {
+      key: "init",
+      value: function init() {
+        document.addEventListener('mouseover', this.onMouseOver, !1), document.addEventListener('mouseout', this.onMouseOut, !1);
+      }
+    }, {
+      key: "onMouseOver",
+      value: function onMouseOver(e) {
+        var t, n, o;
+        o = e.target, this.timeout && (clearTimeout(this.timeout), this.timeout = null), o.hasAttribute('data-tip') && (n = null, o.hasAttribute('data-tip-cb') && (t = o.getAttribute('data-tip-cb'), window[t] && (n = window[t](o))), this.timeout = setTimeout(this.show, this.delay, e.target, n));
+      }
+    }, {
+      key: "onMouseOut",
+      value: function onMouseOut() {
+        this.timeout && (clearTimeout(this.timeout), this.timeout = null), this.hide();
+      }
+    }, {
+      key: "show",
+      value: function show(e, t, n) {
+        var o, a, i, l, r;
+        a = e.getBoundingClientRect(), (o = document.createElement('div')).id = 'tooltip', t ? o.innerHTML = t : o.textContent = e.getAttribute('data-tip'), n || (n = 'top'), o.className = 'tip-' + n, document.body.appendChild(o), (l = a.left - (o.offsetWidth - e.offsetWidth) / 2) < 0 ? (l = a.left + 2, o.className += '-right') : l + o.offsetWidth > document.documentElement.clientWidth && (l = a.left - o.offsetWidth + e.offsetWidth + 2, o.className += '-left'), r = a.top - o.offsetHeight - 5, (i = o.style).top = r + window.pageYOffset + 'px', i.left = l + window.pageXOffset + 'px', this.node = o;
+      }
+    }, {
+      key: "hide",
+      value: function hide() {
+        this.node && (document.body.removeChild(this.node), this.node = null);
+      }
+    }]);
+
+    return Tip;
+  }();
+
+
+  var IDColor = function () {
+    function IDColor() {
+      _classCallCheck(this, IDColor);
+
+      this.css = 'padding: 0 5px; border-radius: 6px; font-size: 0.8em;';
+      this.ids = {};
+      this.init();
+    }
+
+    _createClass(IDColor, [{
+      key: "init",
+      value: function init() {
+        var e;
+        (e = document.createElement('style')).setAttribute('type', 'text/css');
+        e.textContent = '.posteruid span {' + this.css + '}';
+        e.id = 'id-style';
+        document.head.appendChild(e);
+      }
+    }, {
+      key: "compute",
+      value: function compute(e) {
+        var t, a;
+        return t = [], a = $.hash(e), t[0] = a >> 24 & 255, t[1] = a >> 16 & 255, t[2] = a >> 8 & 255, t[3] = 0.299 * t[0] + 0.587 * t[1] + 0.114 * t[2] > 125, this.ids[e] = t, t;
+      }
+    }, {
+      key: "apply",
+      value: function apply(e) {
+        var t;
+        t = this.ids[e.textContent] || this.compute(e.textContent), e.style.cssText = '    background-color: rgb(' + t[0] + ',' + t[1] + ',' + t[2] + ');    color: ' + (t[3] ? 'black;' : 'white;');
+      }
+    }, {
+      key: "applyRemote",
+      value: function applyRemote(e) {
+        this.apply(e), e.style.cssText += this.css;
+      }
+    }]);
+
+    return IDColor;
   }();
 
 
@@ -18260,7 +18390,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "handleEvent",
       value: function handleEvent(e) {
-        var _this43 = this;
+        var _this44 = this;
 
         var temp,
             el = fixEventEl(e.target);
@@ -18552,7 +18682,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
               }
             } else {
               this._linkDelay = setTimeout(function () {
-                return _this43.kid = Pview.showPview(_this43, el);
+                return _this44.kid = Pview.showPview(_this44, el);
               }, Cfg.linksOver);
             }
 
@@ -18618,14 +18748,14 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "_addMenu",
       value: function _addMenu(el, isOutEvent, html) {
-        var _this44 = this;
+        var _this45 = this;
 
         if (!this.menu || this.menu.parentEl !== el) {
           if (isOutEvent) {
             clearTimeout(this._menuDelay);
           } else {
             this._menuDelay = setTimeout(function () {
-              return _this44._showMenu(el, html);
+              return _this45._showMenu(el, html);
             }, Cfg.linksOver);
           }
         }
@@ -18646,7 +18776,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "_getFullMsg",
       value: function _getFullMsg(truncEl, isInit) {
-        var _this45 = this;
+        var _this46 = this;
 
         if (aib.deleteTruncMsg) {
           aib.deleteTruncMsg(this, truncEl, isInit);
@@ -18661,7 +18791,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           var sourceEl;
           var maybeSpells = new Maybe(SpellsRunner);
 
-          if (_this45.isOp) {
+          if (_this46.isOp) {
             sourceEl = form;
           } else {
             var posts = $Q(aib.qRPost, form);
@@ -18669,7 +18799,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
             for (var i = 0, len = posts.length; i < len; ++i) {
               var post = posts[i];
 
-              if (_this45.num === aib.getPNum(post)) {
+              if (_this46.num === aib.getPNum(post)) {
                 sourceEl = post;
                 break;
               }
@@ -18677,7 +18807,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           }
 
           if (sourceEl) {
-            _this45.updateMsg(aib.fixHTML(doc.adoptNode($q(aib.qPostMsg, sourceEl))), maybeSpells.value);
+            _this46.updateMsg(aib.fixHTML(doc.adoptNode($q(aib.qPostMsg, sourceEl))), maybeSpells.value);
 
             truncEl.remove();
           }
@@ -18690,18 +18820,18 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "_showMenu",
       value: function _showMenu(el, html) {
-        var _this46 = this;
+        var _this47 = this;
 
         if (this._menu) {
           this._menu.removeMenu();
         }
 
         this._menu = new Menu(el, html, function (el) {
-          return (_this46 instanceof Pview ? pByNum.get(_this46.num) : _this46)._clickMenu(el);
+          return (_this47 instanceof Pview ? pByNum.get(_this47.num) : _this47)._clickMenu(el);
         }, false);
 
         this._menu.onremove = function () {
-          return _this46._menu = null;
+          return _this47._menu = null;
         };
       }
     }]);
@@ -18712,53 +18842,98 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
   var Post = function (_AbstractPost) {
     _inherits(Post, _AbstractPost);
 
-    var _super4 = _createSuper(Post);
+    var _super5 = _createSuper(Post);
 
     function Post(el, thr, num, count, isOp, prev) {
-      var _this47;
+      var _thr$IDColors;
+
+      var _this48;
 
       _classCallCheck(this, Post);
 
-      _this47 = _super4.call(this, thr, num, isOp);
-      _this47.count = count;
-      _this47.el = el;
-      _this47.isDeleted = false;
-      _this47.isHidden = false;
-      _this47.isOmitted = false;
-      _this47.isViewed = false;
-      _this47.next = null;
-      _this47.prev = prev;
-      _this47.spellHidden = false;
-      _this47.userToggled = false;
-      _this47._selRange = null;
-      _this47._selText = '';
+      _this48 = _super5.call(this, thr, num, isOp);
+      _this48.count = count;
+      _this48.el = el;
+      _this48.isDeleted = false;
+      _this48.isHidden = false;
+      _this48.isOmitted = false;
+      _this48.isViewed = false;
+      _this48.next = null;
+      _this48.prev = prev;
+      _this48.spellHidden = false;
+      _this48.userToggled = false;
+      _this48._selRange = null;
+      _this48._selText = '';
 
       if (prev) {
-        prev.next = _assertThisInitialized(_this47);
+        prev.next = _assertThisInitialized(_this48);
       }
 
-      pByEl.set(el, _assertThisInitialized(_this47));
-      pByNum.set(num, _assertThisInitialized(_this47));
+      pByEl.set(el, _assertThisInitialized(_this48));
+      pByNum.set(num, _assertThisInitialized(_this48));
       var isMyPost = MyPosts.has(num);
 
       if (isMyPost) {
-        _this47.el.classList.add('de-mypost');
-      } else if (localData && _this47.el.classList.contains('de-mypost')) {
+        _this48.el.classList.add('de-mypost');
+      } else if (localData && _this48.el.classList.contains('de-mypost')) {
         MyPosts.set(num, thr.num);
         isMyPost = true;
       }
 
-      el.classList.add(isOp ? 'de-oppost' : 'de-reply');
-      _this47.sage = aib.getSage(el);
-      _this47.btns = $aEnd(_this47._pref = $q(aib.qPostRef, el), '<span class="de-post-btns">' + Post.getPostBtns(isOp, aib.t) + (_this47.sage ? '<svg class="de-btn-sage"><use xlink:href="#de-symbol-post-sage"/></svg>' : '') + (isOp ? '' : "<span class=\"de-post-counter\">".concat(count + 1, "</span>")) + (isMyPost ? '<span class="de-post-counter-you">(You)</span>' : '') + '</span>');
-      _this47.counterEl = isOp ? null : $q('.de-post-counter', _this47.btns);
+      var isHighlighted = HighlightedPosts.has(_this48.posterId);
 
-      if (Cfg.expandTrunc && _this47.trunc) {
-        _this47._getFullMsg(_this47.trunc, true);
+      if (isHighlighted) {
+        _this48.el.classList.add('de-highlighted');
       }
 
-      el.addEventListener('mouseover', _assertThisInitialized(_this47), true);
-      return _this47;
+      var isOpsPost = thr.opPosterId === _this48.posterId;
+      el.classList.add(isOp ? 'de-oppost' : 'de-reply');
+      _this48.sage = aib.getSage(el);
+      _this48.btns = $aEnd(_this48._pref = $q(aib.qPostRef, el), '<span class="de-post-btns">' + Post.getPostBtns(isOp, aib.t) + (_this48.sage ? '<svg class="de-btn-sage"><use xlink:href="#de-symbol-post-sage"/></svg>' : '') + (isOp ? '' : "<span class=\"de-post-counter\">".concat(count + 1, "</span>")) + (isOpsPost ? '<span class="de-post-counter-op">(OP)</span>' : '') + (isMyPost ? '<span class="de-post-counter-you">(You)</span>' : '') + '</span>');
+      _this48.counterEl = isOp ? null : $q('.de-post-counter', _this48.btns);
+
+      if (Cfg.expandTrunc && _this48.trunc) {
+        _this48._getFullMsg(_this48.trunc, true);
+      }
+
+      if (typeof thr.Tip !== 'undefined') {
+        var postIdEl = el.querySelector('.postInfo .posteruid span');
+        postIdEl.addEventListener('mouseover', function (e) {
+          var a, i, n, o, r;
+          var t = e.target.textContent;
+
+          for (o = 0, n = $.qsa('.postInfo .hand'), a = 0; i = n[a]; ++a) {
+            i.textContent === t && ++o;
+          }
+
+          r = o + ' post' + (o != 1 ? 's' : '') + ' by this ID';
+          thr.Tip.show(e.target, r);
+        }, true);
+        postIdEl.addEventListener('mouseout', function (e) {
+          thr.Tip.hide();
+        }, true);
+        postIdEl.addEventListener('click', function (e) {
+          var isAdd = !HighlightedPosts.has(_this48.posterId);
+
+          if (isAdd) {
+            HighlightedPosts.set(_this48.posterId, _this48.thr.num);
+          } else {
+            HighlightedPosts.removeStorage(_this48.posterId);
+          }
+
+          var a, i, n, o, r;
+
+          for (o = 0, n = $.qsa('.postInfo .hand'), a = 0; i = n[a]; ++a) {
+            if (i.textContent === _this48.posterId) {
+              i.closest('.post').classList.toggle('de-highlighted', isAdd);
+            }
+          }
+        }, true);
+      }
+
+      (_thr$IDColors = thr.IDColors) === null || _thr$IDColors === void 0 ? void 0 : _thr$IDColors.apply(el.querySelector('.postInfo .posteruid span'));
+      el.addEventListener('mouseover', _assertThisInitialized(_this48), true);
+      return _this48;
     }
 
     _createClass(Post, [{
@@ -18816,6 +18991,11 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       key: "posterName",
       get: function get() {
         return new Post.Сontent(this).posterName;
+      }
+    }, {
+      key: "posterId",
+      get: function get() {
+        return new Post.Сontent(this).posterId;
       }
     }, {
       key: "posterTrip",
@@ -19002,7 +19182,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "setVisib",
       value: function setVisib(isHide) {
-        var _this48 = this;
+        var _this49 = this;
 
         var note = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
@@ -19023,7 +19203,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
             this._pref.onmouseover = this._pref.onmouseout = !isHide ? null : function (e) {
               var yOffset = deWindow.pageYOffset;
 
-              _this48.hideContent(e.type === 'mouseout');
+              _this49.hideContent(e.type === 'mouseout');
 
               scrollTo(deWindow.pageXOffset, yOffset);
             };
@@ -19032,7 +19212,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
         if (Cfg.strikeHidd) {
           setTimeout(function () {
-            return _this48._strikePostNum(isHide);
+            return _this49._strikePostNum(isHide);
           }, 50);
         }
 
@@ -19100,7 +19280,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "_clickMenu",
       value: function _clickMenu(el) {
-        var _this49 = this;
+        var _this50 = this;
 
         var isHide = !this.isHidden;
         var isPview = this instanceof Pview;
@@ -19145,6 +19325,14 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
             Spells.addSpell(6
             , this.posterName, false);
             return;
+
+          case 'hide-uid':
+            {
+              var exph = "/(?:<span.*>)s?".concat(this.posterId, "/");
+              Spells.addSpell(2
+              , exph, false);
+              return;
+            }
 
           case 'hide-trip':
             Spells.addSpell(7
@@ -19221,7 +19409,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
               $each($Q("[de-form] ".concat(aib.qPostMsg, " a[href$=\"").concat(aib.anchor + num, "\"]")), function (el) {
                 var post = aib.getPostOfEl(el);
 
-                if (post.el !== _this49.el) {
+                if (post.el !== _this50.el) {
                   el.classList.toggle('de-ref-you', isAdd);
                   post.el.classList.toggle('de-mypost-reply', isAdd);
                 }
@@ -19260,7 +19448,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           this._selRange = sel.getRangeAt(0);
         }
 
-        return "".concat(ssel ? item('sel') : '').concat(this.posterName ? item('name') : '').concat(this.posterTrip ? item('trip') : '').concat(this.images.hasAttachments ? item('img') + item('imgn') + item('ihash') : item('noimg')).concat(this.text ? item('text') : item('notext')).concat(!Cfg.hideRefPsts && this.ref.hasMap ? item('refs') : '').concat(item('refsonly'));
+        return "".concat(ssel ? item('sel') : '').concat(this.posterId ? item('uid') : '').concat(this.posterName ? item('name') : '').concat(this.posterTrip ? item('trip') : '').concat(this.images.hasAttachments ? item('img') + item('imgn') + item('ihash') : item('noimg')).concat(this.text ? item('text') : item('notext')).concat(!Cfg.hideRefPsts && this.ref.hasMap ? item('refs') : '').concat(item('refsonly'));
       }
     }, {
       key: "_strikePostNum",
@@ -19404,23 +19592,23 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
   Post.Сontent = function (_TemporaryContent) {
     _inherits(PostContent, _TemporaryContent);
 
-    var _super5 = _createSuper(PostContent);
+    var _super6 = _createSuper(PostContent);
 
     function PostContent(post) {
-      var _this50;
+      var _this51;
 
       _classCallCheck(this, PostContent);
 
-      _this50 = _super5.call(this, post);
+      _this51 = _super6.call(this, post);
 
-      if (_this50._isInited) {
-        return _possibleConstructorReturn(_this50);
+      if (_this51._isInited) {
+        return _possibleConstructorReturn(_this51);
       }
 
-      _this50._isInited = true;
-      _this50.el = post.el;
-      _this50.post = post;
-      return _this50;
+      _this51._isInited = true;
+      _this51.el = post.el;
+      _this51.post = post;
+      return _this51;
     }
 
     _createClass(PostContent, [{
@@ -19447,6 +19635,16 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         var pName = $q(aib.qPostName, this.el);
         var value = pName ? pName.textContent.trim().replace(/\s/g, ' ') : '';
         Object.defineProperty(this, 'posterName', {
+          value: value
+        });
+        return value;
+      }
+    }, {
+      key: "posterId",
+      get: function get() {
+        var pID = $q(aib.qPostID, this.el);
+        var value = pID ? pID.textContent.trim().replace(/\s/g, ' ') : '';
+        Object.defineProperty(this, 'posterId', {
           value: value
         });
         return value;
@@ -19545,20 +19743,20 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "set",
       value: function set(note) {
-        var _this51 = this;
+        var _this52 = this;
 
         this.text = note;
         var text;
 
         if (this.isHideThr) {
           this._aEl.onmouseover = this._aEl.onmouseout = function (e) {
-            return _this51._post.hideContent(e.type === 'mouseout');
+            return _this52._post.hideContent(e.type === 'mouseout');
           };
 
           this._aEl.onclick = function (e) {
             $pd(e);
 
-            _this51._post.setUserVisib(!_this51._post.isHidden);
+            _this52._post.setUserVisib(!_this52._post.isHidden);
           };
 
           text = (this._post.title ? "(".concat(this._post.title, ") ") : '') + (note ? "[autohide: ".concat(note, "]") : '');
@@ -19639,57 +19837,57 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
   var Pview = function (_AbstractPost2) {
     _inherits(Pview, _AbstractPost2);
 
-    var _super6 = _createSuper(Pview);
+    var _super7 = _createSuper(Pview);
 
     function Pview(parent, link, pNum, tNum) {
-      var _this52;
+      var _this53;
 
       _classCallCheck(this, Pview);
 
-      _this52 = _super6.call(this, parent.thr, pNum, pNum === tNum);
-      _this52.isSticky = false;
-      _this52.parent = parent;
-      _this52.remoteThr = null;
-      _this52.tNum = tNum;
-      _this52._isCached = false;
-      _this52._isLeft = false;
-      _this52._isTop = false;
-      _this52._link = link;
-      _this52._newPos = null;
-      _this52._offsetTop = 0;
-      _this52._readDelay = 0;
+      _this53 = _super7.call(this, parent.thr, pNum, pNum === tNum);
+      _this53.isSticky = false;
+      _this53.parent = parent;
+      _this53.remoteThr = null;
+      _this53.tNum = tNum;
+      _this53._isCached = false;
+      _this53._isLeft = false;
+      _this53._isTop = false;
+      _this53._link = link;
+      _this53._newPos = null;
+      _this53._offsetTop = 0;
+      _this53._readDelay = 0;
       var post = pByNum.get(pNum);
 
       if (post && (!post.isOp || !(parent instanceof Pview) || !parent._isCached)) {
-        _this52._buildPview(post);
+        _this53._buildPview(post);
 
-        return _possibleConstructorReturn(_this52);
+        return _possibleConstructorReturn(_this53);
       }
 
-      _this52._isCached = true;
-      _this52.brd = link.pathname.match(/^\/?(.+\/)/)[1].replace(aib.res, '').replace(/\/$/, '');
+      _this53._isCached = true;
+      _this53.brd = link.pathname.match(/^\/?(.+\/)/)[1].replace(aib.res, '').replace(/\/$/, '');
 
-      if (PviewsCache.has(_this52.brd + tNum)) {
-        post = PviewsCache.get(_this52.brd + tNum).getPost(pNum);
+      if (PviewsCache.has(_this53.brd + tNum)) {
+        post = PviewsCache.get(_this53.brd + tNum).getPost(pNum);
 
         if (post) {
-          _this52._buildPview(post);
+          _this53._buildPview(post);
         } else {
-          _this52._showPview(_this52.el = $add("<div class=\"".concat(aib.cReply, " de-pview-info de-pview\">\n\t\t\t\t\t").concat(Lng.postNotFound[lang], "</div>")));
+          _this53._showPview(_this53.el = $add("<div class=\"".concat(aib.cReply, " de-pview-info de-pview\">\n\t\t\t\t\t").concat(Lng.postNotFound[lang], "</div>")));
         }
 
-        return _possibleConstructorReturn(_this52);
+        return _possibleConstructorReturn(_this53);
       }
 
-      _this52._showPview(_this52.el = $add("<div class=\"".concat(aib.cReply, " de-pview-info de-pview\">\n\t\t\t<svg class=\"de-wait\"><use xlink:href=\"#de-symbol-wait\"/></svg>").concat(Lng.loading[lang], "</div>"))); 
+      _this53._showPview(_this53.el = $add("<div class=\"".concat(aib.cReply, " de-pview-info de-pview\">\n\t\t\t<svg class=\"de-wait\"><use xlink:href=\"#de-symbol-wait\"/></svg>").concat(Lng.loading[lang], "</div>"))); 
 
 
-      _this52._loadPromise = ajaxPostsLoad(_this52.brd, tNum, false, false).then(function (pBuilder) {
-        return _this52._onload(pBuilder);
+      _this53._loadPromise = ajaxPostsLoad(_this53.brd, tNum, false, false).then(function (pBuilder) {
+        return _this53._onload(pBuilder);
       }, function (err) {
-        return _this52._onerror(err);
+        return _this53._onerror(err);
       });
-      return _this52;
+      return _this53;
     }
 
     _createClass(Pview, [{
@@ -19806,11 +20004,11 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "markToDel",
       value: function markToDel() {
-        var _this53 = this;
+        var _this54 = this;
 
         clearTimeout(Pview._delTO);
         Pview._delTO = setTimeout(function () {
-          return _this53.deleteNonSticky();
+          return _this54.deleteNonSticky();
         }, Cfg.linksOut);
       }
     }, {
@@ -19844,7 +20042,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       key: "_buildPview",
       value: function () {
         var _buildPview2 = _asyncToGenerator( regeneratorRuntime.mark(function _callee12(post) {
-          var num, pv, isMyPost, isOp, f, isFav, isCached, pCountHtml, pText, btnsEl, link;
+          var num, pv, isMyPost, isOpsPost, isOp, f, isFav, isCached, pCountHtml, pText, btnsEl, link;
           return regeneratorRuntime.wrap(function _callee12$(_context16) {
             while (1) {
               switch (_context16.prev = _context16.next) {
@@ -19854,6 +20052,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                   pv = this.el = post.el.cloneNode(true);
                   pByEl.set(pv, this);
                   isMyPost = MyPosts.has(num);
+                  isOpsPost = post.thr.opPosterId === post.posterId;
                   pv.className = "".concat(aib.cReply, " de-pview").concat(post.isViewed ? ' de-viewed' : '').concat(isMyPost ? ' de-mypost' : '') + "".concat(post.el.classList.contains('de-mypost-reply') ? ' de-mypost-reply' : '');
                   $show(pv);
                   $each($Q('.de-post-hiddencontent', pv), function (el) {
@@ -19872,51 +20071,51 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                   _context16.t0 = isOp;
 
                   if (!_context16.t0) {
-                    _context16.next = 27;
+                    _context16.next = 28;
                     break;
                   }
 
                   _context16.t1 = post.thr.isFav;
 
                   if (_context16.t1) {
-                    _context16.next = 26;
+                    _context16.next = 27;
                     break;
                   }
 
-                  _context16.next = 18;
+                  _context16.next = 19;
                   return readFavorites();
 
-                case 18:
+                case 19:
                   _context16.t4 = aib.host;
                   _context16.t3 = f = _context16.sent[_context16.t4];
 
                   if (!_context16.t3) {
-                    _context16.next = 22;
+                    _context16.next = 23;
                     break;
                   }
 
                   _context16.t3 = f = f[this.brd];
 
-                case 22:
+                case 23:
                   _context16.t2 = _context16.t3;
 
                   if (!_context16.t2) {
-                    _context16.next = 25;
+                    _context16.next = 26;
                     break;
                   }
 
                   _context16.t2 = num in f;
 
-                case 25:
+                case 26:
                   _context16.t1 = _context16.t2;
 
-                case 26:
+                case 27:
                   _context16.t0 = _context16.t1;
 
-                case 27:
+                case 28:
                   isFav = _context16.t0;
                   isCached = post instanceof CacheItem;
-                  pCountHtml = (post.isDeleted ? " de-post-counter-deleted\">".concat(Lng.deleted[lang], "</span>") : "\">".concat(isOp ? '(OP)' : post.count + +!(aib.JsonBuilder && isCached), "</span>")) + (isMyPost ? '<span class="de-post-counter-you">(You)</span>' : '');
+                  pCountHtml = (post.isDeleted ? " de-post-counter-deleted\">".concat(Lng.deleted[lang], "</span>") : "\">".concat(isOp ? '(OP)' : post.count + +!(aib.JsonBuilder && isCached), "</span>")) + (isOpsPost ? '<span class="de-post-counter-op">(OP)</span>' : '') + (isMyPost ? '<span class="de-post-counter-you">(You)</span>' : '');
                   pText = '<svg class="de-btn-reply"><use xlink:href="#de-symbol-post-reply"/></svg>' + (isOp ? "<svg class=\"".concat(isFav ? 'de-btn-fav-sel' : 'de-btn-fav', "\">") + '<use xlink:href="#de-symbol-post-fav"></use></svg>' : '') + (post.sage ? '<svg class="de-btn-sage"><use xlink:href="#de-symbol-post-sage"/></svg>' : '') + '<svg class="de-btn-stick"><use xlink:href="#de-symbol-post-stick"/></svg>' + '<span class="de-post-counter' + pCountHtml;
 
                   if (isCached) {
@@ -19984,7 +20183,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
                   this._showPview(pv);
 
-                case 34:
+                case 35:
                 case "end":
                   return _context16.stop();
               }
@@ -20071,12 +20270,12 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "_showMenu",
       value: function _showMenu(el, html) {
-        var _this54 = this;
+        var _this55 = this;
 
         _get(_getPrototypeOf(Pview.prototype), "_showMenu", this).call(this, el, html);
 
         this._menu.onover = function () {
-          return _this54.mouseEnter();
+          return _this55.mouseEnter();
         };
 
         this._menu.onout = function () {
@@ -20286,7 +20485,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "thr",
       get: function get() {
-        var _this55 = this;
+        var _this56 = this;
 
         var value = null;
 
@@ -20298,7 +20497,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           };
           Object.defineProperty(value, 'title', {
             get: function get() {
-              return _this55.title;
+              return _this56.title;
             }
           });
         }
@@ -20316,20 +20515,20 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
   var PviewsCache = function (_TemporaryContent2) {
     _inherits(PviewsCache, _TemporaryContent2);
 
-    var _super7 = _createSuper(PviewsCache);
+    var _super8 = _createSuper(PviewsCache);
 
     function PviewsCache(pBuilder, b, tNum) {
-      var _this56;
+      var _this57;
 
       _classCallCheck(this, PviewsCache);
 
-      _this56 = _super7.call(this, b + tNum);
+      _this57 = _super8.call(this, b + tNum);
 
-      if (_this56._isInited) {
-        return _possibleConstructorReturn(_this56);
+      if (_this57._isInited) {
+        return _possibleConstructorReturn(_this57);
       }
 
-      _this56._isInited = true;
+      _this57._isInited = true;
       var lPByNum = new Map();
       var thrUrl = aib.getThrUrl(b, tNum);
       lPByNum.set(tNum, new CacheItem(pBuilder, thrUrl, 0));
@@ -20339,14 +20538,14 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       }
 
       DelForm.tNums.add(tNum);
-      _this56._b = b;
-      _this56._posts = lPByNum;
+      _this57._b = b;
+      _this57._posts = lPByNum;
 
       if (Cfg.linksNavig) {
         RefMap.gen(lPByNum);
       }
 
-      return _this56;
+      return _this57;
     }
 
     _createClass(PviewsCache, [{
@@ -20493,11 +20692,11 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "_setHideTmt",
       value: function _setHideTmt() {
-        var _this57 = this;
+        var _this58 = this;
 
         clearTimeout(this._hideTmt);
         this._hideTmt = setTimeout(function () {
-          return _this57.hideBtns();
+          return _this58.hideBtns();
         }, 2e3);
       }
     }]);
@@ -20796,7 +20995,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "_showFullImg",
       value: function _showFullImg(data) {
-        var _this58 = this;
+        var _this59 = this;
 
         var _data$computeFullSize = data.computeFullSize(),
             _data$computeFullSize2 = _slicedToArray(_data$computeFullSize, 3),
@@ -20805,9 +21004,9 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
             minSize = _data$computeFullSize2[2];
 
         this._fullEl = data.getFullImg(false, function (el) {
-          return _this58._resizeFullImg(el);
+          return _this59._resizeFullImg(el);
         }, function (el) {
-          return _this58._rotateFullImg(el);
+          return _this59._rotateFullImg(el);
         });
         this._width = width;
         this._height = height;
@@ -20943,20 +21142,20 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "checkForRedirect",
       value: function checkForRedirect(fullEl) {
-        var _this59 = this;
+        var _this60 = this;
 
         if (!aib.getImgRedirectSrc || this.redirected) {
           return;
         }
 
         aib.getImgRedirectSrc(this.src).then(function (newSrc) {
-          _this59.redirected = true;
-          Object.defineProperty(_this59, 'src', {
+          _this60.redirected = true;
+          Object.defineProperty(_this60, 'src', {
             value: newSrc
           });
-          $q('img, video', fullEl).src = _this59.el.src = _this59.el.parentNode.href = getImgNameLink(_this59.el).href = newSrc;
+          $q('img, video', fullEl).src = _this60.el.src = _this60.el.parentNode.href = getImgNameLink(_this60.el).href = newSrc;
 
-          if (!_this59.isVideo) {
+          if (!_this60.isVideo) {
             $q('a', fullEl).href = newSrc;
           }
         });
@@ -21057,7 +21256,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "expandImg",
       value: function expandImg(inPost, e) {
-        var _this60 = this;
+        var _this61 = this;
 
         if (e && !e.bubbles) {
           return;
@@ -21093,7 +21292,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         this._fullEl = this.getFullImg(true, null, null);
 
         this._fullEl.addEventListener('click', function (e) {
-          return _this60.collapseImg(e);
+          return _this61.collapseImg(e);
         }, true);
 
         this.srcBtnEvents(this);
@@ -21144,7 +21343,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "getFullImg",
       value: function getFullImg(inPost, onsizechange, onrotate) {
-        var _this61 = this;
+        var _this62 = this;
 
         var wrapEl, name, origSrc;
 
@@ -21184,11 +21383,11 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
             var newW = img.naturalWidth,
                 newH = img.naturalHeight;
-            var ar = _this61._size ? _this61._size[1] / _this61._size[0] : newH / newW;
+            var ar = _this62._size ? _this62._size[1] / _this62._size[0] : newH / newW;
             var isRotated = !img.scrollWidth ? false : img.scrollHeight / img.scrollWidth > 1 ? ar < 1 : ar > 1;
 
-            if (!_this61._size || isRotated) {
-              _this61._size = isRotated ? [newH, newW] : [newW, newH];
+            if (!_this62._size || isRotated) {
+              _this62._size = isRotated ? [newH, newW] : [newW, newH];
             }
 
             var parentEl = img.parentNode.parentNode;
@@ -21244,7 +21443,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         if (!this._size) {
           videoEl.addEventListener('loadedmetadata', function (_ref34) {
             var el = _ref34.target;
-            _this61._size = [el.videoWidth, el.videoHeight];
+            _this62._size = [el.videoWidth, el.videoHeight];
             onsizechange(wrapEl);
           });
         } 
@@ -21304,7 +21503,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
             var loadedTitle = decodeURIComponent(escape(str));
 
-            _this61.el.setAttribute('de-metatitle', loadedTitle);
+            _this62.el.setAttribute('de-metatitle', loadedTitle);
 
             if (str) {
               $q('.de-webm-title', wrapEl).textContent = videoEl.title = loadedTitle.replace(/\./g, ' ');
@@ -21346,7 +21545,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "srcBtnEvents",
       value: function srcBtnEvents(_ref36) {
-        var _this62 = this;
+        var _this63 = this;
 
         var _fullEl = _ref36._fullEl;
 
@@ -21357,15 +21556,15 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         var srcBtnEl = $q('.de-btn-img', _fullEl);
         srcBtnEl.addEventListener('mouseover', function () {
           return srcBtnEl.odelay = setTimeout(function () {
-            var menuHtml = !_this62.isVideo ? Menu.getMenuImg(srcBtnEl) : Menu.getMenuImg(srcBtnEl, true) + "<span class=\"de-menu-item de-menu-getframe\">".concat(Lng.getFrameLinks[lang], "</span>");
-            new Menu(srcBtnEl, menuHtml, !_this62.isVideo ? emptyFn : function (optiontEl) {
+            var menuHtml = !_this63.isVideo ? Menu.getMenuImg(srcBtnEl) : Menu.getMenuImg(srcBtnEl, true) + "<span class=\"de-menu-item de-menu-getframe\">".concat(Lng.getFrameLinks[lang], "</span>");
+            new Menu(srcBtnEl, menuHtml, !_this63.isVideo ? emptyFn : function (optiontEl) {
               if (!optiontEl.classList.contains('de-menu-getframe')) {
                 return;
               }
 
               ContentLoader.getDataFromImg($q('video', _fullEl)).then(function (arr) {
                 $popup('upload', Lng.sending[lang], true);
-                var name = cutFileExt(_this62.name) + '.png';
+                var name = cutFileExt(_this63.name) + '.png';
                 var blob = new Blob([arr], {
                   type: 'image/png'
                 });
@@ -21435,12 +21634,12 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
   var EmbeddedImage = function (_ExpandableImage) {
     _inherits(EmbeddedImage, _ExpandableImage);
 
-    var _super8 = _createSuper(EmbeddedImage);
+    var _super9 = _createSuper(EmbeddedImage);
 
     function EmbeddedImage() {
       _classCallCheck(this, EmbeddedImage);
 
-      return _super8.apply(this, arguments);
+      return _super9.apply(this, arguments);
     }
 
     _createClass(EmbeddedImage, [{
@@ -21471,12 +21670,12 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
   var AttachedImage = function (_ExpandableImage2) {
     _inherits(AttachedImage, _ExpandableImage2);
 
-    var _super9 = _createSuper(AttachedImage);
+    var _super10 = _createSuper(AttachedImage);
 
     function AttachedImage() {
       _classCallCheck(this, AttachedImage);
 
-      return _super9.apply(this, arguments);
+      return _super10.apply(this, arguments);
     }
 
     _createClass(AttachedImage, [{
@@ -21752,7 +21951,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       };
     },
     _getHashHelper: function _getHashHelper(_ref39) {
-      var _this63 = this;
+      var _this64 = this;
 
       return _asyncToGenerator( regeneratorRuntime.mark(function _callee13() {
         var el, src, data, val, w, h, cnv, ctx, buffer;
@@ -21762,12 +21961,12 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
               case 0:
                 el = _ref39.el, src = _ref39.src;
 
-                if (!(src in _this63._storage)) {
+                if (!(src in _this64._storage)) {
                   _context18.next = 3;
                   break;
                 }
 
-                return _context18.abrupt("return", _this63._storage[src]);
+                return _context18.abrupt("return", _this64._storage[src]);
 
               case 3:
                 if (el.complete) {
@@ -21795,7 +21994,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
               case 9:
                 val = -1;
                 w = el.naturalWidth, h = el.naturalHeight;
-                cnv = _this63._canvas;
+                cnv = _this64._canvas;
                 cnv.width = w;
                 cnv.height = h;
                 ctx = cnv.getContext('2d');
@@ -21809,7 +22008,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
                 _context18.next = 20;
                 return new Promise(function (resolve) {
-                  return _this63._workers.runWorker([buffer, w, h], [buffer], function (val) {
+                  return _this64._workers.runWorker([buffer, w, h], [buffer], function (val) {
                     return resolve(val);
                   });
                 });
@@ -21822,7 +22021,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                 }
 
               case 22:
-                _this63._storage[src] = val;
+                _this64._storage[src] = val;
                 return _context18.abrupt("return", val);
 
               case 24:
@@ -22870,7 +23069,10 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         prev.next = this;
       }
 
+      this.IDColors = new IDColor();
+      this.Tip = new Tip();
       var lastPost = this.op = new Post(aib.getOp(el), this, num, 0, true, prev ? prev.last : null);
+      this.opPosterId = this.op.posterId;
       pByEl.set(el, lastPost);
 
       for (var i = 0; i < len; ++i) {
@@ -23069,7 +23271,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "loadPosts",
       value: function loadPosts(task) {
-        var _this64 = this;
+        var _this65 = this;
 
         var isSmartScroll = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var isInformUser = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
@@ -23079,7 +23281,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         }
 
         return ajaxPostsLoad(aib.b, this.num, false).then(function (pBuilder) {
-          return _this64._loadFromBuilder(task, isSmartScroll, pBuilder);
+          return _this65._loadFromBuilder(task, isSmartScroll, pBuilder);
         }, function (err) {
           return $popup('load-thr', getErrorMessage(err));
         });
@@ -23088,10 +23290,10 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "loadNewPosts",
       value: function loadNewPosts() {
-        var _this65 = this;
+        var _this66 = this;
 
         return ajaxPostsLoad(aib.b, this.num, true).then(function (pBuilder) {
-          return pBuilder ? _this65._loadNewFromBuilder(pBuilder) : {
+          return pBuilder ? _this66._loadNewFromBuilder(pBuilder) : {
             newCount: 0,
             locked: false
           };
@@ -23564,7 +23766,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "_toggleReplies",
       value: function _toggleReplies() {
-        var _this66 = this;
+        var _this67 = this;
 
         var isHide = !this.last.isOmitted;
         var post = this.op;
@@ -23577,7 +23779,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
         this.btnReplies.firstElementChild.className = "".concat(isHide ? 'de-replies-show' : 'de-replies-hide', " de-abtn");
         $each(this.btns.children, function (el) {
-          return el !== _this66.btnReplies && $toggle(el, !isHide);
+          return el !== _this67.btnReplies && $toggle(el, !isHide);
         });
         $del($q(aib.qOmitted + ', .de-omitted', this.el));
         i = this.pcount - 1 - (isHide ? 0 : i);
@@ -23618,12 +23820,12 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       }
     },
     handleEvent: function handleEvent(e) {
-      var _this67 = this;
+      var _this68 = this;
 
       switch (e.type) {
         case 'scroll':
           deWindow.requestAnimationFrame(function () {
-            return _this67._checkThreads();
+            return _this68._checkThreads();
           });
           break;
 
@@ -23680,28 +23882,28 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       }
     },
     _expandCollapse: function _expandCollapse(isExpand, rt) {
-      var _this68 = this;
+      var _this69 = this;
 
       if (!rt || !this._el.contains(rt.farthestViewportElement || rt)) {
         clearTimeout(this._toggleTO);
         this._toggleTO = setTimeout(function () {
-          return _this68._el.classList.toggle('de-thr-navpanel-hidden', !isExpand);
+          return _this69._el.classList.toggle('de-thr-navpanel-hidden', !isExpand);
         }, Cfg.linksOver);
       }
     },
     _findCurrentThread: function _findCurrentThread() {
-      var _this69 = this;
+      var _this70 = this;
 
       Object.defineProperty(this, '_findCurrentThread', {
         value: 'elementsFromPoint' in doc ? function () {
           return doc.elementsFromPoint(Post.sizing.wWidth / 2, Post.sizing.wHeight / 2).find(function (el) {
-            return _this69._thrs.has(el);
+            return _this70._thrs.has(el);
           });
         } : function () {
           var el = doc.elementFromPoint(Post.sizing.wWidth / 2, Post.sizing.wHeight / 2);
 
           while (el) {
-            if (_this69._thrs.has(el)) {
+            if (_this70._thrs.has(el)) {
               return el;
             }
 
@@ -23755,7 +23957,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         }
       },
       playAudio: function playAudio() {
-        var _this70 = this;
+        var _this71 = this;
 
         this.stopAudio();
 
@@ -23766,7 +23968,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         }
 
         this._playInterval = setInterval(function () {
-          return _this70._el.play();
+          return _this71._el.play();
         }, this.repeatMS);
       },
       stopAudio: function stopAudio() {
@@ -23789,11 +23991,11 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     };
     var counter = {
       count: function count(delayMS, useCounter, callback) {
-        var _this71 = this;
+        var _this72 = this;
 
         if (!this._enabled || !useCounter) {
           this._countingTO = setTimeout(function () {
-            _this71._countingTO = null;
+            _this72._countingTO = null;
             callback();
           }, delayMS);
           return;
@@ -23807,11 +24009,11 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           seconds--;
 
           if (seconds === 0) {
-            _this71._stopCounter();
+            _this72._stopCounter();
 
             callback();
           } else {
-            _this71._set(seconds);
+            _this72._set(seconds);
           }
         }, 1e3);
       },
@@ -23870,7 +24072,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       },
 
       initIcons: function initIcons() {
-        var _this72 = this;
+        var _this73 = this;
 
         if (this._isInited) {
           return;
@@ -23881,7 +24083,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
         icon.onload = function (e) {
           try {
-            _this72._initIconsHelper(e.target);
+            _this73._initIconsHelper(e.target);
           } catch (err) {
             console.warn('Icon error:', err);
           }
@@ -23899,7 +24101,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         icon.src = this._iconEl.href;
       },
       startBlink: function startBlink(isError) {
-        var _this73 = this;
+        var _this74 = this;
 
         var iconUrl = !this._hasIcons ? this._emptyIcon : isError ? this._iconError : repliesToYou.size ? this._getIconYou(newPosts) : this._getIconNew(newPosts);
 
@@ -23913,9 +24115,9 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
         this._currentIcon = iconUrl;
         this._blinkInterv = setInterval(function () {
-          _this73._isOrigIcon = !_this73._isOrigIcon;
+          _this74._isOrigIcon = !_this74._isOrigIcon;
 
-          _this73._setIcon(_this73._isOrigIcon ? _this73.originalIcon : _this73._currentIcon);
+          _this74._setIcon(_this74._isOrigIcon ? _this74.originalIcon : _this74._currentIcon);
         }, this._blinkMS);
       },
       stopBlink: function stopBlink() {
@@ -24003,7 +24205,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         return canvas.toDataURL('image/png');
       },
       _initIconsHelper: function _initIconsHelper(icon) {
-        var _this74 = this;
+        var _this75 = this;
 
         var canvas = doc.createElement('canvas');
         var ctx = canvas.getContext('2d');
@@ -24033,12 +24235,12 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
         this._getIconNew = function (newPosts) {
           var id = newPosts < 10 ? newPosts : 0;
-          return _this74._iconsNew[id] || (_this74._iconsNew[id] = _this74._drawIconsNewYou(ctx, canvas, id, iconNewCircle, scale));
+          return _this75._iconsNew[id] || (_this75._iconsNew[id] = _this75._drawIconsNewYou(ctx, canvas, id, iconNewCircle, scale));
         };
 
         this._getIconYou = function (newPosts) {
           var id = newPosts < 10 ? newPosts : 0;
-          return _this74._iconsYou[id] || (_this74._iconsYou[id] = _this74._drawIconsNewYou(ctx, canvas, id, iconYouCircle, scale));
+          return _this75._iconsYou[id] || (_this75._iconsYou[id] = _this75._drawIconsNewYou(ctx, canvas, id, iconYouCircle, scale));
         };
 
         this._hasIcons = true;
@@ -24075,7 +24277,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         }
       },
       showNotif: function showNotif() {
-        var _this75 = this;
+        var _this76 = this;
 
         var lngQuantity = function lngQuantity(num) {
           var new10 = num % 10;
@@ -24092,7 +24294,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
         notif.onshow = function () {
           return setTimeout(function () {
-            return notif === _this75._notifEl && _this75.closeNotif();
+            return notif === _this76._notifEl && _this76.closeNotif();
           }, 12e3);
         };
 
@@ -24103,7 +24305,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         notif.onerror = function () {
           deWindow.focus();
 
-          _this75._requestPermission();
+          _this76._requestPermission();
         };
 
         this._notifEl = notif;
@@ -24112,14 +24314,14 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       _granted: true,
       _notifEl: null,
       _requestPermission: function _requestPermission() {
-        var _this76 = this;
+        var _this77 = this;
 
         this._granted = false;
         Notification.requestPermission(function (state) {
           if (state.toLowerCase() === 'denied') {
             saveCfg('desktNotif', 0);
           } else {
-            _this76._granted = true;
+            _this77._granted = true;
           }
         });
       }
@@ -24250,7 +24452,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         this._makeStep();
       },
       _makeStep: function _makeStep() {
-        var _this77 = this;
+        var _this78 = this;
 
         var needSleep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
 
@@ -24260,7 +24462,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
               if (needSleep) {
                 this._state = 1;
                 counter.count(this._delay, !doc.hidden, function () {
-                  return _this77._makeStep();
+                  return _this78._makeStep();
                 });
                 return;
               }
@@ -24272,9 +24474,9 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
               this._loadPromise = Thread.first.loadNewPosts().then(function (_ref41) {
                 var newCount = _ref41.newCount,
                     locked = _ref41.locked;
-                return _this77._handleNewPosts(newCount, locked ? AjaxError.Locked : AjaxError.Success);
+                return _this78._handleNewPosts(newCount, locked ? AjaxError.Locked : AjaxError.Success);
               }, function (err) {
-                return _this77._handleNewPosts(0, err);
+                return _this78._handleNewPosts(0, err);
               });
               return;
 
@@ -24916,6 +25118,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       this.qImgInfo = '.filesize';
       this.qOmitted = '.omittedposts';
       this.qOPost = '.oppost';
+      this.qPostID = '.posteruid span';
       this.qPages = 'table[border="1"] > tbody > tr > td:nth-child(2) > a:last-of-type';
       this.qPostHeader = '.de-post-btns';
       this.qPostImg = '.thumb, .ca_thumb, img[src*="thumb"], img[src*="/spoiler"], img[src^="blob:"]';
@@ -25442,20 +25645,20 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Kusaba = function (_BaseBoard) {
       _inherits(Kusaba, _BaseBoard);
 
-      var _super10 = _createSuper(Kusaba);
+      var _super11 = _createSuper(Kusaba);
 
       function Kusaba(prot, dm) {
-        var _this78;
+        var _this79;
 
         _classCallCheck(this, Kusaba);
 
-        _this78 = _super10.call(this, prot, dm);
-        _this78.kusaba = true;
-        _this78.qError = 'h1, h2, div[style*="1.25em"]';
-        _this78.qFormRedir = 'input[name="redirecttothread"][value="1"]';
-        _this78.formParent = 'replythread';
-        _this78.markupBB = true;
-        return _this78;
+        _this79 = _super11.call(this, prot, dm);
+        _this79.kusaba = true;
+        _this79.qError = 'h1, h2, div[style*="1.25em"]';
+        _this79.qFormRedir = 'input[name="redirecttothread"][value="1"]';
+        _this79.formParent = 'replythread';
+        _this79.markupBB = true;
+        return _this79;
       }
 
       _createClass(Kusaba, [{
@@ -25504,39 +25707,39 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Tinyboard = function (_BaseBoard2) {
       _inherits(Tinyboard, _BaseBoard2);
 
-      var _super11 = _createSuper(Tinyboard);
+      var _super12 = _createSuper(Tinyboard);
 
       function Tinyboard(prot, dm) {
-        var _this79;
+        var _this80;
 
         _classCallCheck(this, Tinyboard);
 
-        _this79 = _super11.call(this, prot, dm);
-        _this79.cReply = 'post reply';
-        _this79.qClosed = '.fa-lock';
-        _this79.qDForm = 'form[name*="postcontrols"]';
-        _this79.qForm = 'form[name="post"]';
-        _this79.qFormPassw = 'input[name="password"]:not([type="hidden"])';
-        _this79.qFormRedir = null;
-        _this79.qImgInfo = '.fileinfo';
-        _this79.qOmitted = '.omitted';
-        _this79.qPages = '.pages';
-        _this79.qPostHeader = '.intro';
-        _this79.qPostMsg = '.body';
-        _this79.qPostName = '.name';
-        _this79.qPostRef = '.post_no + a';
-        _this79.qPostSubj = '.subject';
-        _this79.qPostTrip = '.trip';
-        _this79.qTrunc = '.toolong';
-        _this79._origInputs = null;
-        _this79._qOPostEnd = '.post.reply';
-        _this79.firstPage = 1;
-        _this79.formParent = 'thread';
-        _this79.hasCatalog = true;
-        _this79.hasRefererErr = true;
-        _this79.jsonSubmit = true;
-        _this79.timePattern = 'nn+dd+yy++w++hh+ii+ss';
-        return _this79;
+        _this80 = _super12.call(this, prot, dm);
+        _this80.cReply = 'post reply';
+        _this80.qClosed = '.fa-lock';
+        _this80.qDForm = 'form[name*="postcontrols"]';
+        _this80.qForm = 'form[name="post"]';
+        _this80.qFormPassw = 'input[name="password"]:not([type="hidden"])';
+        _this80.qFormRedir = null;
+        _this80.qImgInfo = '.fileinfo';
+        _this80.qOmitted = '.omitted';
+        _this80.qPages = '.pages';
+        _this80.qPostHeader = '.intro';
+        _this80.qPostMsg = '.body';
+        _this80.qPostName = '.name';
+        _this80.qPostRef = '.post_no + a';
+        _this80.qPostSubj = '.subject';
+        _this80.qPostTrip = '.trip';
+        _this80.qTrunc = '.toolong';
+        _this80._origInputs = null;
+        _this80._qOPostEnd = '.post.reply';
+        _this80.firstPage = 1;
+        _this80.formParent = 'thread';
+        _this80.hasCatalog = true;
+        _this80.hasRefererErr = true;
+        _this80.jsonSubmit = true;
+        _this80.timePattern = 'nn+dd+yy++w++hh+ii+ss';
+        return _this80;
       }
 
       _createClass(Tinyboard, [{
@@ -25558,7 +25761,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         key: "changeReplyMode",
         value: function () {
           var _changeReplyMode = _asyncToGenerator( regeneratorRuntime.mark(function _callee14(form, tNum) {
-            var _this80 = this;
+            var _this81 = this;
 
             var pageInp, query, errFn;
             return regeneratorRuntime.wrap(function _callee14$(_context24) {
@@ -25591,7 +25794,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
                     this._origInputs = [doc.createElement('div'), pr.subm.value];
                     $each($Q(query, form), function (el) {
-                      return _this80._origInputs[0].appendChild(el);
+                      return _this81._origInputs[0].appendChild(el);
                     });
                     _context24.next = 17;
                     break;
@@ -25617,14 +25820,14 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                     $popup('load-form', Lng.loading[lang], true);
                     _context24.next = 21;
                     return ajaxLoad(aib.getThrUrl(this.b, tNum), false).then(function (loadedDoc) {
-                      var loadedForm = $q(_this80.qForm, loadedDoc);
+                      var loadedForm = $q(_this81.qForm, loadedDoc);
 
                       if (!loadedForm) {
                         errFn();
                         return;
                       }
 
-                      pr.subm.value = $q(_this80.qFormSubm, loadedDoc).value;
+                      pr.subm.value = $q(_this81.qFormSubm, loadedDoc).value;
                       $delAll(query, form);
                       $each($Q(query, loadedForm), function (el) {
                         return form.appendChild(doc.adoptNode(el));
@@ -25665,10 +25868,10 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       }, {
         key: "fixVideo",
         value: function fixVideo(isPost, data) {
-          var _this81 = this;
+          var _this82 = this;
 
           return Array.from($Q('.video-container, #ytplayer', isPost ? data.el : data), function (el) {
-            var value = [isPost ? data : _this81.getPostOfEl(el), el.id === 'ytplayer' ? el.src.match(Videos.ytReg) : ['', el.getAttribute('data-video')], true];
+            var value = [isPost ? data : _this82.getPostOfEl(el), el.id === 'ytplayer' ? el.src.match(Videos.ytReg) : ['', el.getAttribute('data-video')], true];
             el.remove();
             return value;
           });
@@ -25729,18 +25932,18 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Vichan = function (_Tinyboard) {
       _inherits(Vichan, _Tinyboard);
 
-      var _super12 = _createSuper(Vichan);
+      var _super13 = _createSuper(Vichan);
 
       function Vichan(prot, dm) {
-        var _this82;
+        var _this83;
 
         _classCallCheck(this, Vichan);
 
-        _this82 = _super12.call(this, prot, dm);
-        _this82.qDelPassw = '#password';
-        _this82.qPostImg = '.post-image[alt]:not(.deleted)';
-        _this82.multiFile = true;
-        return _this82;
+        _this83 = _super13.call(this, prot, dm);
+        _this83.qDelPassw = '#password';
+        _this83.qPostImg = '.post-image[alt]:not(.deleted)';
+        _this83.multiFile = true;
+        return _this83;
       }
 
       _createClass(Vichan, [{
@@ -25795,18 +25998,18 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var TinyIB = function (_BaseBoard3) {
       _inherits(TinyIB, _BaseBoard3);
 
-      var _super13 = _createSuper(TinyIB);
+      var _super14 = _createSuper(TinyIB);
 
       function TinyIB(prot, dm) {
-        var _this83;
+        var _this84;
 
         _classCallCheck(this, TinyIB);
 
-        _this83 = _super13.call(this, prot, dm);
-        _this83.qError = 'body[align=center] div, div[style="margin-top: 50px;"]';
-        _this83.qPostImg = 'img.thumb, video.thumb';
-        _this83.qPostMsg = '.message';
-        return _this83;
+        _this84 = _super14.call(this, prot, dm);
+        _this84.qError = 'body[align=center] div, div[style="margin-top: 50px;"]';
+        _this84.qPostImg = 'img.thumb, video.thumb';
+        _this84.qPostMsg = '.message';
+        return _this84;
       }
 
       _createClass(TinyIB, [{
@@ -25863,19 +26066,19 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var newTinyIB = function (_TinyIB) {
       _inherits(newTinyIB, _TinyIB);
 
-      var _super14 = _createSuper(newTinyIB);
+      var _super15 = _createSuper(newTinyIB);
 
       function newTinyIB(prot, dm) {
-        var _this84;
+        var _this85;
 
         _classCallCheck(this, newTinyIB);
 
-        _this84 = _super14.call(this, prot, dm);
-        _this84.hasCatalog = true;
-        _this84.markupBB = true;
-        _this84.multiFile = true;
-        _this84.timePattern = 'yy+nn+dd+w+hh+ii+ss';
-        return _this84;
+        _this85 = _super15.call(this, prot, dm);
+        _this85.hasCatalog = true;
+        _this85.markupBB = true;
+        _this85.multiFile = true;
+        _this85.timePattern = 'yy+nn+dd+w+hh+ii+ss';
+        return _this85;
       }
 
       _createClass(newTinyIB, [{
@@ -25909,42 +26112,42 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Lynxchan = function (_BaseBoard4) {
       _inherits(Lynxchan, _BaseBoard4);
 
-      var _super15 = _createSuper(Lynxchan);
+      var _super16 = _createSuper(Lynxchan);
 
       function Lynxchan(prot, dm) {
-        var _this85;
+        var _this86;
 
         _classCallCheck(this, Lynxchan);
 
-        _this85 = _super15.call(this, prot, dm);
-        _this85.cReply = 'innerPost';
-        _this85.qDForm = 'form[action$="contentActions.js"]';
-        _this85.qDelBut = '#deleteFormButton';
-        _this85.qError = '#errorLabel, #labelMessage';
-        _this85.qForm = '.form-post, form[action$="newThread.js"], form[action$="replyThread.js"]';
-        _this85.qFormPassw = 'input[name="password"]';
-        _this85.qFormRules = '.form-post > .small';
-        _this85.qFormSubm = '#formButton, #de-postform-submit';
-        _this85.qImgInfo = '.uploadDetails';
-        _this85.qOmitted = '.labelOmission';
-        _this85.qOPost = '.innerOP';
-        _this85.qPages = '#divPages';
-        _this85.qPostHeader = '.postInfo, .de-post-btns';
-        _this85.qPostImg = '.imgLink > img, img[src*="/.media/"]';
-        _this85.qPostMsg = '.divMessage';
-        _this85.qPostRef = '.linkQuote';
-        _this85.qPostSubj = '.labelSubject';
-        _this85.qPostsParent = '.divPosts';
-        _this85.qRPost = '.innerPost, .markedPost';
-        _this85.qTrunc = '.contentOmissionIndicator';
-        _this85._qOPostEnd = '.divPosts';
-        _this85.firstPage = 1;
-        _this85.formParent = 'threadId';
-        _this85.hasCatalog = true;
-        _this85.jsonSubmit = true;
-        _this85.multiFile = true;
-        _this85._hasNewAPI = false;
-        return _this85;
+        _this86 = _super16.call(this, prot, dm);
+        _this86.cReply = 'innerPost';
+        _this86.qDForm = 'form[action$="contentActions.js"]';
+        _this86.qDelBut = '#deleteFormButton';
+        _this86.qError = '#errorLabel, #labelMessage';
+        _this86.qForm = '.form-post, form[action$="newThread.js"], form[action$="replyThread.js"]';
+        _this86.qFormPassw = 'input[name="password"]';
+        _this86.qFormRules = '.form-post > .small';
+        _this86.qFormSubm = '#formButton, #de-postform-submit';
+        _this86.qImgInfo = '.uploadDetails';
+        _this86.qOmitted = '.labelOmission';
+        _this86.qOPost = '.innerOP';
+        _this86.qPages = '#divPages';
+        _this86.qPostHeader = '.postInfo, .de-post-btns';
+        _this86.qPostImg = '.imgLink > img, img[src*="/.media/"]';
+        _this86.qPostMsg = '.divMessage';
+        _this86.qPostRef = '.linkQuote';
+        _this86.qPostSubj = '.labelSubject';
+        _this86.qPostsParent = '.divPosts';
+        _this86.qRPost = '.innerPost, .markedPost';
+        _this86.qTrunc = '.contentOmissionIndicator';
+        _this86._qOPostEnd = '.divPosts';
+        _this86.firstPage = 1;
+        _this86.formParent = 'threadId';
+        _this86.hasCatalog = true;
+        _this86.jsonSubmit = true;
+        _this86.multiFile = true;
+        _this86._hasNewAPI = false;
+        return _this86;
       }
 
       _createClass(Lynxchan, [{
@@ -26271,31 +26474,31 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var FoolFuuka = function (_BaseBoard5) {
       _inherits(FoolFuuka, _BaseBoard5);
 
-      var _super16 = _createSuper(FoolFuuka);
+      var _super17 = _createSuper(FoolFuuka);
 
       function FoolFuuka(prot, dm) {
-        var _this86;
+        var _this87;
 
         _classCallCheck(this, FoolFuuka);
 
-        _this86 = _super16.call(this, prot, dm);
-        _this86.cReply = 'post_wrapper';
-        _this86.qDForm = '#main';
-        _this86.qImgInfo = '.post_file_metadata, .thread_image_box > .post_file';
-        _this86.qOmitted = '.omitted_text';
-        _this86.qPages = '.paginate > ul > li:nth-last-child(3)';
-        _this86.qPostHeader = 'header';
-        _this86.qPostImg = '.post_image, .thread_image';
-        _this86.qPostMsg = '.text';
-        _this86.qPostRef = '.post_data > a[data-function="quote"]';
-        _this86.qPostSubj = '.post_title';
-        _this86.qPostsParent = '.posts';
-        _this86.qRPost = '.post[id]';
-        _this86._qOPostEnd = '.posts';
-        _this86.docExt = '';
-        _this86.firstPage = 1;
-        _this86.res = 'thread/';
-        return _this86;
+        _this87 = _super17.call(this, prot, dm);
+        _this87.cReply = 'post_wrapper';
+        _this87.qDForm = '#main';
+        _this87.qImgInfo = '.post_file_metadata, .thread_image_box > .post_file';
+        _this87.qOmitted = '.omitted_text';
+        _this87.qPages = '.paginate > ul > li:nth-last-child(3)';
+        _this87.qPostHeader = 'header';
+        _this87.qPostImg = '.post_image, .thread_image';
+        _this87.qPostMsg = '.text';
+        _this87.qPostRef = '.post_data > a[data-function="quote"]';
+        _this87.qPostSubj = '.post_title';
+        _this87.qPostsParent = '.posts';
+        _this87.qRPost = '.post[id]';
+        _this87._qOPostEnd = '.posts';
+        _this87.docExt = '';
+        _this87.firstPage = 1;
+        _this87.res = 'thread/';
+        return _this87;
       }
 
       _createClass(FoolFuuka, [{
@@ -26368,16 +26571,16 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var _0chan = function (_Kusaba) {
       _inherits(_0chan, _Kusaba);
 
-      var _super17 = _createSuper(_0chan);
+      var _super18 = _createSuper(_0chan);
 
       function _0chan(prot, dm) {
-        var _this87;
+        var _this88;
 
         _classCallCheck(this, _0chan);
 
-        _this87 = _super17.call(this, prot, dm);
-        _this87.hasCatalog = true;
-        return _this87;
+        _this88 = _super18.call(this, prot, dm);
+        _this88.hasCatalog = true;
+        return _this88;
       }
 
       _createClass(_0chan, [{
@@ -26395,18 +26598,18 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var _02ch = function (_Kusaba2) {
       _inherits(_02ch, _Kusaba2);
 
-      var _super18 = _createSuper(_02ch);
+      var _super19 = _createSuper(_02ch);
 
       function _02ch(prot, dm) {
-        var _this88;
+        var _this89;
 
         _classCallCheck(this, _02ch);
 
-        _this88 = _super18.call(this, prot, dm);
-        _this88._02ch = true;
-        _this88.hasCatalog = true;
-        _this88._capUpdPromise = null;
-        return _this88;
+        _this89 = _super19.call(this, prot, dm);
+        _this89._02ch = true;
+        _this89.hasCatalog = true;
+        _this89._capUpdPromise = null;
+        return _this89;
       }
 
       _createClass(_02ch, [{
@@ -26429,24 +26632,24 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var _2__ch = function (_BaseBoard6) {
       _inherits(_2__ch, _BaseBoard6);
 
-      var _super19 = _createSuper(_2__ch);
+      var _super20 = _createSuper(_2__ch);
 
       function _2__ch(prot, dm) {
-        var _this89;
+        var _this90;
 
         _classCallCheck(this, _2__ch);
 
-        _this89 = _super19.call(this, prot, dm);
-        _this89.qPages = 'table[border="1"] td > a:last-of-type';
-        _this89.qPostImg = 'img.thumb';
-        _this89._qOPostEnd = 'table:not(.postfiles)';
-        _this89.docExt = '.html';
-        _this89.hasPicWrap = true;
-        _this89.jsonSubmit = true;
-        _this89.markupBB = true;
-        _this89.multiFile = true;
-        _this89.ru = true;
-        return _this89;
+        _this90 = _super20.call(this, prot, dm);
+        _this90.qPages = 'table[border="1"] td > a:last-of-type';
+        _this90.qPostImg = 'img.thumb';
+        _this90._qOPostEnd = 'table:not(.postfiles)';
+        _this90.docExt = '.html';
+        _this90.hasPicWrap = true;
+        _this90.jsonSubmit = true;
+        _this90.markupBB = true;
+        _this90.multiFile = true;
+        _this90.ru = true;
+        return _this90;
       }
 
       _createClass(_2__ch, [{
@@ -26544,50 +26747,50 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     Makaba = function (_BaseBoard7) {
       _inherits(Makaba, _BaseBoard7);
 
-      var _super20 = _createSuper(Makaba);
+      var _super21 = _createSuper(Makaba);
 
       function Makaba(prot, dm) {
-        var _this90;
+        var _this91;
 
         _classCallCheck(this, Makaba);
 
-        _this90 = _super20.call(this, prot, dm);
-        _this90.makaba = true;
-        _this90.cReply = 'de-reply-class';
-        _this90.qBan = '.post__pomyanem';
-        _this90.qClosed = '.sticky-img[src$="locked.png"]';
-        _this90.qDForm = '#posts-form';
-        _this90.qFormFile = '.postform__raw.filer input[type="file"]';
-        _this90.qFormRedir = null;
-        _this90.qFormRules = '.rules';
-        _this90.qFormSubm = '#submit';
-        _this90.qFormTd = '.postform__raw';
-        _this90.qFormTr = '.postform__raw';
-        _this90.qFormTxta = '#shampoo';
-        _this90.qImgInfo = '.post__file-attr';
-        _this90.qOmitted = '.thread__missed';
-        _this90.qOPost = '.post_type_oppost';
-        _this90.qPostHeader = '.post__details';
-        _this90.qPostImg = '.post__file-preview';
-        _this90.qPostMsg = '.post__message';
-        _this90.qPostName = '.post__anon, .post__email';
-        _this90.qPostRef = '.post__reflink:nth-child(2)';
-        _this90.qPostSubj = '.post__title';
-        _this90.qRPost = '.post_type_reply[data-num]';
-        _this90.qTrunc = null;
-        _this90.formParent = 'thread';
-        _this90.hasAltCaptcha = true;
-        _this90.hasArchive = true;
-        _this90.hasCatalog = true;
-        _this90.hasOPNum = true;
-        _this90.hasPicWrap = true;
-        _this90.JsonBuilder = MakabaPostsBuilder;
-        _this90.jsonSubmit = true;
-        _this90.markupBB = true;
-        _this90.multiFile = true;
-        _this90.timePattern = 'dd+nn+yy+w+hh+ii+ss';
-        _this90._capUpdPromise = null;
-        return _this90;
+        _this91 = _super21.call(this, prot, dm);
+        _this91.makaba = true;
+        _this91.cReply = 'de-reply-class';
+        _this91.qBan = '.post__pomyanem';
+        _this91.qClosed = '.sticky-img[src$="locked.png"]';
+        _this91.qDForm = '#posts-form';
+        _this91.qFormFile = '.postform__raw.filer input[type="file"]';
+        _this91.qFormRedir = null;
+        _this91.qFormRules = '.rules';
+        _this91.qFormSubm = '#submit';
+        _this91.qFormTd = '.postform__raw';
+        _this91.qFormTr = '.postform__raw';
+        _this91.qFormTxta = '#shampoo';
+        _this91.qImgInfo = '.post__file-attr';
+        _this91.qOmitted = '.thread__missed';
+        _this91.qOPost = '.post_type_oppost';
+        _this91.qPostHeader = '.post__details';
+        _this91.qPostImg = '.post__file-preview';
+        _this91.qPostMsg = '.post__message';
+        _this91.qPostName = '.post__anon, .post__email';
+        _this91.qPostRef = '.post__reflink:nth-child(2)';
+        _this91.qPostSubj = '.post__title';
+        _this91.qRPost = '.post_type_reply[data-num]';
+        _this91.qTrunc = null;
+        _this91.formParent = 'thread';
+        _this91.hasAltCaptcha = true;
+        _this91.hasArchive = true;
+        _this91.hasCatalog = true;
+        _this91.hasOPNum = true;
+        _this91.hasPicWrap = true;
+        _this91.JsonBuilder = MakabaPostsBuilder;
+        _this91.jsonSubmit = true;
+        _this91.markupBB = true;
+        _this91.multiFile = true;
+        _this91.timePattern = 'dd+nn+yy+w+hh+ii+ss';
+        _this91._capUpdPromise = null;
+        return _this91;
       }
 
       _createClass(Makaba, [{
@@ -26638,7 +26841,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       }, {
         key: "reportForm",
         get: function get() {
-          var _this91 = this;
+          var _this92 = this;
 
           var value = function value(pNum, tNum) {
             return $q('input[type="button"]', $popup('edit-report', "<input name=\"comment\" value=\"\" placeholder=\"".concat(pNum === tNum ? Lng.reportThr[lang] : Lng.reportPost[lang], "\" type=\"text\"> <input value=\"OK\" type=\"button\">"))).onclick = function (e) {
@@ -26651,7 +26854,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
               var formData = new FormData();
               formData.append('task', 'report');
-              formData.append('board', _this91.b);
+              formData.append('board', _this92.b);
               formData.append('thread', tNum);
               formData.append('posts', pNum);
               formData.append('comment', inpEl.value);
@@ -26680,7 +26883,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       }, {
         key: "captchaInit",
         value: function captchaInit(cap) {
-          var _this92 = this;
+          var _this93 = this;
 
           var box = $q('.captcha-box, .captcha');
 
@@ -26699,7 +26902,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                 inp = _ref46[1];
 
             _img2.onclick = function () {
-              return _this92.updateCaptcha(cap);
+              return _this93.updateCaptcha(cap);
             };
 
             inp.tabIndex = 999;
@@ -26929,25 +27132,25 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var _2chan = function (_BaseBoard8) {
       _inherits(_2chan, _BaseBoard8);
 
-      var _super21 = _createSuper(_2chan);
+      var _super22 = _createSuper(_2chan);
 
       function _2chan(prot, dm) {
-        var _this93;
+        var _this94;
 
         _classCallCheck(this, _2chan);
 
-        _this93 = _super21.call(this, prot, dm);
-        _this93.qDForm = 'form:not([enctype])';
-        _this93.qForm = '#fm';
-        _this93.qFormRedir = null;
-        _this93.qFormRules = '.chui';
-        _this93.qOmitted = 'font[color="#707070"]';
-        _this93.qPostImg = 'a[href$=".jpg"] > img, a[href$=".png"] > img, a[href$=".gif"] > img';
-        _this93.qPostRef = '.del';
-        _this93.qRPost = 'td:nth-child(2)';
-        _this93.docExt = '.htm';
-        _this93.formParent = 'resto';
-        return _this93;
+        _this94 = _super22.call(this, prot, dm);
+        _this94.qDForm = 'form:not([enctype])';
+        _this94.qForm = '#fm';
+        _this94.qFormRedir = null;
+        _this94.qFormRules = '.chui';
+        _this94.qOmitted = 'font[color="#707070"]';
+        _this94.qPostImg = 'a[href$=".jpg"] > img, a[href$=".png"] > img, a[href$=".gif"] > img';
+        _this94.qPostRef = '.del';
+        _this94.qRPost = 'td:nth-child(2)';
+        _this94.docExt = '.htm';
+        _this94.formParent = 'resto';
+        return _this94;
       }
 
       _createClass(_2chan, [{
@@ -27006,17 +27209,17 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var _2channel = function (_Makaba) {
       _inherits(_2channel, _Makaba);
 
-      var _super22 = _createSuper(_2channel);
+      var _super23 = _createSuper(_2channel);
 
       function _2channel(prot, dm) {
-        var _this94;
+        var _this95;
 
         _classCallCheck(this, _2channel);
 
-        _this94 = _super22.call(this, prot, dm);
-        _this94._2channel = true;
-        _this94.hasAltCaptcha = false;
-        return _this94;
+        _this95 = _super23.call(this, prot, dm);
+        _this95._2channel = true;
+        _this95.hasAltCaptcha = false;
+        return _this95;
       }
 
       _createClass(_2channel, [{
@@ -27127,18 +27330,18 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var _2chRip = function (_BaseBoard9) {
       _inherits(_2chRip, _BaseBoard9);
 
-      var _super23 = _createSuper(_2chRip);
+      var _super24 = _createSuper(_2chRip);
 
       function _2chRip(prot, dm) {
-        var _this95;
+        var _this96;
 
         _classCallCheck(this, _2chRip);
 
-        _this95 = _super23.call(this, prot, dm);
-        _this95.jsonSubmit = true;
-        _this95.ru = true;
-        _this95._capUpdPromise = null;
-        return _this95;
+        _this96 = _super24.call(this, prot, dm);
+        _this96.jsonSubmit = true;
+        _this96.ru = true;
+        _this96._capUpdPromise = null;
+        return _this96;
       }
 
       _createClass(_2chRip, [{
@@ -27181,22 +27384,22 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var _410chan = function (_Kusaba3) {
       _inherits(_410chan, _Kusaba3);
 
-      var _super24 = _createSuper(_410chan);
+      var _super25 = _createSuper(_410chan);
 
       function _410chan(prot, dm) {
-        var _this96;
+        var _this97;
 
         _classCallCheck(this, _410chan);
 
-        _this96 = _super24.call(this, prot, dm);
-        _this96.qFormRedir = 'input#noko';
-        _this96.qPages = '.pgstbl > table > tbody > tr > td:nth-child(2)';
-        _this96.ru = true;
-        _this96.hasCatalog = true;
-        _this96.markupBB = false;
-        _this96.timePattern = 'dd+nn+yyyy++w++hh+ii+ss';
-        _this96._capUpdPromise = null;
-        return _this96;
+        _this97 = _super25.call(this, prot, dm);
+        _this97.qFormRedir = 'input#noko';
+        _this97.qPages = '.pgstbl > table > tbody > tr > td:nth-child(2)';
+        _this97.ru = true;
+        _this97.hasCatalog = true;
+        _this97.markupBB = false;
+        _this97.timePattern = 'dd+nn+yyyy++w++hh+ii+ss';
+        _this97._capUpdPromise = null;
+        return _this97;
       }
 
       _createClass(_410chan, [{
@@ -27217,7 +27420,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       }, {
         key: "captchaUpdate",
         value: function captchaUpdate(cap) {
-          var _this97 = this;
+          var _this98 = this;
 
           return cap.updateHelper("/api_adaptive.php?board=".concat(this.b), function (xhr) {
             if (xhr.responseText === '1') {
@@ -27233,7 +27436,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
             var img = $q('img', cap.parentEl);
             var src = img.getAttribute('src');
             img.src = '';
-            img.src = _this97.getCaptchaSrc(src);
+            img.src = _this98.getCaptchaSrc(src);
           });
         }
       }, {
@@ -27257,42 +27460,42 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var _4chan = function (_BaseBoard10) {
       _inherits(_4chan, _BaseBoard10);
 
-      var _super25 = _createSuper(_4chan);
+      var _super26 = _createSuper(_4chan);
 
       function _4chan(prot, dm) {
-        var _this98;
+        var _this99;
 
         _classCallCheck(this, _4chan);
 
-        _this98 = _super25.call(this, prot, dm);
-        _this98._4chan = true;
-        _this98.cReply = 'post reply';
-        _this98.qBan = 'strong[style="color: red;"]';
-        _this98.qClosed = '.archivedIcon';
-        _this98.qDelBut = '.deleteform > input[type="submit"]';
-        _this98.qError = '#errmsg';
-        _this98.qForm = 'form[name="post"]';
-        _this98.qFormRedir = null;
-        _this98.qImgInfo = '.fileText';
-        _this98.qOmitted = '.summary.desktop';
-        _this98.qOPost = '.op';
-        _this98.qPages = '.pagelist > .pages:not(.cataloglink) > a:last-of-type';
-        _this98.qPostHeader = '.postInfo';
-        _this98.qPostImg = '.fileThumb > img:not(.fileDeletedRes)';
-        _this98.qPostName = '.name';
-        _this98.qPostRef = '.postInfo > .postNum';
-        _this98.qPostSubj = '.subject';
-        _this98._qOPostEnd = '.replyContainer';
-        _this98.anchor = '#p';
-        _this98.docExt = '';
-        _this98.firstPage = 1;
-        _this98.formParent = 'resto';
-        _this98.hasCatalog = true;
-        _this98.hasTextLinks = true;
-        _this98.JsonBuilder = _4chanPostsBuilder;
-        _this98.res = 'thread/';
-        _this98.timePattern = 'nn+dd+yy+w+hh+ii-?s?s?';
-        return _this98;
+        _this99 = _super26.call(this, prot, dm);
+        _this99._4chan = true;
+        _this99.cReply = 'post reply';
+        _this99.qBan = 'strong[style="color: red;"]';
+        _this99.qClosed = '.archivedIcon';
+        _this99.qDelBut = '.deleteform > input[type="submit"]';
+        _this99.qError = '#errmsg';
+        _this99.qForm = 'form[name="post"]';
+        _this99.qFormRedir = null;
+        _this99.qImgInfo = '.fileText';
+        _this99.qOmitted = '.summary.desktop';
+        _this99.qOPost = '.op';
+        _this99.qPages = '.pagelist > .pages:not(.cataloglink) > a:last-of-type';
+        _this99.qPostHeader = '.postInfo';
+        _this99.qPostImg = '.fileThumb > img:not(.fileDeletedRes)';
+        _this99.qPostName = '.name';
+        _this99.qPostRef = '.postInfo > .postNum';
+        _this99.qPostSubj = '.subject';
+        _this99._qOPostEnd = '.replyContainer';
+        _this99.anchor = '#p';
+        _this99.docExt = '';
+        _this99.firstPage = 1;
+        _this99.formParent = 'resto';
+        _this99.hasCatalog = true;
+        _this99.hasTextLinks = true;
+        _this99.JsonBuilder = _4chanPostsBuilder;
+        _this99.res = 'thread/';
+        _this99.timePattern = 'nn+dd+yy+w+hh+ii-?s?s?';
+        return _this99;
       }
 
       _createClass(_4chan, [{
@@ -27434,17 +27637,17 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var _55chan = function (_Vichan) {
       _inherits(_55chan, _Vichan);
 
-      var _super26 = _createSuper(_55chan);
+      var _super27 = _createSuper(_55chan);
 
       function _55chan(prot, dm) {
-        var _this99;
+        var _this100;
 
         _classCallCheck(this, _55chan);
 
-        _this99 = _super26.call(this, prot, dm);
-        _this99.qFormRules = '.regras';
-        _this99._capUpdPromise = null;
-        return _this99;
+        _this100 = _super27.call(this, prot, dm);
+        _this100.qFormRules = '.regras';
+        _this100._capUpdPromise = null;
+        return _this100;
       }
 
       _createClass(_55chan, [{
@@ -27493,12 +27696,12 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Archived = function (_FoolFuuka) {
       _inherits(Archived, _FoolFuuka);
 
-      var _super27 = _createSuper(Archived);
+      var _super28 = _createSuper(Archived);
 
       function Archived() {
         _classCallCheck(this, Archived);
 
-        return _super27.apply(this, arguments);
+        return _super28.apply(this, arguments);
       }
 
       _createClass(Archived, [{
@@ -27518,28 +27721,28 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Arhivach = function (_BaseBoard11) {
       _inherits(Arhivach, _BaseBoard11);
 
-      var _super28 = _createSuper(Arhivach);
+      var _super29 = _createSuper(Arhivach);
 
       function Arhivach(prot, dm) {
-        var _this100;
+        var _this101;
 
         _classCallCheck(this, Arhivach);
 
-        _this100 = _super28.call(this, prot, dm);
-        _this100.cReply = 'post';
-        _this100.qDelBut = null;
-        _this100.qDelPassw = null;
-        _this100.qDForm = 'body > .container-fluid';
-        _this100.qPostHeader = '.post_head';
-        _this100.qPostImg = '.post_image > img';
-        _this100.qPostMsg = '.post_comment_body';
-        _this100.qPostRef = '.post_id, .post_head > b';
-        _this100.qPostSubj = '.post_subject';
-        _this100.qRPost = '.post[postid]:not([postid=""])';
-        _this100.docExt = '';
-        _this100.hasOPNum = true;
-        _this100.res = 'thread/';
-        return _this100;
+        _this101 = _super29.call(this, prot, dm);
+        _this101.cReply = 'post';
+        _this101.qDelBut = null;
+        _this101.qDelPassw = null;
+        _this101.qDForm = 'body > .container-fluid';
+        _this101.qPostHeader = '.post_head';
+        _this101.qPostImg = '.post_image > img';
+        _this101.qPostMsg = '.post_comment_body';
+        _this101.qPostRef = '.post_id, .post_head > b';
+        _this101.qPostSubj = '.post_subject';
+        _this101.qRPost = '.post[postid]:not([postid=""])';
+        _this101.docExt = '';
+        _this101.hasOPNum = true;
+        _this101.res = 'thread/';
+        return _this101;
       }
 
       _createClass(Arhivach, [{
@@ -27615,14 +27818,14 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       }, {
         key: "init",
         value: function init() {
-          var _this101 = this;
+          var _this102 = this;
 
           defaultCfg.ajaxUpdThr = 0;
           setTimeout(function () {
             var delPosts = $Q('.post_deleted');
 
             for (var i = 0, len = delPosts.length; i < len; ++i) {
-              var post = pByNum.get(_this101.getPNum(delPosts[i]));
+              var post = pByNum.get(_this102.getPNum(delPosts[i]));
 
               if (post) {
                 post.thr.deletePosts(post, false, false);
@@ -27647,16 +27850,16 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var CrystalCafe = function (_Tinyboard2) {
       _inherits(CrystalCafe, _Tinyboard2);
 
-      var _super29 = _createSuper(CrystalCafe);
+      var _super30 = _createSuper(CrystalCafe);
 
       function CrystalCafe(prot, dm) {
-        var _this102;
+        var _this103;
 
         _classCallCheck(this, CrystalCafe);
 
-        _this102 = _super29.call(this, prot, dm);
-        _this102.qRPost = '.post.reply';
-        return _this102;
+        _this103 = _super30.call(this, prot, dm);
+        _this103.qRPost = '.post.reply';
+        return _this103;
       }
 
       _createClass(CrystalCafe, [{
@@ -27684,33 +27887,33 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Dobrochan = function (_BaseBoard12) {
       _inherits(Dobrochan, _BaseBoard12);
 
-      var _super30 = _createSuper(Dobrochan);
+      var _super31 = _createSuper(Dobrochan);
 
       function Dobrochan(prot, dm) {
-        var _this103;
+        var _this104;
 
         _classCallCheck(this, Dobrochan);
 
-        _this103 = _super30.call(this, prot, dm);
-        _this103.dobrochan = true;
-        _this103.qClosed = 'img[src="/images/locked.png"]';
-        _this103.qDForm = 'form[action*="delete"]';
-        _this103.qError = '.post-error, h2';
-        _this103.qFormRedir = 'select[name="goto"]';
-        _this103.qImgInfo = '.fileinfo';
-        _this103.qOmitted = '.abbrev > span:last-of-type';
-        _this103.qPages = '.pages > tbody > tr > td';
-        _this103.qPostMsg = '.postbody';
-        _this103.qPostSubj = '.replytitle';
-        _this103.qTrunc = '.abbrev > span:first-of-type';
-        _this103.anchor = '#i';
-        _this103.formParent = 'thread_id';
-        _this103.hasPicWrap = true;
-        _this103.JsonBuilder = DobrochanPostsBuilder;
-        _this103.multiFile = true;
-        _this103.ru = true;
-        _this103.timePattern = 'dd+m+?+?+?+?+?+yyyy++w++hh+ii-?s?s?';
-        return _this103;
+        _this104 = _super31.call(this, prot, dm);
+        _this104.dobrochan = true;
+        _this104.qClosed = 'img[src="/images/locked.png"]';
+        _this104.qDForm = 'form[action*="delete"]';
+        _this104.qError = '.post-error, h2';
+        _this104.qFormRedir = 'select[name="goto"]';
+        _this104.qImgInfo = '.fileinfo';
+        _this104.qOmitted = '.abbrev > span:last-of-type';
+        _this104.qPages = '.pages > tbody > tr > td';
+        _this104.qPostMsg = '.postbody';
+        _this104.qPostSubj = '.replytitle';
+        _this104.qTrunc = '.abbrev > span:first-of-type';
+        _this104.anchor = '#i';
+        _this104.formParent = 'thread_id';
+        _this104.hasPicWrap = true;
+        _this104.JsonBuilder = DobrochanPostsBuilder;
+        _this104.multiFile = true;
+        _this104.ru = true;
+        _this104.timePattern = 'dd+m+?+?+?+?+?+yyyy++w++hh+ii-?s?s?';
+        return _this104;
       }
 
       _createClass(Dobrochan, [{
@@ -27864,16 +28067,16 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Endchan = function (_Lynxchan) {
       _inherits(Endchan, _Lynxchan);
 
-      var _super31 = _createSuper(Endchan);
+      var _super32 = _createSuper(Endchan);
 
       function Endchan(prot, dm) {
-        var _this104;
+        var _this105;
 
         _classCallCheck(this, Endchan);
 
-        _this104 = _super31.call(this, prot, dm);
-        _this104.qTrunc = '.contentOmissionIndicator > p';
-        return _this104;
+        _this105 = _super32.call(this, prot, dm);
+        _this105.qTrunc = '.contentOmissionIndicator > p';
+        return _this105;
       }
 
       _createClass(Endchan, [{
@@ -27905,32 +28108,32 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Ernstchan = function (_BaseBoard13) {
       _inherits(Ernstchan, _BaseBoard13);
 
-      var _super32 = _createSuper(Ernstchan);
+      var _super33 = _createSuper(Ernstchan);
 
       function Ernstchan(prot, dm) {
-        var _this105;
+        var _this106;
 
         _classCallCheck(this, Ernstchan);
 
-        _this105 = _super32.call(this, prot, dm);
-        _this105.cReply = 'post';
-        _this105.qError = '.error > .info';
-        _this105.qFormRedir = 'input[name="gb2"][value="thread"]';
-        _this105.qFormSpoiler = 'input[type="checkbox"][name="spoilered"]';
-        _this105.qOPost = '.thread_OP';
-        _this105.qPages = '.pagelist > li:nth-last-child(2)';
-        _this105.qPostHeader = '.post_head';
-        _this105.qPostMsg = '.text';
-        _this105.qPostSubj = '.subject';
-        _this105.qPostTrip = '.tripcode';
-        _this105.qRPost = '.thread_reply';
-        _this105.qTrunc = '.tldr';
-        _this105.docExt = '';
-        _this105.firstPage = 1;
-        _this105.markupBB = true;
-        _this105.multiFile = true;
-        _this105.res = 'thread/';
-        return _this105;
+        _this106 = _super33.call(this, prot, dm);
+        _this106.cReply = 'post';
+        _this106.qError = '.error > .info';
+        _this106.qFormRedir = 'input[name="gb2"][value="thread"]';
+        _this106.qFormSpoiler = 'input[type="checkbox"][name="spoilered"]';
+        _this106.qOPost = '.thread_OP';
+        _this106.qPages = '.pagelist > li:nth-last-child(2)';
+        _this106.qPostHeader = '.post_head';
+        _this106.qPostMsg = '.text';
+        _this106.qPostSubj = '.subject';
+        _this106.qPostTrip = '.tripcode';
+        _this106.qRPost = '.thread_reply';
+        _this106.qTrunc = '.tldr';
+        _this106.docExt = '';
+        _this106.firstPage = 1;
+        _this106.markupBB = true;
+        _this106.multiFile = true;
+        _this106.res = 'thread/';
+        return _this106;
       }
 
       _createClass(Ernstchan, [{
@@ -27978,16 +28181,16 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Gensokyo = function (_Kusaba4) {
       _inherits(Gensokyo, _Kusaba4);
 
-      var _super33 = _createSuper(Gensokyo);
+      var _super34 = _createSuper(Gensokyo);
 
       function Gensokyo(prot, dm) {
-        var _this106;
+        var _this107;
 
         _classCallCheck(this, Gensokyo);
 
-        _this106 = _super33.call(this, prot, dm);
-        _this106.hasRefererErr = true;
-        return _this106;
+        _this107 = _super34.call(this, prot, dm);
+        _this107.hasRefererErr = true;
+        return _this107;
       }
 
       return Gensokyo;
@@ -27998,17 +28201,17 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Iichan = function (_BaseBoard14) {
       _inherits(Iichan, _BaseBoard14);
 
-      var _super34 = _createSuper(Iichan);
+      var _super35 = _createSuper(Iichan);
 
       function Iichan(prot, dm) {
-        var _this107;
+        var _this108;
 
         _classCallCheck(this, Iichan);
 
-        _this107 = _super34.call(this, prot, dm);
-        _this107.hasArchive = true;
-        _this107.hasCatalog = true;
-        return _this107;
+        _this108 = _super35.call(this, prot, dm);
+        _this108.hasArchive = true;
+        _this108.hasCatalog = true;
+        return _this108;
       }
 
       _createClass(Iichan, [{
@@ -28053,11 +28256,11 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       }, {
         key: "stormWallFixCaptcha",
         value: function stormWallFixCaptcha(url, img) {
-          var _this108 = this;
+          var _this109 = this;
 
           img.onload = img.onerror = function () {
             if (!(img.naturalHeight + img.naturalWidth)) {
-              _this108.stormWallHelper(url, null, emptyFn, function () {
+              _this109.stormWallHelper(url, null, emptyFn, function () {
                 img.src = '';
                 img.src = url;
               });
@@ -28136,20 +28339,20 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Kohlchan = function (_Lynxchan2) {
       _inherits(Kohlchan, _Lynxchan2);
 
-      var _super35 = _createSuper(Kohlchan);
+      var _super36 = _createSuper(Kohlchan);
 
       function Kohlchan(prot, dm) {
-        var _this109;
+        var _this110;
 
         _classCallCheck(this, Kohlchan);
 
-        _this109 = _super35.call(this, prot, dm);
-        _this109.kohlchan = true;
-        _this109.qFormRules = '#rules_row';
-        _this109.hasTextLinks = true;
-        _this109.markupBB = true;
-        _this109.timePattern = 'yyyy+nn+dd+hh+ii+ss';
-        return _this109;
+        _this110 = _super36.call(this, prot, dm);
+        _this110.kohlchan = true;
+        _this110.qFormRules = '#rules_row';
+        _this110.hasTextLinks = true;
+        _this110.markupBB = true;
+        _this110.timePattern = 'yyyy+nn+dd+hh+ii+ss';
+        return _this110;
       }
 
       _createClass(Kohlchan, [{
@@ -28284,16 +28487,16 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Kropyvach = function (_Vichan2) {
       _inherits(Kropyvach, _Vichan2);
 
-      var _super36 = _createSuper(Kropyvach);
+      var _super37 = _createSuper(Kropyvach);
 
       function Kropyvach(prot, dm) {
-        var _this110;
+        var _this111;
 
         _classCallCheck(this, Kropyvach);
 
-        _this110 = _super36.call(this, prot, dm);
-        _this110.markupBB = true;
-        return _this110;
+        _this111 = _super37.call(this, prot, dm);
+        _this111.markupBB = true;
+        return _this111;
       }
 
       _createClass(Kropyvach, [{
@@ -28316,17 +28519,17 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Kurisach = function (_Kusaba5) {
       _inherits(Kurisach, _Kusaba5);
 
-      var _super37 = _createSuper(Kurisach);
+      var _super38 = _createSuper(Kurisach);
 
       function Kurisach(prot, dm) {
-        var _this111;
+        var _this112;
 
         _classCallCheck(this, Kurisach);
 
-        _this111 = _super37.call(this, prot, dm);
-        _this111.hasCatalog = true;
-        _this111.ru = true;
-        return _this111;
+        _this112 = _super38.call(this, prot, dm);
+        _this112.hasCatalog = true;
+        _this112.ru = true;
+        return _this112;
       }
 
       return Kurisach;
@@ -28337,16 +28540,16 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Lainchan = function (_Vichan3) {
       _inherits(Lainchan, _Vichan3);
 
-      var _super38 = _createSuper(Lainchan);
+      var _super39 = _createSuper(Lainchan);
 
       function Lainchan(prot, dm) {
-        var _this112;
+        var _this113;
 
         _classCallCheck(this, Lainchan);
 
-        _this112 = _super38.call(this, prot, dm);
-        _this112.qOPost = '.op';
-        return _this112;
+        _this113 = _super39.call(this, prot, dm);
+        _this113.qOPost = '.op';
+        return _this113;
       }
 
       _createClass(Lainchan, [{
@@ -28379,12 +28582,12 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Niuchan = function (_Kusaba6) {
       _inherits(Niuchan, _Kusaba6);
 
-      var _super39 = _createSuper(Niuchan);
+      var _super40 = _createSuper(Niuchan);
 
       function Niuchan() {
         _classCallCheck(this, Niuchan);
 
-        return _super39.apply(this, arguments);
+        return _super40.apply(this, arguments);
       }
 
       _createClass(Niuchan, [{
@@ -28402,12 +28605,12 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Nowere = function (_BaseBoard15) {
       _inherits(Nowere, _BaseBoard15);
 
-      var _super40 = _createSuper(Nowere);
+      var _super41 = _createSuper(Nowere);
 
       function Nowere() {
         _classCallCheck(this, Nowere);
 
-        return _super40.apply(this, arguments);
+        return _super41.apply(this, arguments);
       }
 
       _createClass(Nowere, [{
@@ -28431,20 +28634,20 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Ponyach = function (_BaseBoard16) {
       _inherits(Ponyach, _BaseBoard16);
 
-      var _super41 = _createSuper(Ponyach);
+      var _super42 = _createSuper(Ponyach);
 
       function Ponyach(prot, dm) {
-        var _this113;
+        var _this114;
 
         _classCallCheck(this, Ponyach);
 
-        _this113 = _super41.call(this, prot, dm);
-        _this113.qBan = 'font[color="#FF0000"]';
-        _this113.qImgInfo = '.filesize[style="display: inline;"]';
-        _this113.formParent = 'replythread';
-        _this113.jsonSubmit = true;
-        _this113.multiFile = true;
-        return _this113;
+        _this114 = _super42.call(this, prot, dm);
+        _this114.qBan = 'font[color="#FF0000"]';
+        _this114.qImgInfo = '.filesize[style="display: inline;"]';
+        _this114.formParent = 'replythread';
+        _this114.jsonSubmit = true;
+        _this114.multiFile = true;
+        return _this114;
       }
 
       _createClass(Ponyach, [{
@@ -28505,17 +28708,17 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Ponychan = function (_Tinyboard3) {
       _inherits(Ponychan, _Tinyboard3);
 
-      var _super42 = _createSuper(Ponychan);
+      var _super43 = _createSuper(Ponychan);
 
       function Ponychan(prot, dm) {
-        var _this114;
+        var _this115;
 
         _classCallCheck(this, Ponychan);
 
-        _this114 = _super42.call(this, prot, dm);
-        _this114.qOPost = '.opContainer';
-        _this114.jsonSubmit = false;
-        return _this114;
+        _this115 = _super43.call(this, prot, dm);
+        _this115.qOPost = '.opContainer';
+        _this115.jsonSubmit = false;
+        return _this115;
       }
 
       _createClass(Ponychan, [{
@@ -28548,18 +28751,18 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Synch = function (_Tinyboard4) {
       _inherits(Synch, _Tinyboard4);
 
-      var _super43 = _createSuper(Synch);
+      var _super44 = _createSuper(Synch);
 
       function Synch(prot, dm) {
-        var _this115;
+        var _this116;
 
         _classCallCheck(this, Synch);
 
-        _this115 = _super43.call(this, prot, dm);
-        _this115.qImgInfo = '.unimportant';
-        _this115.qPages = '.pagination';
-        _this115.markupBB = true;
-        return _this115;
+        _this116 = _super44.call(this, prot, dm);
+        _this116.qImgInfo = '.unimportant';
+        _this116.qPages = '.pagination';
+        _this116.markupBB = true;
+        return _this116;
       }
 
       _createClass(Synch, [{
@@ -28620,21 +28823,21 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var Warosu = function (_BaseBoard17) {
       _inherits(Warosu, _BaseBoard17);
 
-      var _super44 = _createSuper(Warosu);
+      var _super45 = _createSuper(Warosu);
 
       function Warosu(prot, dm) {
-        var _this116;
+        var _this117;
 
         _classCallCheck(this, Warosu);
 
-        _this116 = _super44.call(this, prot, dm);
-        _this116.qDForm = '.content';
-        _this116.qForm = '.subreply';
-        _this116.qPostRef = '.js';
-        _this116.qImgInfo = 'span';
-        _this116.qOPost = 'div[itemscope]';
-        _this116.res = 'thread/';
-        return _this116;
+        _this117 = _super45.call(this, prot, dm);
+        _this117.qDForm = '.content';
+        _this117.qForm = '.subreply';
+        _this117.qPostRef = '.js';
+        _this117.qImgInfo = 'span';
+        _this117.qOPost = 'div[itemscope]';
+        _this117.res = 'thread/';
+        return _this117;
       }
 
       _createClass(Warosu, [{
@@ -28706,7 +28909,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
   var DollchanAPI = {
     initAPI: function initAPI() {
-      var _this117 = this;
+      var _this118 = this;
 
       this.hasListeners = false;
 
@@ -28721,7 +28924,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       var port = channel.port2;
       doc.defaultView.addEventListener('message', function (e) {
         if (e.data === 'de-request-api-message') {
-          _this117.hasListeners = true;
+          _this118.hasListeners = true;
           doc.defaultView.postMessage('de-answer-api-message', '*', [port]);
         }
       });
@@ -28903,7 +29106,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     "#de-cfg-bar { background-color: #325f9e; }\n\t\t.de-cfg-tab { border-color: #183d77 !important; }",
     "#de-cfg-bar, #de-spell-rowmeter { background-color: #777; }\n\t\t.de-cfg-body, #de-cfg-buttons { border-color: #444; }",
     "#de-cfg-bar { background-color: rgba(0,20,80,.72); }\n\t\t.de-cfg-tab { border-color: #001450 !important; }",
-    "#de-cfg-bar { background-color: #222; }\n\t\t.de-cfg-body, #de-cfg-buttons { border-color: #666; }"][Cfg.scriptStyle], "\n\n\t/* Favorites window */\n\t.de-entry { display: flex !important; align-items: center; float: none !important; padding: 0 !important; margin: 1px 0 !important; min-width: 0 !important; border: none !important; font-size: 13px; overflow: hidden !important; white-space: nowrap; }\n\t.de-entry-title { flex: auto; padding-left: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n\t#de-fav-buttons, #de-hid-buttons, #de-fav-del-confirm { padding-top: 6px; }\n\t.de-fav-entries { border-top: 1px solid rgba(80,80,80,.3); }\n\t.de-fav-entries-hide, .de-fav-inf-icon:not(.de-fav-closed):not(.de-fav-unavail):not(.de-fav-wait), .de-fav-closed > .de-fav-unavail-use, .de-fav-closed > .de-fav-wait-use, .de-fav-unavail > .de-fav-closed-use, .de-fav-unavail > .de-fav-wait-use, .de-fav-wait > .de-fav-closed-use, .de-fav-wait > .de-fav-unavail-use { display: none; }\n\t.de-fav-del-btn { margin-left: 2px; cursor: pointer; }\n\t.de-fav-del-btn > svg { width: 12px; height: 12px; opacity: 0.65; vertical-align: -2px; }\n\t.de-fav-del-btn[de-checked] > svg { color: red; background-color: rgba(255,0,0,.2); border-radius: 7px; opacity: 1; }\n\t.de-fav-header { display: flex; cursor: pointer; font-size: 13px; }\n\t.de-fav-header-btn { flex: 1 0 auto; margin-right: 2px; font-size: 11px; color: inherit; text-align: right; opacity: 0.65; }\n\t.de-fav-header-link { margin-left: 2px; color: inherit; font-weight: bold; text-decoration: none; outline: none; }\n\t.de-fav-inf { flex: none; padding: 0 4px 0 10px; font: bold 14px serif; cursor: default; }\n\t.de-fav-inf-icon, .de-fav-inf-iwrap  { width: 16px; height: 16px; }\n\t.de-fav-inf-icon { margin-bottom: -3px; }\n\t.de-fav-inf-new { color: #424f79; }\n\t.de-fav-inf-new::after { content: \" +\"; }\n\t.de-fav-inf-old { color: #4f7942; }\n\t.de-fav-inf-you { padding: 0 4px; margin-right: 4px; border-radius: 3px; color: #fff; background-color: #424f79; opacity: 0.65; }\n\t.de-fav-link { flex: none; margin-left: 2px; text-decoration: none; border: none; }\n\t.de-fav-table-unfold > .de-fold-block > .de-fav-entries { display: initial !important; }\n\t.de-fav-unavail { color: #cf4436; }\n\t.de-fold-block { border: 1px solid rgba(120,120,120,.8); border-radius: 2px; }\n\t.de-fold-block:not(:first-child) { border-top: none; }\n\n\t/* Post panel */\n\t.de-btn-hide > .de-btn-unhide-use, .de-btn-hide-user > .de-btn-unhide-use, .de-btn-unhide > .de-btn-hide-use, .de-btn-unhide-user > .de-btn-hide-use { display: none; }\n\t.de-btn-expthr, .de-btn-fav, .de-btn-fav-sel, .de-btn-hide, .de-btn-hide-user, .de-btn-img, .de-btn-reply, .de-btn-sage, .de-btn-stick, .de-btn-stick-on, .de-btn-unhide, .de-btn-unhide-user, .de-win-btn-clear, .de-win-btn-close, .de-win-btn-toggle { margin: 0 2px -3px 0 !important; cursor: pointer; width: 16px; height: 16px; }").concat(!pr.form && !pr.oeForm ? '.de-btn-reply { display: none; }' : '', "\n\t.de-post-btns { margin-left: 4px; }\n\t.de-post-btns-back { fill: inherit; stroke: none; }\n\t.de-post-note:not(:empty) { color: inherit; margin: 0 4px; vertical-align: 1px; font: italic bold 12px serif; }\n\t.de-thread-note { font-style: italic; }\n\n\t/* Sauce buttons */\n\t").concat(cont('.de-src-google', 'data:image/gif;base64,R0lGODlhEAAQAMQAAIy0+tHh/gJc8Qlh8UyM9H2r9/3///7//x+OfACSJy+mTZHQos3Te////f///v3HAP+uAPzWjvWTWeUTAPSdl/79/f////39/f///wAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABgALAAAAAAQABAAAAVuICaKh2Eax6hih+W+bqoaLjXdE+UaY2vhwInrInLhdBYbDEOL3GBQS4X2gEiiUBoEAhMIBl6CpaHlvrxocaO1XUQBgsLYxUgkot7AGONS2N0WCwgCYhZFfXaJCQguDiMvC34JCoCOKlgvK49QKyEAOw=='), "\n\t").concat(cont('.de-src-yandex', 'data:image/gif;base64,R0lGODlhEAAQAMQAAP////v7+/r5+fb29vHx8eLi4tnZ2dTU1NDQ0MvLy8fHx8TExPzJv/immvlXRvq0re4UEdeGhtbFxcnJyby8vKampm5ubv///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABcALAAAAAAQABAAAAVx4CWOZCkOQKqq5uoCQhnMQuPcc2CQuc3YuQBJQHQ8BA8HkUgYDZ6Qx+ABeVoVIoL2RmhAtODmpUD23iDkdEFkaBsiEAfE3a6IDngJJALH4ycjCIJyCXCCgiQJhXuLigl2IwqSk5QUJRQLmZqaFiaeniEAOw=='), "\n\t").concat(cont('.de-src-tineye', 'data:image/gif;base64,R0lGODlhEAAQAMQAAP///wAAAAwOEhg4UDZ7skGNxkuf3Vycxx4nLerw9DlSX2FnanO21Epxg4LO62KOnpXj+ZGcmb7CvbZ6RfxmAIxBCzsGAP///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABcALAAAAAAQABAAAAWlYGIUZGGc6HgkxzSRozIgdHMUx0NR5hH8v8VjeFsoDAyFpcKcQByMnIGgYDAikmxkOLQWqNAGQhAQLBC/BgSXC0QivwgAgFbjHLQ5XDKXBBRrBA80WAABRgkJPwxfDw2HCYYBfHABDSQMDgoIEgs/ZgoPDmuYEFEHmQ6jT5ckBKirEE8HCgEWJQe5ZwJjQBYRBwQMsk8RFgJkP04sVrHGNAEVEAAhADs='), "\n\t").concat(cont('.de-src-saucenao', 'data:image/gif;base64,R0lGODlhEAAQAIAAAP///wAAACwAAAAAEAAQAAACJ4yPacDtvpQCkU1KT0P75i49mbSAZACd6HN2pmbBI7pe9K1+4q5KBQA7'), "\n\t").concat(cont('.de-src-iqdb', 'data:image/gif;base64,R0lGODlhEAAQAMQAAP//////AP8A//8AAAD//wD/AAAA/wAAANx/hV1ISW9YWvLOd/u0T+WlTNaqcKdtMv/r1mxML7OCVoxtUbmmlfPRuKKGeHpcTvK3nEEvKGpRTCcbGU48OYVua3tkYv///yH5BAEAAB8ALAAAAAAQABAAAAW4INV5ZDcmibM0iVJRnukpmnJJDdNwnDWSk4vCNMnpGJXfwqHReDQJTuTxmEhmqoTFEtRsNhltRTFZTBKUl2IzAmeE2csFA8kcKADLl5NgSDgaGRYAFVYQABkRgAxnGhcdEJEVhxYSDhwNEQkaEhSRGBgIGBUOGBwXERkcExyeFaGjr4E8qgcHDpKgkQpRGhwZYA4Vw6CvPBOpwD0ODlMSoxcJOQ8ZyhccBxkSkRRFDw4SD1/jF5MQIQA7'), "\n\t").concat(cont('.de-src-tracemoe', 'data:image/gif;base64,R0lGODlhEAAPALMAAAAAAP///9fY18HBwTg4ODw1No6PjoFnZhoBAXNGRf/V1KmRkf///wAAAAAAAAAAACH5BAEAAAwALAAAAAAQAA8AAAQ5EMhJq7046w0I9hMhBAIoiSQ4BiS1tgQrg7EceIM8UDm7S4aBwRIcYgoFjmSxQHASCkWCc6gelJkIADs='), "\n\n\t/* Posts counter */\n\t.de-post-counter { margin: 0 4px 0 2px; vertical-align: 1px; font: bold 11px tahoma; color: #4f7942; cursor: default; }\n\t.de-post-counter-deleted { color: #727579; }\n\t.de-post-counter-you { vertical-align: 1px; font: bold 11px tahoma; color: #505a7a; cursor: default; }\n\n\t/* Text markup buttons */\n\t.de-markup-back { fill: #f0f0f0; stroke: #808080; }\n\t#de-txt-panel { display: block; font-weight: bold; cursor: pointer; }\n\t#de-txt-panel > div { display: inline-block; }\n\t#de-txt-panel > div > svg { width: 23px; height: 22px; margin: 0 1px; }\r\n");
+    "#de-cfg-bar { background-color: #222; }\n\t\t.de-cfg-body, #de-cfg-buttons { border-color: #666; }"][Cfg.scriptStyle], "\n\n\t/* Favorites window */\n\t.de-entry { display: flex !important; align-items: center; float: none !important; padding: 0 !important; margin: 1px 0 !important; min-width: 0 !important; border: none !important; font-size: 13px; overflow: hidden !important; white-space: nowrap; }\n\t.de-entry-title { flex: auto; padding-left: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n\t#de-fav-buttons, #de-hid-buttons, #de-fav-del-confirm { padding-top: 6px; }\n\t.de-fav-entries { border-top: 1px solid rgba(80,80,80,.3); }\n\t.de-fav-entries-hide, .de-fav-inf-icon:not(.de-fav-closed):not(.de-fav-unavail):not(.de-fav-wait), .de-fav-closed > .de-fav-unavail-use, .de-fav-closed > .de-fav-wait-use, .de-fav-unavail > .de-fav-closed-use, .de-fav-unavail > .de-fav-wait-use, .de-fav-wait > .de-fav-closed-use, .de-fav-wait > .de-fav-unavail-use { display: none; }\n\t.de-fav-del-btn { margin-left: 2px; cursor: pointer; }\n\t.de-fav-del-btn > svg { width: 12px; height: 12px; opacity: 0.65; vertical-align: -2px; }\n\t.de-fav-del-btn[de-checked] > svg { color: red; background-color: rgba(255,0,0,.2); border-radius: 7px; opacity: 1; }\n\t.de-fav-header { display: flex; cursor: pointer; font-size: 13px; }\n\t.de-fav-header-btn { flex: 1 0 auto; margin-right: 2px; font-size: 11px; color: inherit; text-align: right; opacity: 0.65; }\n\t.de-fav-header-link { margin-left: 2px; color: inherit; font-weight: bold; text-decoration: none; outline: none; }\n\t.de-fav-inf { flex: none; padding: 0 4px 0 10px; font: bold 14px serif; cursor: default; }\n\t.de-fav-inf-icon, .de-fav-inf-iwrap  { width: 16px; height: 16px; }\n\t.de-fav-inf-icon { margin-bottom: -3px; }\n\t.de-fav-inf-new { color: #424f79; }\n\t.de-fav-inf-new::after { content: \" +\"; }\n\t.de-fav-inf-old { color: #4f7942; }\n\t.de-fav-inf-you { padding: 0 4px; margin-right: 4px; border-radius: 3px; color: #fff; background-color: #424f79; opacity: 0.65; }\n\t.de-fav-link { flex: none; margin-left: 2px; text-decoration: none; border: none; }\n\t.de-fav-table-unfold > .de-fold-block > .de-fav-entries { display: initial !important; }\n\t.de-fav-unavail { color: #cf4436; }\n\t.de-fold-block { border: 1px solid rgba(120,120,120,.8); border-radius: 2px; }\n\t.de-fold-block:not(:first-child) { border-top: none; }\n\n\t/* Post panel */\n\t.de-btn-hide > .de-btn-unhide-use, .de-btn-hide-user > .de-btn-unhide-use, .de-btn-unhide > .de-btn-hide-use, .de-btn-unhide-user > .de-btn-hide-use { display: none; }\n\t.de-btn-expthr, .de-btn-fav, .de-btn-fav-sel, .de-btn-hide, .de-btn-hide-user, .de-btn-img, .de-btn-reply, .de-btn-sage, .de-btn-stick, .de-btn-stick-on, .de-btn-unhide, .de-btn-unhide-user, .de-win-btn-clear, .de-win-btn-close, .de-win-btn-toggle { margin: 0 2px -3px 0 !important; cursor: pointer; width: 16px; height: 16px; }").concat(!pr.form && !pr.oeForm ? '.de-btn-reply { display: none; }' : '', "\n\t.de-post-btns { margin-left: 4px; }\n\t.de-post-btns-back { fill: inherit; stroke: none; }\n\t.de-post-note:not(:empty) { color: inherit; margin: 0 4px; vertical-align: 1px; font: italic bold 12px serif; }\n\t.de-thread-note { font-style: italic; }\n\n\t/* Sauce buttons */\n\t").concat(cont('.de-src-google', 'data:image/gif;base64,R0lGODlhEAAQAMQAAIy0+tHh/gJc8Qlh8UyM9H2r9/3///7//x+OfACSJy+mTZHQos3Te////f///v3HAP+uAPzWjvWTWeUTAPSdl/79/f////39/f///wAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABgALAAAAAAQABAAAAVuICaKh2Eax6hih+W+bqoaLjXdE+UaY2vhwInrInLhdBYbDEOL3GBQS4X2gEiiUBoEAhMIBl6CpaHlvrxocaO1XUQBgsLYxUgkot7AGONS2N0WCwgCYhZFfXaJCQguDiMvC34JCoCOKlgvK49QKyEAOw=='), "\n\t").concat(cont('.de-src-yandex', 'data:image/gif;base64,R0lGODlhEAAQAMQAAP////v7+/r5+fb29vHx8eLi4tnZ2dTU1NDQ0MvLy8fHx8TExPzJv/immvlXRvq0re4UEdeGhtbFxcnJyby8vKampm5ubv///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABcALAAAAAAQABAAAAVx4CWOZCkOQKqq5uoCQhnMQuPcc2CQuc3YuQBJQHQ8BA8HkUgYDZ6Qx+ABeVoVIoL2RmhAtODmpUD23iDkdEFkaBsiEAfE3a6IDngJJALH4ycjCIJyCXCCgiQJhXuLigl2IwqSk5QUJRQLmZqaFiaeniEAOw=='), "\n\t").concat(cont('.de-src-tineye', 'data:image/gif;base64,R0lGODlhEAAQAMQAAP///wAAAAwOEhg4UDZ7skGNxkuf3Vycxx4nLerw9DlSX2FnanO21Epxg4LO62KOnpXj+ZGcmb7CvbZ6RfxmAIxBCzsGAP///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABcALAAAAAAQABAAAAWlYGIUZGGc6HgkxzSRozIgdHMUx0NR5hH8v8VjeFsoDAyFpcKcQByMnIGgYDAikmxkOLQWqNAGQhAQLBC/BgSXC0QivwgAgFbjHLQ5XDKXBBRrBA80WAABRgkJPwxfDw2HCYYBfHABDSQMDgoIEgs/ZgoPDmuYEFEHmQ6jT5ckBKirEE8HCgEWJQe5ZwJjQBYRBwQMsk8RFgJkP04sVrHGNAEVEAAhADs='), "\n\t").concat(cont('.de-src-saucenao', 'data:image/gif;base64,R0lGODlhEAAQAIAAAP///wAAACwAAAAAEAAQAAACJ4yPacDtvpQCkU1KT0P75i49mbSAZACd6HN2pmbBI7pe9K1+4q5KBQA7'), "\n\t").concat(cont('.de-src-iqdb', 'data:image/gif;base64,R0lGODlhEAAQAMQAAP//////AP8A//8AAAD//wD/AAAA/wAAANx/hV1ISW9YWvLOd/u0T+WlTNaqcKdtMv/r1mxML7OCVoxtUbmmlfPRuKKGeHpcTvK3nEEvKGpRTCcbGU48OYVua3tkYv///yH5BAEAAB8ALAAAAAAQABAAAAW4INV5ZDcmibM0iVJRnukpmnJJDdNwnDWSk4vCNMnpGJXfwqHReDQJTuTxmEhmqoTFEtRsNhltRTFZTBKUl2IzAmeE2csFA8kcKADLl5NgSDgaGRYAFVYQABkRgAxnGhcdEJEVhxYSDhwNEQkaEhSRGBgIGBUOGBwXERkcExyeFaGjr4E8qgcHDpKgkQpRGhwZYA4Vw6CvPBOpwD0ODlMSoxcJOQ8ZyhccBxkSkRRFDw4SD1/jF5MQIQA7'), "\n\t").concat(cont('.de-src-tracemoe', 'data:image/gif;base64,R0lGODlhEAAPALMAAAAAAP///9fY18HBwTg4ODw1No6PjoFnZhoBAXNGRf/V1KmRkf///wAAAAAAAAAAACH5BAEAAAwALAAAAAAQAA8AAAQ5EMhJq7046w0I9hMhBAIoiSQ4BiS1tgQrg7EceIM8UDm7S4aBwRIcYgoFjmSxQHASCkWCc6gelJkIADs='), "\n\n\t/* Posts counter */\n\t.de-post-counter { margin: 0 4px 0 2px; vertical-align: 1px; font: bold 11px tahoma; color: #4f7942; cursor: default; }\n\t.de-post-counter-deleted { color: #727579; }\n\t.de-post-counter-you { vertical-align: 1px; font: bold 11px tahoma; color: #505a7a; cursor: default; }\n\t.de-post-counter-op { vertical-align: 1px; font: bold 10px tahoma; color: #259e00; cursor: default; }\n\n\t/* Text markup buttons */\n\t.de-markup-back { fill: #f0f0f0; stroke: #808080; }\n\t#de-txt-panel { display: block; font-weight: bold; cursor: pointer; }\n\t#de-txt-panel > div { display: inline-block; }\n\t#de-txt-panel > div > svg { width: 23px; height: 22px; margin: 0 1px; }\r\n");
 
     if ('animation' in docBody.style) {
       x += "\n\t\t/* Show/hide animation */\n\t\t@keyframes de-open { 0% { transform: translateY(-100%); } 100% { transform: translateY(0); } }\n\t\t@keyframes de-close { 0% { transform: translateY(0); } 100% { transform: translateY(-100%); } }\n\t\t@keyframes de-blink {\n\t\t\t0%, 100% { transform: translateX(0); }\n\t\t\t10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }\n\t\t\t20%, 40%, 60%, 80% { transform: translateX(10px); }\n\t\t}\n\t\t@keyframes de-post-open-tl { from { transform: translate(-50%,-50%) scale(0); opacity: 0; } }\n\t\t@keyframes de-post-open-bl { from { transform: translate(-50%,50%) scale(0); opacity: 0; } }\n\t\t@keyframes de-post-open-tr { from { transform: translate(50%,-50%) scale(0); opacity: 0; } }\n\t\t@keyframes de-post-open-br { from { transform: translate(50%,50%) scale(0); opacity: 0; } }\n\t\t@keyframes de-post-close-tl { to { transform: translate(-50%,-50%) scale(0); opacity: 0; } }\n\t\t@keyframes de-post-close-bl { to { transform: translate(-50%,50%) scale(0); opacity: 0; } }\n\t\t@keyframes de-post-close-tr { to { transform: translate(50%,-50%) scale(0); opacity: 0; } }\n\t\t@keyframes de-post-close-br { to { transform: translate(50%,50%) scale(0); opacity: 0; } }\n\t\t@keyframes de-post-new { from { transform: translate(0,-50%) scaleY(0); opacity: 0; } }\n\t\t@keyframes de-win-open { from { transform: translate(0,50%) scaleY(0); opacity: 0; } }\n\t\t@keyframes de-win-close { to { transform: translate(0,50%) scaleY(0); opacity: 0; } }\n\t\t.de-pview-anim { animation-duration: .2s; animation-timing-function: ease-in-out; animation-fill-mode: both; }\n\t\t.de-open { animation: de-open .15s ease-out both; }\n\t\t.de-close { animation: de-close .15s ease-in both; }\n\t\t.de-blink { animation: de-blink .7s ease-in-out both; }\n\t\t.de-post-new { animation: de-post-new .2s ease-out both; }\n\t\t.de-win-open { animation: de-win-open .2s ease-out backwards; }\n\t\t.de-win-close { animation: de-win-close .2s ease-in both; }\r\n";
@@ -28920,7 +29123,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
   }
 
   function updateCSS() {
-    var x = "\n\t.de-video-obj { width: ".concat(Cfg.YTubeWidth, "px; height: ").concat(Cfg.YTubeHeigh, "px; }\n\t.de-new-post { ").concat(nav.isPresto ? 'border-left: 4px solid rgba(107,134,97,.7); border-right: 4px solid rgba(107,134,97,.7)' : 'box-shadow: 6px 0 2px -2px rgba(107,134,97,.8), -6px 0 2px -2px rgba(107,134,97,.8)', " !important; }\n\t.de-selected, .de-input-error { ").concat(nav.isPresto ? 'border-left: 4px solid rgba(220,0,0,.7); border-right: 4px solid rgba(220,0,0,.7)' : 'box-shadow: 6px 0 2px -2px rgba(220,0,0,.8), -6px 0 2px -2px rgba(220,0,0,.8)', " !important; }\n\t").concat(Cfg.markMyPosts ? ".de-mypost { ".concat(nav.isPresto ? 'border-left: 4px solid rgba(97,107,134,.7); border-right: 4px solid rgba(97,107,134,.7)' : 'box-shadow: 6px 0 2px -2px rgba(97,107,134,.8), -6px 0 2px -2px rgba(97,107,134,.8)', " !important; }\n\t\t.de-mypost-reply:not(.de-pview) { position: relative; }\n\t\t.de-mypost-reply::before { content: \"\"; position: absolute; top: -0; bottom: 0; left: -1px; border-left: 5px dotted rgba(97,107,134,.8) !important; }") : '', "\n\t").concat(Cfg.markMyLinks ? ".de-ref-del.de-ref-you::after { content: \" (Del)(You)\"; }\n\t\t\t.de-ref-op.de-ref-you::after { content: \" (OP)(You)\"; }\n\t\t\t.de-ref-you::after { content: \" (You)\"; }" : '.de-post-counter-you { display: none; }', "\n\t").concat(Cfg.postBtnsCSS === 0 ? ".de-btn-expthr, .de-btn-fav, .de-btn-hide, .de-btn-img, .de-btn-reply, .de-btn-stick, .de-btn-unhide { fill: rgba(0,0,0,0); color: currentColor; }\n\t\t\t.de-btn-fav-sel, .de-btn-hide-user, .de-btn-sage, .de-btn-stick-on, .de-btn-unhide-user { fill: rgba(0,0,0,0); color: #F00; }" : ".de-btn-expthr, .de-btn-fav, .de-btn-hide, .de-btn-img, .de-btn-reply, .de-btn-sage, .de-btn-stick, .de-btn-unhide { color: #F5F5F5; }\n\t\t\t.de-btn-expthr, .de-btn-fav, .de-btn-fav-sel, .de-btn-hide, .de-btn-hide-user, .de-btn-img, .de-btn-reply, .de-btn-stick, .de-btn-stick-on, .de-btn-unhide, .de-btn-unhide-user { fill: ".concat(Cfg.postBtnsCSS === 1 && !nav.isPresto ? 'url(#de-btn-back-gradient)' : Cfg.postBtnsBack, "; }\n\t\t\t.de-btn-fav-sel { color: #FFE100; }\n\t\t\t.de-btn-hide-user { color: #BFFFBF; }\n\t\t\t.de-btn-sage { fill: #4B4B4B; }\n\t\t\t.de-btn-stick-on { color: #BFFFBF; }\n\t\t\t.de-btn-unhide-user { color: #FFBFBF; }"), "\n\t.de-fullimg-wrap-inpost > .de-fullimg { ").concat(Cfg.resizeImgs ? "max-width: 100%;".concat(Cfg.resizeImgs === 2 ? ' max-height: 96vh' : '') : 'width: auto', "; }\n\t").concat(Cfg.maskImgs ? "".concat(aib.qPostImg, ", .de-img-embed, .de-video-obj { opacity: ").concat(Cfg.maskVisib / 100, " !important; }\n\t\t\t").concat(aib.qPostImg.split(', ').join(':hover, '), ":hover, .de-img-embed:hover, .de-video-obj:hover { opacity: 1 !important; }\n\t\t\t.de-video-obj:not(.de-video-obj-inline) { clear: both; }") : '', "\n\t").concat(Cfg.imgNames === 1 ? '.de-img-name { max-width: 165px; overflow: hidden; }' : '', "\n\t").concat(Cfg.imgNames === 1 || Cfg.imgNames === 3 ? '.de-img-name { display: inline-block; white-space: nowrap; vertical-align: bottom; text-overflow: ellipsis; }' : Cfg.imgNames === 2 ? '.de-img-name { text-decoration: none !important; text-transform: capitalize; }' : '', "\n\t").concat(Cfg.widePosts ? '.de-reply { float: none; width: 99.9%; margin-left: 0; }' : '', "\n\t").concat(aib.qPostMsg, " { max-width: ").concat(Cfg.limitPostMsg, "px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; }\n\t").concat(Cfg.strikeHidd ? '.de-link-hid { text-decoration: line-through !important; }' : '', "\n\t").concat(Cfg.noSpoilers === 1 ? ".spoiler, s { color: #F5F5F5 !important; background-color: #888 !important; }\n\t\t\t.spoiler > a, s > a:not(:hover) { color: #F5F5F5 !important; background-color: #888 !important; }" : '', "\n\t").concat(Cfg.noSpoilers === 2 ? ".spoiler, s { color: inherit !important; }\n\t\t\t.spoiler > a, s > a:not(:hover) { color: inherit !important; }" : '', "\n\t").concat(Cfg.addSageBtn ? '' : '#de-sagebtn, ', "\n\t").concat(Cfg.delHiddPost === 1 || Cfg.delHiddPost === 3 ? '.de-thr-hid, .de-thr-hid + div + br, .de-thr-hid + div + hr, .de-thr-hid + div + br + hr, .de-thr-hid + div + div + hr, ' : '.de-thr-hid:not([style="display: none;"]) + div + br, ', "\n\t").concat(Cfg.imgNavBtns ? '' : '.de-img-btn, ', "\n\t").concat(Cfg.imgInfoLink ? '' : '.de-fullimg-info, ', "\n\t").concat(Cfg.noPostNames ? "".concat(aib.qPostName, ", ").concat(aib.qPostTrip, ", ") : '', "\n\t").concat(Cfg.noBoardRule ? "".concat(aib.qFormRules, ", ") : '', "\n\t").concat(Cfg.panelCounter ? '' : '#de-panel-info, ', "\n\t").concat(Cfg.removeHidd ? '.de-link-backref.de-link-hid, .de-link-backref.de-link-hid + .de-refcomma, ' : '', "\n\t").concat(Cfg.showHideBtn ? '' : '.de-btn-hide, ', "\n\t").concat(Cfg.showRepBtn ? '' : '.de-btn-reply, ', "\n\t").concat(Cfg.thrBtns || aib.t ? '' : '.de-thr-updater, ', "\n\t").concat(Cfg.thrBtns === 1 || Cfg.thrBtns === 2 && !aib.t ? '' : '.de-thr-buttons > svg, ', "\n\t").concat(Cfg.ajaxPosting ? '' : '.de-file-btn-rar, .de-file-btn-txt, ', "\n\t").concat(Cfg.fileInputs ? '' : '.de-file-txt-wrap, .de-file-btn-txt, ', "\n\t").concat(!aib.kusaba && (aib.multiFile || Cfg.fileInputs !== 2) ? '#de-pform form > table > tbody > tr > td:not([colspan]):first-child, #de-pform form > table > tbody > tr > th:first-child, ' : '', "body > hr, .postarea, .theader { display: none !important; }\r\n");
+    var x = "\n\t.de-video-obj { width: ".concat(Cfg.YTubeWidth, "px; height: ").concat(Cfg.YTubeHeigh, "px; }\n\t.de-new-post { ").concat(nav.isPresto ? 'border-left: 4px solid rgba(107,134,97,.7); border-right: 4px solid rgba(107,134,97,.7)' : 'box-shadow: 6px 0 2px -2px rgba(107,134,97,.8), -6px 0 2px -2px rgba(107,134,97,.8)', " !important; }\n\t.de-selected, .de-input-error { ").concat(nav.isPresto ? 'border-left: 4px solid rgba(220,0,0,.7); border-right: 4px solid rgba(220,0,0,.7)' : 'box-shadow: 6px 0 2px -2px rgba(220,0,0,.8), -6px 0 2px -2px rgba(220,0,0,.8)', " !important; }\n\t.de-highlighted { ").concat(nav.isPresto ? 'border-left: 4px solid rgba(97,107,30,.7); border-right: 4px solid rgba(97,107,30,.7)' : 'box-shadow: 6px 0 2px -2px rgba(97,107,30,.8), -6px 0 2px -2px rgba(97,107,30,.8)', " !important; }\n\t.de-highlighted-reply:not(.de-pview) { position: relative; }\n\t.de-highlighted-reply::before { content: \"\"; position: absolute; top: -0; bottom: 0; left: -1px; border-left: 5px dotted rgba(97,107,134,.8) !important; }\n\t").concat(Cfg.markMyPosts ? ".de-mypost { ".concat(nav.isPresto ? 'border-left: 4px solid rgba(97,107,134,.7); border-right: 4px solid rgba(97,107,134,.7)' : 'box-shadow: 6px 0 2px -2px rgba(97,107,134,.8), -6px 0 2px -2px rgba(97,107,134,.8)', " !important; }\n\t\t.de-mypost-reply:not(.de-pview) { position: relative; }\n\t\t.de-mypost-reply::before { content: \"\"; position: absolute; top: -0; bottom: 0; left: -1px; border-left: 5px dotted rgba(97,107,134,.8) !important; }") : '', "\n\t").concat(Cfg.markMyLinks ? ".de-ref-del.de-ref-you::after { content: \" (Del)(You)\"; }\n\t\t\t.de-ref-op.de-ref-you::after { content: \" (OP)(You)\"; }\n\t\t\t.de-ref-you::after { content: \" (You)\"; }" : '.de-post-counter-you { display: none; }', "\n\t").concat(Cfg.postBtnsCSS === 0 ? ".de-btn-expthr, .de-btn-fav, .de-btn-hide, .de-btn-img, .de-btn-reply, .de-btn-stick, .de-btn-unhide { fill: rgba(0,0,0,0); color: currentColor; }\n\t\t\t.de-btn-fav-sel, .de-btn-hide-user, .de-btn-sage, .de-btn-stick-on, .de-btn-unhide-user { fill: rgba(0,0,0,0); color: #F00; }" : ".de-btn-expthr, .de-btn-fav, .de-btn-hide, .de-btn-img, .de-btn-reply, .de-btn-sage, .de-btn-stick, .de-btn-unhide { color: #F5F5F5; }\n\t\t\t.de-btn-expthr, .de-btn-fav, .de-btn-fav-sel, .de-btn-hide, .de-btn-hide-user, .de-btn-img, .de-btn-reply, .de-btn-stick, .de-btn-stick-on, .de-btn-unhide, .de-btn-unhide-user { fill: ".concat(Cfg.postBtnsCSS === 1 && !nav.isPresto ? 'url(#de-btn-back-gradient)' : Cfg.postBtnsBack, "; }\n\t\t\t.de-btn-fav-sel { color: #FFE100; }\n\t\t\t.de-btn-hide-user { color: #BFFFBF; }\n\t\t\t.de-btn-sage { fill: #4B4B4B; }\n\t\t\t.de-btn-stick-on { color: #BFFFBF; }\n\t\t\t.de-btn-unhide-user { color: #FFBFBF; }"), "\n\t.de-fullimg-wrap-inpost > .de-fullimg { ").concat(Cfg.resizeImgs ? "max-width: 100%;".concat(Cfg.resizeImgs === 2 ? ' max-height: 96vh' : '') : 'width: auto', "; }\n\t").concat(Cfg.maskImgs ? "".concat(aib.qPostImg, ", .de-img-embed, .de-video-obj { opacity: ").concat(Cfg.maskVisib / 100, " !important; }\n\t\t\t").concat(aib.qPostImg.split(', ').join(':hover, '), ":hover, .de-img-embed:hover, .de-video-obj:hover { opacity: 1 !important; }\n\t\t\t.de-video-obj:not(.de-video-obj-inline) { clear: both; }") : '', "\n\t").concat(Cfg.imgNames === 1 ? '.de-img-name { max-width: 165px; overflow: hidden; }' : '', "\n\t").concat(Cfg.imgNames === 1 || Cfg.imgNames === 3 ? '.de-img-name { display: inline-block; white-space: nowrap; vertical-align: bottom; text-overflow: ellipsis; }' : Cfg.imgNames === 2 ? '.de-img-name { text-decoration: none !important; text-transform: capitalize; }' : '', "\n\t").concat(Cfg.widePosts ? '.de-reply { float: none; width: 99.9%; margin-left: 0; }' : '', "\n\t").concat(aib.qPostMsg, " { max-width: ").concat(Cfg.limitPostMsg, "px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; }\n\t").concat(Cfg.strikeHidd ? '.de-link-hid { text-decoration: line-through !important; }' : '', "\n\t").concat(Cfg.noSpoilers === 1 ? ".spoiler, s { color: #F5F5F5 !important; background-color: #888 !important; }\n\t\t\t.spoiler > a, s > a:not(:hover) { color: #F5F5F5 !important; background-color: #888 !important; }" : '', "\n\t").concat(Cfg.noSpoilers === 2 ? ".spoiler, s { color: inherit !important; }\n\t\t\t.spoiler > a, s > a:not(:hover) { color: inherit !important; }" : '', "\n\t").concat(Cfg.addSageBtn ? '' : '#de-sagebtn, ', "\n\t").concat(Cfg.delHiddPost === 1 || Cfg.delHiddPost === 3 ? '.de-thr-hid, .de-thr-hid + div + br, .de-thr-hid + div + hr, .de-thr-hid + div + br + hr, .de-thr-hid + div + div + hr, ' : '.de-thr-hid:not([style="display: none;"]) + div + br, ', "\n\t").concat(Cfg.imgNavBtns ? '' : '.de-img-btn, ', "\n\t").concat(Cfg.imgInfoLink ? '' : '.de-fullimg-info, ', "\n\t").concat(Cfg.noPostNames ? "".concat(aib.qPostName, ", ").concat(aib.qPostTrip, ", ") : '', "\n\t").concat(Cfg.noBoardRule ? "".concat(aib.qFormRules, ", ") : '', "\n\t").concat(Cfg.panelCounter ? '' : '#de-panel-info, ', "\n\t").concat(Cfg.removeHidd ? '.de-link-backref.de-link-hid, .de-link-backref.de-link-hid + .de-refcomma, ' : '', "\n\t").concat(Cfg.showHideBtn ? '' : '.de-btn-hide, ', "\n\t").concat(Cfg.showRepBtn ? '' : '.de-btn-reply, ', "\n\t").concat(Cfg.thrBtns || aib.t ? '' : '.de-thr-updater, ', "\n\t").concat(Cfg.thrBtns === 1 || Cfg.thrBtns === 2 && !aib.t ? '' : '.de-thr-buttons > svg, ', "\n\t").concat(Cfg.ajaxPosting ? '' : '.de-file-btn-rar, .de-file-btn-txt, ', "\n\t").concat(Cfg.fileInputs ? '' : '.de-file-txt-wrap, .de-file-btn-txt, ', "\n\t").concat(!aib.kusaba && (aib.multiFile || Cfg.fileInputs !== 2) ? '#de-pform form > table > tbody > tr > td:not([colspan]):first-child, #de-pform form > table > tbody > tr > th:first-child, ' : '', "body > hr, .postarea, .theader { display: none !important; }\r\n");
     $id('de-css-dynamic').textContent = (x + aib.css).replace(/[\r\n\t]+/g, '\r\n\t');
     $id('de-css-user').textContent = Cfg.userCSS ? Cfg.userCSSTxt : '';
   }

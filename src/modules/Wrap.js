@@ -5,8 +5,8 @@
 (function deMainFuncInner(deWindow, prestoStorage, FormData, scrollTo, localData) {
 'use strict';
 
-const version = '21.7.6.0';
-const commit = 'b289964';
+const version = '21.7.6-1';
+const commit = 'a6670d2';
 
 /* ==[ DefaultCfg.js ]== */
 /* ==[ Localization.js ]== */

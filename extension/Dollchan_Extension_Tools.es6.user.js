@@ -5,8 +5,8 @@
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
 // @description     Doing some profit for imageboards
-// @icon            https://raw.github.com/SthephanShinkufag/Dollchan-Extension-Tools/master/Icon.png
-// @updateURL       https://raw.github.com/SthephanShinkufag/Dollchan-Extension-Tools/master/Dollchan_Extension_Tools.meta.js
+// @icon            https://raw.github.com/kr1ck/Dollchan-Extension-Tools/master/Icon.png
+// @updateURL       https://raw.github.com/kr1ck/Dollchan-Extension-Tools/master/src/Dollchan_Extension_Tools.es6.user.js
 // @nocompat        Chrome
 // @run-at          document-start
 // @grant           GM_getValue
@@ -30,7 +30,7 @@
 'use strict';
 
 const version = '21.7.6.0';
-const commit = '19c4044';
+const commit = '19b3ac6';
 
 /* ==[ DefaultCfg.js ]========================================================================================
                                                 DEFAULT CONFIG
@@ -88,7 +88,7 @@ const defaultCfg = {
 	maskVisib    : 7,    // image opacity in NSFW mode [0-100%]
 	linksNavig   : 1,    // posts navigation by >>links
 	linksOver    : 100,  //    delay appearance (ms)
-	linksOut     : 1500, //    delay disappearance (ms)
+	linksOut     : 100, //    delay disappearance (ms)
 	markViewed   : 0,    //    mark viewed posts
 	strikeHidd   : 0,    //    strike >>links to hidden posts
 	removeHidd   : 0,    //        also remove from reply maps
@@ -922,6 +922,10 @@ const Lng = {
 			'Скрывать по трипкоду',
 			'Hide by tripcode',
 			'Ховати по тріпкоду'],
+		uid: [
+			'Скрывать по ID',
+			'Hide by ID',
+			'Ховати по ID'],
 		img: [
 			'Скрывать по размеру картинки',
 			'Hide by image size',
@@ -2942,6 +2946,25 @@ const MyPosts = new class MyPostsClass extends PostsStorage {
 	}
 }();
 
+const HighlightedPosts = new class HighlightedPostsClass extends PostsStorage {
+	constructor() {
+		super();
+		this.storageName = 'de-highlighted';
+	}
+	hideHidden(post, num) {
+		const uHideData = HighlightedPosts.get(num);
+		if(!uHideData) {
+			post.setUserVisib(true);
+		} else {
+			post.setUserVisib(!!uHideData, false);
+		}
+	}
+	_readStorage() {
+		PostsStorage._migrateOld(this.storageName, 'de-threads-new'); // Old storage has wrong name
+		return super._readStorage();
+	}
+}();
+
 function sendStorageEvent(name, value) {
 	locStorage[name] = typeof value === 'string' ? value : JSON.stringify(value);
 	locStorage.removeItem(name);
@@ -2964,6 +2987,7 @@ function initStorageEvent() {
 			return;
 		}
 		case '__de-mypost': MyPosts.purge(); return;
+		case '__de-highlighted': HighlightedPosts.purge(); return;
 		case '__de-webmvolume':
 			val = +val || 0;
 			Cfg.webmVolume = val;
@@ -3559,6 +3583,15 @@ function showVideosWindow(body) {
 		body.innerHTML = `<b>${ Lng.noVideoLinks[lang] }</b>`;
 		return;
 	}
+	// EXCLUDED FROM FIREFOX EXTENSION - START
+	if(!$id('de-ytube-api')) {
+		// YouTube APT script. We can't insert scripts directly as html.
+		const script = doc.createElement('script');
+		script.type = 'text/javascript';
+		script.src = aib.prot + '//www.youtube.com/player_api';
+		doc.head.appendChild(script).id = 'de-ytube-api';
+	}
+	// EXCLUDED FROM FIREFOX EXTENSION - END
 	body.innerHTML = `<div de-disableautoplay class="de-video-obj"></div>
 	<div id="de-video-buttons">
 		<a class="de-abtn" id="de-video-btn-prev" href="#" title="${ Lng.prevVideo[lang] }">&#x25C0;</a>
@@ -3569,6 +3602,47 @@ function showVideosWindow(body) {
 	const linkList = $add(`<div id="de-video-list" style="max-width: ${
 		+Cfg.YTubeWidth + 40 }px; max-height: ${
 		nav.viewportHeight() * 0.92 - +Cfg.YTubeHeigh - 82 }px;"></div>`);
+
+	// EXCLUDED FROM FIREFOX EXTENSION - START
+	// A script to detect the end of current video playback, and auto play next. Uses YouTube API.
+	// The first video should not start automatically!
+	const script = doc.createElement('script');
+	script.type = 'text/javascript';
+	script.textContent = `(function() {
+		if('YT' in window && 'Player' in window.YT) {
+			onYouTubePlayerAPIReady();
+		} else {
+			window.onYouTubePlayerAPIReady = onYouTubePlayerAPIReady;
+		}
+		function onYouTubePlayerAPIReady() {
+			window.de_addVideoEvents =
+				addEvents.bind(document.querySelector('#de-win-vid > .de-win-body > .de-video-obj'));
+			window.de_addVideoEvents();
+		}
+		function addEvents() {
+			var autoplay = true;
+			if(this.hasAttribute('de-disableautoplay')) {
+				autoplay = false;
+				this.removeAttribute('de-disableautoplay');
+			}
+			new YT.Player(this.firstChild, { events: {
+				'onError': gotoNextVideo,
+				'onReady': autoplay ? function(e) {
+					e.target.playVideo();
+				} : Function.prototype,
+				'onStateChange': function(e) {
+					if(e.data === 0) {
+						gotoNextVideo();
+					}
+				}
+			}});
+		}
+		function gotoNextVideo() {
+			document.getElementById("de-video-btn-next").click();
+		}
+	})();`;
+	body.appendChild(script);
+	// EXCLUDED FROM FIREFOX EXTENSION - END
 
 	// Events for control buttons
 	body.addEventListener('click', {
@@ -10315,7 +10389,15 @@ class Captcha {
 			$show(this.parentEl);
 		}
 	}
-	_updateRecap() {}
+	_updateRecap() {
+		// EXCLUDED FROM FIREFOX EXTENSION - START
+		const script = doc.createElement('script');
+		script.type = 'text/javascript';
+		script.src = aib.prot + '//www.google.com/recaptcha/api.js';
+		doc.head.appendChild(script);
+		setTimeout(() => script.remove(), 1e5);
+		// EXCLUDED FROM FIREFOX EXTENSION - END
+	}
 	_updateTextEl(isFocus) {
 		if(this.textEl) {
 			this.textEl.value = '';
@@ -10323,6 +10405,98 @@ class Captcha {
 				this.textEl.focus();
 			}
 		}
+	}
+}
+
+/* ==[ Tip.js ]=======================================================================================
+                                                    TIP
+=========================================================================================================== */
+
+class Tip {
+	construcor() {
+		this.node = null;
+		this.timeout = null;
+		this.delay = 300;
+		this.init();
+	}
+	init() {
+		document.addEventListener('mouseover', this.onMouseOver, !1),
+		document.addEventListener('mouseout', this.onMouseOut, !1);
+	}
+	onMouseOver(e) {
+		let t, n, o;
+		o = e.target,
+		this.timeout && (clearTimeout(this.timeout),
+		this.timeout = null),
+		o.hasAttribute('data-tip') && (n = null,
+		o.hasAttribute('data-tip-cb') && (t = o.getAttribute('data-tip-cb'),
+		window[t] && (n = window[t](o))),
+		this.timeout = setTimeout(this.show, this.delay, e.target, n));
+	}
+	onMouseOut() {
+		this.timeout && (clearTimeout(this.timeout),
+		this.timeout = null),
+		this.hide();
+	}
+	show(e, t, n) {
+		let o, a, i, l, r;
+		a = e.getBoundingClientRect(),
+		(o = document.createElement('div')).id = 'tooltip',
+		t ? o.innerHTML = t : o.textContent = e.getAttribute('data-tip'),
+		n || (n = 'top'),
+		o.className = 'tip-' + n,
+		document.body.appendChild(o),
+		(l = a.left - (o.offsetWidth - e.offsetWidth) / 2) < 0 ? (l = a.left + 2,
+		o.className += '-right') : l + o.offsetWidth > document.documentElement.clientWidth && (l = a.left - o.offsetWidth + e.offsetWidth + 2,
+		o.className += '-left'),
+		r = a.top - o.offsetHeight - 5,
+		(i = o.style).top = r + window.pageYOffset + 'px',
+		i.left = l + window.pageXOffset + 'px',
+		this.node = o;
+	}
+	hide() {
+		this.node && (document.body.removeChild(this.node),
+		this.node = null);
+	}
+}
+
+/* ==[ IDColor.js ]=======================================================================================
+                                                    IDColor
+=========================================================================================================== */
+
+class IDColor {
+	constructor() {
+		// super();
+		this.css = 'padding: 0 5px; border-radius: 6px; font-size: 0.8em;';
+		this.ids = {};
+		this.init();
+	}
+	init() {
+		let e;
+		(e = document.createElement('style')).setAttribute('type', 'text/css');
+		e.textContent = '.posteruid span {' + this.css + '}';
+		e.id = 'id-style';
+		document.head.appendChild(e);
+	}
+	compute(e) {
+		let t, a;
+		return t = [],
+		a = $.hash(e),
+		t[0] = a >> 24 & 255,
+		t[1] = a >> 16 & 255,
+		t[2] = a >> 8 & 255,
+		t[3] = 0.299 * t[0] + 0.587 * t[1] + 0.114 * t[2] > 125,
+		this.ids[e] = t,
+		t;
+	}
+	apply(e) {
+		let t;
+		t = this.ids[e.textContent] || this.compute(e.textContent),
+		e.style.cssText = '    background-color: rgb(' + t[0] + ',' + t[1] + ',' + t[2] + ');    color: ' + (t[3] ? 'black;' : 'white;');
+	}
+	applyRemote(e) {
+		this.apply(e),
+		e.style.cssText += this.css;
 	}
 }
 
@@ -10752,17 +10926,57 @@ class Post extends AbstractPost {
 			MyPosts.set(num, thr.num);
 			isMyPost = true;
 		}
+		const isHighlighted = HighlightedPosts.has(this.posterId);
+		if(isHighlighted) {
+			this.el.classList.add('de-highlighted');
+		}
+		const isOpsPost = thr.opPosterId === this.posterId;
 		el.classList.add(isOp ? 'de-oppost' : 'de-reply');
 		this.sage = aib.getSage(el);
 		this.btns = $aEnd(this._pref = $q(aib.qPostRef, el),
 			'<span class="de-post-btns">' + Post.getPostBtns(isOp, aib.t) +
 			(this.sage ? '<svg class="de-btn-sage"><use xlink:href="#de-symbol-post-sage"/></svg>' : '') +
 			(isOp ? '' : `<span class="de-post-counter">${ count + 1 }</span>`) +
+			(isOpsPost ? '<span class="de-post-counter-op">(OP)</span>' : '') +
 			(isMyPost ? '<span class="de-post-counter-you">(You)</span>' : '') + '</span>');
 		this.counterEl = isOp ? null : $q('.de-post-counter', this.btns);
 		if(Cfg.expandTrunc && this.trunc) {
 			this._getFullMsg(this.trunc, true);
 		}
+
+		if(typeof thr.Tip !== 'undefined') {
+			const postIdEl = el.querySelector('.postInfo .posteruid span');
+			postIdEl.addEventListener('mouseover', e => {
+				let a, i, n, o, r;
+				const t = e.target.textContent;
+				for(o = 0,
+				n = $.qsa('.postInfo .hand'),
+				a = 0; i = n[a]; ++a) {
+					i.textContent === t && ++o;
+				}
+				r = o + ' post' + (o != 1 ? 's' : '') + ' by this ID';
+				thr.Tip.show(e.target, r);
+			}, true);
+			postIdEl.addEventListener('mouseout', e => {
+				thr.Tip.hide();
+			}, true);
+			postIdEl.addEventListener('click', e => {
+				const isAdd = !HighlightedPosts.has(this.posterId);
+				if(isAdd) {
+					HighlightedPosts.set(this.posterId, this.thr.num);
+				} else {
+					HighlightedPosts.removeStorage(this.posterId);
+				}
+				let a, i, n, o, r;
+				for(o = 0, n = $.qsa('.postInfo .hand'), a = 0; i = n[a]; ++a) {
+					if(i.textContent === this.posterId) {
+						i.closest('.post').classList.toggle('de-highlighted', isAdd);
+					}
+				}
+			}, true);
+		}
+		thr.IDColors?.apply(el.querySelector('.postInfo .posteruid span'));
+
 		el.addEventListener('mouseover', this, true);
 	}
 	static addMark(postEl, forced) {
@@ -10883,6 +11097,9 @@ class Post extends AbstractPost {
 	}
 	get posterName() {
 		return new Post.Сontent(this).posterName;
+	}
+	get posterId() {
+		return new Post.Сontent(this).posterId;
 	}
 	get posterTrip() {
 		return new Post.Сontent(this).posterTrip;
@@ -11116,6 +11333,10 @@ class Post extends AbstractPost {
 			return;
 		}
 		case 'hide-name': Spells.addSpell(6 /* #name */, this.posterName, false); return;
+		case 'hide-uid': {
+			const exph = `/(?:<span.*>)\s?${ this.posterId }/`;
+			Spells.addSpell(2 /* #id */, exph, false); return;
+		}
 		case 'hide-trip': Spells.addSpell(7 /* #trip */, this.posterTrip, false); return;
 		case 'hide-img': {
 			const { weight: w, width: wi, height: h } = this.images.firstAttach;
@@ -11184,6 +11405,7 @@ class Post extends AbstractPost {
 			this._selRange = sel.getRangeAt(0);
 		}
 		return `${ ssel ? item('sel') : '' }${
+			this.posterId ? item('uid') : '' }${
 			this.posterName ? item('name') : '' }${
 			this.posterTrip ? item('trip') : '' }${
 			this.images.hasAttachments ? item('img') + item('imgn') + item('ihash') : item('noimg') }${
@@ -11235,6 +11457,12 @@ Post.Сontent = class PostContent extends TemporaryContent {
 		const pName = $q(aib.qPostName, this.el);
 		const value = pName ? pName.textContent.trim().replace(/\s/g, ' ') : '';
 		Object.defineProperty(this, 'posterName', { value });
+		return value;
+	}
+	get posterId() {
+		const pID = $q(aib.qPostID, this.el);
+		const value = pID ? pID.textContent.trim().replace(/\s/g, ' ') : '';
+		Object.defineProperty(this, 'posterId', { value });
 		return value;
 	}
 	get posterTrip() {
@@ -11589,6 +11817,7 @@ class Pview extends AbstractPost {
 		const pv = this.el = post.el.cloneNode(true);
 		pByEl.set(pv, this);
 		const isMyPost = MyPosts.has(num);
+		const isOpsPost = post.thr.opPosterId === post.posterId;
 		pv.className = `${ aib.cReply } de-pview${
 			post.isViewed ? ' de-viewed' : '' }${ isMyPost ? ' de-mypost' : '' }` +
 			`${ post.el.classList.contains('de-mypost-reply') ? ' de-mypost-reply' : '' }`;
@@ -11606,6 +11835,7 @@ class Pview extends AbstractPost {
 		const isCached = post instanceof CacheItem;
 		const pCountHtml = (post.isDeleted ? ` de-post-counter-deleted">${ Lng.deleted[lang] }</span>` :
 			`">${ isOp ? '(OP)' : post.count + +!(aib.JsonBuilder && isCached) }</span>`) +
+			(isOpsPost ? '<span class="de-post-counter-op">(OP)</span>' : '') +
 			(isMyPost ? '<span class="de-post-counter-you">(You)</span>' : '');
 		const pText = '<svg class="de-btn-reply"><use xlink:href="#de-symbol-post-reply"/></svg>' +
 			(isOp ? `<svg class="${ isFav ? 'de-btn-fav-sel' : 'de-btn-fav' }">` +
@@ -13642,7 +13872,10 @@ class Thread {
 		if(prev) {
 			prev.next = this;
 		}
+		this.IDColors = new IDColor();
+		this.Tip = new Tip();
 		let lastPost = this.op = new Post(aib.getOp(el), this, num, 0, true, prev ? prev.last : null);
+		this.opPosterId = this.op.posterId;
 		pByEl.set(el, lastPost);
 		for(let i = 0; i < len; ++i) {
 			const pEl = els[i];
@@ -15219,6 +15452,7 @@ class BaseBoard {
 		this.qImgInfo = '.filesize';
 		this.qOmitted = '.omittedposts';
 		this.qOPost = '.oppost';
+		this.qPostID = '.posteruid span';
 		this.qPages = 'table[border="1"] > tbody > tr > td:nth-child(2) > a:last-of-type';
 		this.qPostHeader = '.de-post-btns';
 		this.qPostImg = '.thumb, .ca_thumb, img[src*="thumb"], img[src*="/spoiler"], img[src^="blob:"]';
@@ -18319,6 +18553,7 @@ function scriptCSS() {
 	.de-post-counter { margin: 0 4px 0 2px; vertical-align: 1px; font: bold 11px tahoma; color: #4f7942; cursor: default; }
 	.de-post-counter-deleted { color: #727579; }
 	.de-post-counter-you { vertical-align: 1px; font: bold 11px tahoma; color: #505a7a; cursor: default; }
+	.de-post-counter-op { vertical-align: 1px; font: bold 10px tahoma; color: #259e00; cursor: default; }
 
 	/* Text markup buttons */
 	.de-markup-back { fill: #f0f0f0; stroke: #808080; }
@@ -18526,6 +18761,11 @@ function updateCSS() {
 	.de-selected, .de-input-error { ${ nav.isPresto ?
 		'border-left: 4px solid rgba(220,0,0,.7); border-right: 4px solid rgba(220,0,0,.7)' :
 		'box-shadow: 6px 0 2px -2px rgba(220,0,0,.8), -6px 0 2px -2px rgba(220,0,0,.8)' } !important; }
+	.de-highlighted { ${ nav.isPresto ?
+		'border-left: 4px solid rgba(97,107,30,.7); border-right: 4px solid rgba(97,107,30,.7)' :
+		'box-shadow: 6px 0 2px -2px rgba(97,107,30,.8), -6px 0 2px -2px rgba(97,107,30,.8)' } !important; }
+	.de-highlighted-reply:not(.de-pview) { position: relative; }
+	.de-highlighted-reply::before { content: ""; position: absolute; top: -0; bottom: 0; left: -1px; border-left: 5px dotted rgba(97,107,134,.8) !important; }
 	${ Cfg.markMyPosts ?
 		`.de-mypost { ${ nav.isPresto ?
 			'border-left: 4px solid rgba(97,107,134,.7); border-right: 4px solid rgba(97,107,134,.7)' :

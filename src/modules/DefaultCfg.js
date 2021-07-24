@@ -54,7 +54,7 @@ const defaultCfg = {
 	maskVisib    : 7,    // image opacity in NSFW mode [0-100%]
 	linksNavig   : 1,    // posts navigation by >>links
 	linksOver    : 100,  //    delay appearance (ms)
-	linksOut     : 1500, //    delay disappearance (ms)
+	linksOut     : 100, //    delay disappearance (ms)
 	markViewed   : 0,    //    mark viewed posts
 	strikeHidd   : 0,    //    strike >>links to hidden posts
 	removeHidd   : 0,    //        also remove from reply maps
