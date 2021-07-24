@@ -6,7 +6,7 @@
 'use strict';
 
 const version = '21.7.6.0';
-const commit = '19c4044';
+const commit = 'b289964';
 
 /* ==[ DefaultCfg.js ]== */
 /* ==[ Localization.js ]== */
@@ -30,6 +30,8 @@ const commit = '19c4044';
 /* ==[ FormSubmit.js ]== */
 /* ==[ FormFile.js ]== */
 /* ==[ FormCaptcha.js ]== */
+/* ==[ Tip.js ]== */
+/* ==[ IDColor.js ]== */
 /* ==[ Posts.js ]== */
 /* ==[ PostPreviews.js ]== */
 /* ==[ PostImages.js ]== */

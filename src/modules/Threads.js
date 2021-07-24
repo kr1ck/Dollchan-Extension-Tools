@@ -22,7 +22,10 @@ class Thread {
 		if(prev) {
 			prev.next = this;
 		}
+		this.IDColors = new IDColor();
+		this.Tip = new Tip();
 		let lastPost = this.op = new Post(aib.getOp(el), this, num, 0, true, prev ? prev.last : null);
+		this.opPosterId = this.op.posterId;
 		pByEl.set(el, lastPost);
 		for(let i = 0; i < len; ++i) {
 			const pEl = els[i];

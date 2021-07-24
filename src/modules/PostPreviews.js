@@ -229,6 +229,7 @@ class Pview extends AbstractPost {
 		const pv = this.el = post.el.cloneNode(true);
 		pByEl.set(pv, this);
 		const isMyPost = MyPosts.has(num);
+		const isOpsPost = post.thr.opPosterId === post.posterId;
 		pv.className = `${ aib.cReply } de-pview${
 			post.isViewed ? ' de-viewed' : '' }${ isMyPost ? ' de-mypost' : '' }` +
 			`${ post.el.classList.contains('de-mypost-reply') ? ' de-mypost-reply' : '' }`;
@@ -246,6 +247,7 @@ class Pview extends AbstractPost {
 		const isCached = post instanceof CacheItem;
 		const pCountHtml = (post.isDeleted ? ` de-post-counter-deleted">${ Lng.deleted[lang] }</span>` :
 			`">${ isOp ? '(OP)' : post.count + +!(aib.JsonBuilder && isCached) }</span>`) +
+			(isOpsPost ? '<span class="de-post-counter-op">(OP)</span>' : '') +
 			(isMyPost ? '<span class="de-post-counter-you">(You)</span>' : '');
 		const pText = '<svg class="de-btn-reply"><use xlink:href="#de-symbol-post-reply"/></svg>' +
 			(isOp ? `<svg class="${ isFav ? 'de-btn-fav-sel' : 'de-btn-fav' }">` +

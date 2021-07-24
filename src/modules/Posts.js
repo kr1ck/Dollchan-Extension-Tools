@@ -424,17 +424,57 @@ class Post extends AbstractPost {
 			MyPosts.set(num, thr.num);
 			isMyPost = true;
 		}
+		const isHighlighted = HighlightedPosts.has(this.posterId);
+		if(isHighlighted) {
+			this.el.classList.add('de-highlighted');
+		}
+		const isOpsPost = thr.opPosterId === this.posterId;
 		el.classList.add(isOp ? 'de-oppost' : 'de-reply');
 		this.sage = aib.getSage(el);
 		this.btns = $aEnd(this._pref = $q(aib.qPostRef, el),
 			'<span class="de-post-btns">' + Post.getPostBtns(isOp, aib.t) +
 			(this.sage ? '<svg class="de-btn-sage"><use xlink:href="#de-symbol-post-sage"/></svg>' : '') +
 			(isOp ? '' : `<span class="de-post-counter">${ count + 1 }</span>`) +
+			(isOpsPost ? '<span class="de-post-counter-op">(OP)</span>' : '') +
 			(isMyPost ? '<span class="de-post-counter-you">(You)</span>' : '') + '</span>');
 		this.counterEl = isOp ? null : $q('.de-post-counter', this.btns);
 		if(Cfg.expandTrunc && this.trunc) {
 			this._getFullMsg(this.trunc, true);
 		}
+
+		if(typeof thr.Tip !== 'undefined') {
+			const postIdEl = el.querySelector('.postInfo .posteruid span');
+			postIdEl.addEventListener('mouseover', e => {
+				let a, i, n, o, r;
+				const t = e.target.textContent;
+				for(o = 0,
+				n = $.qsa('.postInfo .hand'),
+				a = 0; i = n[a]; ++a) {
+					i.textContent === t && ++o;
+				}
+				r = o + ' post' + (o != 1 ? 's' : '') + ' by this ID';
+				thr.Tip.show(e.target, r);
+			}, true);
+			postIdEl.addEventListener('mouseout', e => {
+				thr.Tip.hide();
+			}, true);
+			postIdEl.addEventListener('click', e => {
+				const isAdd = !HighlightedPosts.has(this.posterId);
+				if(isAdd) {
+					HighlightedPosts.set(this.posterId, this.thr.num);
+				} else {
+					HighlightedPosts.removeStorage(this.posterId);
+				}
+				let a, i, n, o, r;
+				for(o = 0, n = $.qsa('.postInfo .hand'), a = 0; i = n[a]; ++a) {
+					if(i.textContent === this.posterId) {
+						i.closest('.post').classList.toggle('de-highlighted', isAdd);
+					}
+				}
+			}, true);
+		}
+		thr.IDColors?.apply(el.querySelector('.postInfo .posteruid span'));
+
 		el.addEventListener('mouseover', this, true);
 	}
 	static addMark(postEl, forced) {
@@ -555,6 +595,9 @@ class Post extends AbstractPost {
 	}
 	get posterName() {
 		return new Post.Сontent(this).posterName;
+	}
+	get posterId() {
+		return new Post.Сontent(this).posterId;
 	}
 	get posterTrip() {
 		return new Post.Сontent(this).posterTrip;
@@ -788,6 +831,10 @@ class Post extends AbstractPost {
 			return;
 		}
 		case 'hide-name': Spells.addSpell(6 /* #name */, this.posterName, false); return;
+		case 'hide-uid': {
+			const exph = `/(?:<span.*>)\s?${ this.posterId }/`;
+			Spells.addSpell(2 /* #id */, exph, false); return;
+		}
 		case 'hide-trip': Spells.addSpell(7 /* #trip */, this.posterTrip, false); return;
 		case 'hide-img': {
 			const { weight: w, width: wi, height: h } = this.images.firstAttach;
@@ -856,6 +903,7 @@ class Post extends AbstractPost {
 			this._selRange = sel.getRangeAt(0);
 		}
 		return `${ ssel ? item('sel') : '' }${
+			this.posterId ? item('uid') : '' }${
 			this.posterName ? item('name') : '' }${
 			this.posterTrip ? item('trip') : '' }${
 			this.images.hasAttachments ? item('img') + item('imgn') + item('ihash') : item('noimg') }${
@@ -907,6 +955,12 @@ Post.Сontent = class PostContent extends TemporaryContent {
 		const pName = $q(aib.qPostName, this.el);
 		const value = pName ? pName.textContent.trim().replace(/\s/g, ' ') : '';
 		Object.defineProperty(this, 'posterName', { value });
+		return value;
+	}
+	get posterId() {
+		const pID = $q(aib.qPostID, this.el);
+		const value = pID ? pID.textContent.trim().replace(/\s/g, ' ') : '';
+		Object.defineProperty(this, 'posterId', { value });
 		return value;
 	}
 	get posterTrip() {

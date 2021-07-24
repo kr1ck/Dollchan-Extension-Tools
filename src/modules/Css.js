@@ -179,6 +179,7 @@ function scriptCSS() {
 	.de-post-counter { margin: 0 4px 0 2px; vertical-align: 1px; font: bold 11px tahoma; color: #4f7942; cursor: default; }
 	.de-post-counter-deleted { color: #727579; }
 	.de-post-counter-you { vertical-align: 1px; font: bold 11px tahoma; color: #505a7a; cursor: default; }
+	.de-post-counter-op { vertical-align: 1px; font: bold 10px tahoma; color: #259e00; cursor: default; }
 
 	/* Text markup buttons */
 	.de-markup-back { fill: #f0f0f0; stroke: #808080; }
@@ -386,6 +387,11 @@ function updateCSS() {
 	.de-selected, .de-input-error { ${ nav.isPresto ?
 		'border-left: 4px solid rgba(220,0,0,.7); border-right: 4px solid rgba(220,0,0,.7)' :
 		'box-shadow: 6px 0 2px -2px rgba(220,0,0,.8), -6px 0 2px -2px rgba(220,0,0,.8)' } !important; }
+	.de-highlighted { ${ nav.isPresto ?
+		'border-left: 4px solid rgba(97,107,30,.7); border-right: 4px solid rgba(97,107,30,.7)' :
+		'box-shadow: 6px 0 2px -2px rgba(97,107,30,.8), -6px 0 2px -2px rgba(97,107,30,.8)' } !important; }
+	.de-highlighted-reply:not(.de-pview) { position: relative; }
+	.de-highlighted-reply::before { content: ""; position: absolute; top: -0; bottom: 0; left: -1px; border-left: 5px dotted rgba(97,107,134,.8) !important; }
 	${ Cfg.markMyPosts ?
 		`.de-mypost { ${ nav.isPresto ?
 			'border-left: 4px solid rgba(97,107,134,.7); border-right: 4px solid rgba(97,107,134,.7)' :

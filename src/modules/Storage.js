@@ -493,6 +493,25 @@ const MyPosts = new class MyPostsClass extends PostsStorage {
 	}
 }();
 
+const HighlightedPosts = new class HighlightedPostsClass extends PostsStorage {
+	constructor() {
+		super();
+		this.storageName = 'de-highlighted';
+	}
+	hideHidden(post, num) {
+		const uHideData = HighlightedPosts.get(num);
+		if(!uHideData) {
+			post.setUserVisib(true);
+		} else {
+			post.setUserVisib(!!uHideData, false);
+		}
+	}
+	_readStorage() {
+		PostsStorage._migrateOld(this.storageName, 'de-threads-new'); // Old storage has wrong name
+		return super._readStorage();
+	}
+}();
+
 function sendStorageEvent(name, value) {
 	locStorage[name] = typeof value === 'string' ? value : JSON.stringify(value);
 	locStorage.removeItem(name);
@@ -515,6 +534,7 @@ function initStorageEvent() {
 			return;
 		}
 		case '__de-mypost': MyPosts.purge(); return;
+		case '__de-highlighted': HighlightedPosts.purge(); return;
 		case '__de-webmvolume':
 			val = +val || 0;
 			Cfg.webmVolume = val;
