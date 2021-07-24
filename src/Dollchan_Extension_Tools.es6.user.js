@@ -30,7 +30,7 @@
 'use strict';
 
 const version = '21.7.11';
-const commit = 'bb8f768';
+const commit = '72f455e';
 
 /* ==[ DefaultCfg.js ]========================================================================================
                                                 DEFAULT CONFIG
@@ -10952,7 +10952,7 @@ class Post extends AbstractPost {
 		}
 		const isHighlighted = HighlightedPosts.has(this.posterId);
 		if(isHighlighted) {
-			this.wrap.classList.add('de-highlighted');
+			this.el.classList.add('de-highlighted');
 		}
 		const isOpsPost = thr.opPosterId && thr.opPosterId === this.posterId;
 		el.classList.add(isOp ? 'de-oppost' : 'de-reply');
@@ -10974,7 +10974,6 @@ class Post extends AbstractPost {
 		}
 		if(posterIdEl) {
 			posterIdEl.addEventListener('click', e => {
-				console.log('clock0');
 				const isAdd = !HighlightedPosts.has(this.posterId);
 				if(isAdd) {
 					HighlightedPosts.set(this.posterId, this.thr.num);
@@ -10985,7 +10984,7 @@ class Post extends AbstractPost {
 				for(let i = 0; i < allPosts.length; i++) {
 					const post = allPosts[i];
 					const posterIdEl = $q(aib.qPosterId, post);
-					if(posterIdEl.textContent === this.posterId) {
+					if(posterIdEl && posterIdEl.textContent === this.posterId) {
 						post.classList.toggle('de-highlighted', isAdd);
 					}
 				}
