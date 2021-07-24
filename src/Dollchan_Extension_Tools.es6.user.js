@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            Dollchan Extension Tools
-// @version         21.7.10
+// @version         21.7.11
 // @namespace       http://www.freedollchan.org/scripts/*
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
@@ -29,8 +29,8 @@
 (function deMainFuncInner(deWindow, prestoStorage, FormData, scrollTo, localData) {
 'use strict';
 
-const version = '21.7.10';
-const commit = 'dbcdf29';
+const version = '21.7.11';
+const commit = 'bb8f768';
 
 /* ==[ DefaultCfg.js ]========================================================================================
                                                 DEFAULT CONFIG
@@ -11094,6 +11094,9 @@ class Post extends AbstractPost {
 		btnHide.setAttribute('class', isUser ? 'de-btn-unhide-user' : 'de-btn-unhide');
 		if(headerEl) {
 			for(let el = headerEl.nextElementSibling; el; el = el.nextElementSibling) {
+				el.classList.add('de-post-hiddencontent');
+			}
+			for(let el = headerEl.previousElementSibling; el; el = el.previousElementSibling) {
 				el.classList.add('de-post-hiddencontent');
 			}
 		}

@@ -570,6 +570,9 @@ class Post extends AbstractPost {
 			for(let el = headerEl.nextElementSibling; el; el = el.nextElementSibling) {
 				el.classList.add('de-post-hiddencontent');
 			}
+			for(let el = headerEl.previousElementSibling; el; el = el.previousElementSibling) {
+				el.classList.add('de-post-hiddencontent');
+			}
 		}
 	}
 	get banned() {
