@@ -29,7 +29,7 @@ gulp.task('updatecommit', cb => {
 			throw new Error(`Git error:\n${ stdout ? `${ stdout }\n` : '' }${ stderr }`);
 		}
 		gulp.src('./Dollchan_Extension_Tools.meta.js')
-			.pipe(replace(/^\/\/\s@version\s+.*$/mi, `// @version         ${ pjson.version }';`))
+			.pipe(replace(/^\/\/\s@version\s+.*$/mi, `// @version         ${ pjson.version }`))
 			.pipe(gulp.dest('./'))
 			.on('end', cb);
 		gulp.src('src/modules/Wrap.js')
