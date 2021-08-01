@@ -472,7 +472,7 @@ class Post extends AbstractPost {
 					for(let i = 0; i < allPosts.length; i++) {
 						const post = allPosts[i];
 						const posterIdEl = $q(aib.qPosterId, post);
-						if(posterIdEl.textContent === t) {
+						if(posterIdEl && posterIdEl.textContent === t) {
 							o++;
 						}
 					}

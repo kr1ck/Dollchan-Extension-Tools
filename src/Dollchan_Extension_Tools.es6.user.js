@@ -30,7 +30,7 @@
 'use strict';
 
 const version = '21.7.11';
-const commit = 'e815ca9';
+const commit = 'a7acb33';
 
 /* ==[ DefaultCfg.js ]========================================================================================
                                                 DEFAULT CONFIG
@@ -10998,7 +10998,7 @@ class Post extends AbstractPost {
 					for(let i = 0; i < allPosts.length; i++) {
 						const post = allPosts[i];
 						const posterIdEl = $q(aib.qPosterId, post);
-						if(posterIdEl.textContent === t) {
+						if(posterIdEl && posterIdEl.textContent === t) {
 							o++;
 						}
 					}
@@ -11911,7 +11911,7 @@ class Pview extends AbstractPost {
 					for(let i = 0; i < allPosts.length; i++) {
 						const post = allPosts[i];
 						const posterIdEl = $q(aib.qPosterId, post);
-						if(posterIdEl.textContent === t) {
+						if(posterIdEl && posterIdEl.textContent === t) {
 							o++;
 						}
 					}

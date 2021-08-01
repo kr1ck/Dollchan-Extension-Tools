@@ -13,7 +13,8 @@
 		"url": "https://github.com/SthephanShinkufag/Dollchan-Extension-Tools/issues"
 	},
 	"scripts": {
-		"build": "./node_modules/.bin/gulp make:es6"
+		"build": "./node_modules/.bin/gulp make:es6",
+		"buildall": "./node_modules/.bin/gulp make"
 	},
 	"babel": {
 		"compact": false,
