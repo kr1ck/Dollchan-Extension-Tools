@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            Dollchan Extension Tools
-// @version         21.7.6.0
+// @version         21.7.12
 // @namespace       http://www.freedollchan.org/scripts/*
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
@@ -5507,8 +5507,8 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
   var _marked = regeneratorRuntime.mark(getFormElements);
 
-  var version = '21.7.6.0';
-  var commit = '19b3ac6';
+  var version = '21.7.12';
+  var commit = '442fccb';
 
   var defaultCfg = {
     disabled: 0,
@@ -18168,20 +18168,22 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
   var Tip = function () {
     function Tip() {
       _classCallCheck(this, Tip);
+
+      this.node = null;
+      this.timeout = null;
+      this.delay = 300;
+      this.css = "\n\t\t\tposition: absolute;\n\t\t\tbackground-color: #000;\n\t\t\tfont-size: 11px;\n\t\t\tline-height: 13px;\n\t\t\tpadding: 3px 6px;\n\t\t\tz-index: 100000;\n\t\t\tword-wrap: break-word;\n\t\t\twhite-space: pre-line;\n\t\t\tmax-width: 400px;\n\t\t\tcolor: #fff;\n\t\t\ttext-align: center;\n\t\t";
+      this.init();
     }
 
     _createClass(Tip, [{
-      key: "construcor",
-      value: function construcor() {
-        this.node = null;
-        this.timeout = null;
-        this.delay = 300;
-        this.init();
-      }
-    }, {
       key: "init",
       value: function init() {
-        document.addEventListener('mouseover', this.onMouseOver, !1), document.addEventListener('mouseout', this.onMouseOut, !1);
+        var e;
+        (e = document.createElement('style')).setAttribute('type', 'text/css');
+        e.textContent = "#de-tooltip {".concat(this.css, "}");
+        e.id = 'de-tooltip-style';
+        document.head.appendChild(e);
       }
     }, {
       key: "onMouseOver",
@@ -18198,7 +18200,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       key: "show",
       value: function show(e, t, n) {
         var o, a, i, l, r;
-        a = e.getBoundingClientRect(), (o = document.createElement('div')).id = 'tooltip', t ? o.innerHTML = t : o.textContent = e.getAttribute('data-tip'), n || (n = 'top'), o.className = 'tip-' + n, document.body.appendChild(o), (l = a.left - (o.offsetWidth - e.offsetWidth) / 2) < 0 ? (l = a.left + 2, o.className += '-right') : l + o.offsetWidth > document.documentElement.clientWidth && (l = a.left - o.offsetWidth + e.offsetWidth + 2, o.className += '-left'), r = a.top - o.offsetHeight - 5, (i = o.style).top = r + window.pageYOffset + 'px', i.left = l + window.pageXOffset + 'px', this.node = o;
+        a = e.getBoundingClientRect(), (o = document.createElement('div')).id = 'de-tooltip', t ? o.innerHTML = t : o.textContent = e.getAttribute('data-tip'), n || (n = 'top'), o.className = 'tip-' + n, document.body.appendChild(o), (l = a.left - (o.offsetWidth - e.offsetWidth) / 2) < 0 ? (l = a.left + 2, o.className += '-right') : l + o.offsetWidth > document.documentElement.clientWidth && (l = a.left - o.offsetWidth + e.offsetWidth + 2, o.className += '-left'), r = a.top - o.offsetHeight - 5, (i = o.style).top = r + window.pageYOffset + 'px', i.left = l + window.pageXOffset + 'px', this.node = o;
       }
     }, {
       key: "hide",
@@ -18215,7 +18217,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     function IDColor() {
       _classCallCheck(this, IDColor);
 
-      this.css = 'padding: 0 5px; border-radius: 6px; font-size: 0.8em;';
+      this.css = 'padding: 0 5px; border-radius: 6px; font-size: 0.8em; cursor: pointer;';
       this.ids = {};
       this.init();
     }
@@ -18225,21 +18227,34 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       value: function init() {
         var e;
         (e = document.createElement('style')).setAttribute('type', 'text/css');
-        e.textContent = '.posteruid span {' + this.css + '}';
-        e.id = 'id-style';
+        e.textContent = "".concat(aib.qPosterId, " {").concat(this.css, "}");
+        e.id = 'de-id-style';
         document.head.appendChild(e);
+      }
+    }, {
+      key: "hash",
+      value: function hash(e) {
+        var t,
+            a,
+            i = 0;
+
+        for (t = 0, a = e.length; t < a; ++t) {
+          i = (i << 5) - i + e.charCodeAt(t);
+        }
+
+        return i;
       }
     }, {
       key: "compute",
       value: function compute(e) {
         var t, a;
-        return t = [], a = $.hash(e), t[0] = a >> 24 & 255, t[1] = a >> 16 & 255, t[2] = a >> 8 & 255, t[3] = 0.299 * t[0] + 0.587 * t[1] + 0.114 * t[2] > 125, this.ids[e] = t, t;
+        return t = [], a = this.hash(e), t[0] = a >> 24 & 255, t[1] = a >> 16 & 255, t[2] = a >> 8 & 255, t[3] = 0.299 * t[0] + 0.587 * t[1] + 0.114 * t[2] > 125, this.ids[e] = t, t;
       }
     }, {
       key: "apply",
       value: function apply(e) {
         var t;
-        t = this.ids[e.textContent] || this.compute(e.textContent), e.style.cssText = '    background-color: rgb(' + t[0] + ',' + t[1] + ',' + t[2] + ');    color: ' + (t[3] ? 'black;' : 'white;');
+        t = this.ids[e.textContent] || this.compute(e.textContent.replace(/id:*/i, '')), e.style.cssText = '    background-color: rgb(' + t[0] + ',' + t[1] + ',' + t[2] + ');    color: ' + (t[3] ? 'black;' : 'white;');
       }
     }, {
       key: "applyRemote",
@@ -18845,8 +18860,6 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var _super5 = _createSuper(Post);
 
     function Post(el, thr, num, count, isOp, prev) {
-      var _thr$IDColors;
-
       var _this48;
 
       _classCallCheck(this, Post);
@@ -18886,7 +18899,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         _this48.el.classList.add('de-highlighted');
       }
 
-      var isOpsPost = thr.opPosterId === _this48.posterId;
+      var isOpsPost = thr.opPosterId && thr.opPosterId === _this48.posterId;
       el.classList.add(isOp ? 'de-oppost' : 'de-reply');
       _this48.sage = aib.getSage(el);
       _this48.btns = $aEnd(_this48._pref = $q(aib.qPostRef, el), '<span class="de-post-btns">' + Post.getPostBtns(isOp, aib.t) + (_this48.sage ? '<svg class="de-btn-sage"><use xlink:href="#de-symbol-post-sage"/></svg>' : '') + (isOp ? '' : "<span class=\"de-post-counter\">".concat(count + 1, "</span>")) + (isOpsPost ? '<span class="de-post-counter-op">(OP)</span>' : '') + (isMyPost ? '<span class="de-post-counter-you">(You)</span>' : '') + '</span>');
@@ -18896,23 +18909,14 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         _this48._getFullMsg(_this48.trunc, true);
       }
 
-      if (typeof thr.Tip !== 'undefined') {
-        var postIdEl = el.querySelector('.postInfo .posteruid span');
-        postIdEl.addEventListener('mouseover', function (e) {
-          var a, i, n, o, r;
-          var t = e.target.textContent;
+      var posterIdEl = $q(aib.qPosterId, _this48.el);
 
-          for (o = 0, n = $.qsa('.postInfo .hand'), a = 0; i = n[a]; ++a) {
-            i.textContent === t && ++o;
-          }
+      if (posterIdEl && thr.IDColors) {
+        thr.IDColors.apply(posterIdEl);
+      }
 
-          r = o + ' post' + (o != 1 ? 's' : '') + ' by this ID';
-          thr.Tip.show(e.target, r);
-        }, true);
-        postIdEl.addEventListener('mouseout', function (e) {
-          thr.Tip.hide();
-        }, true);
-        postIdEl.addEventListener('click', function (e) {
+      if (posterIdEl) {
+        posterIdEl.addEventListener('click', function (e) {
           var isAdd = !HighlightedPosts.has(_this48.posterId);
 
           if (isAdd) {
@@ -18921,17 +18925,43 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
             HighlightedPosts.removeStorage(_this48.posterId);
           }
 
-          var a, i, n, o, r;
+          var allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', document.body);
 
-          for (o = 0, n = $.qsa('.postInfo .hand'), a = 0; i = n[a]; ++a) {
-            if (i.textContent === _this48.posterId) {
-              i.closest('.post').classList.toggle('de-highlighted', isAdd);
+          for (var i = 0; i < allPosts.length; i++) {
+            var post = allPosts[i];
+
+            var _posterIdEl = $q(aib.qPosterId, post);
+
+            if (_posterIdEl && _posterIdEl.textContent === _this48.posterId) {
+              post.classList.toggle('de-highlighted', isAdd);
             }
           }
         }, true);
+
+        if (typeof thr.Tip !== 'undefined') {
+          posterIdEl.addEventListener('mouseover', function (e) {
+            var t = e.target.textContent;
+            var o = 0;
+            var allPosts = $Q(aib.qRPost, thr.el);
+
+            for (var i = 0; i < allPosts.length; i++) {
+              var post = allPosts[i];
+
+              var _posterIdEl2 = $q(aib.qPosterId, post);
+
+              if (_posterIdEl2 && _posterIdEl2.textContent === t) {
+                o++;
+              }
+            }
+
+            thr.Tip.show(e.target, o + ' post' + (o !== 1 ? 's' : '') + ' by this ID');
+          }, true);
+          posterIdEl.addEventListener('mouseout', function (e) {
+            thr.Tip.hide();
+          }, true);
+        }
       }
 
-      (_thr$IDColors = thr.IDColors) === null || _thr$IDColors === void 0 ? void 0 : _thr$IDColors.apply(el.querySelector('.postInfo .posteruid span'));
       el.addEventListener('mouseover', _assertThisInitialized(_this48), true);
       return _this48;
     }
@@ -19579,6 +19609,10 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           for (var el = headerEl.nextElementSibling; el; el = el.nextElementSibling) {
             el.classList.add('de-post-hiddencontent');
           }
+
+          for (var _el8 = headerEl.previousElementSibling; _el8; _el8 = _el8.previousElementSibling) {
+            _el8.classList.add('de-post-hiddencontent');
+          }
         }
       }
     }]);
@@ -19642,8 +19676,8 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "posterId",
       get: function get() {
-        var pID = $q(aib.qPosterId, this.el);
-        var value = pID ? pID.textContent.trim().replace(/\s/g, ' ') : '';
+        var pIdEl = $q(aib.qPosterId, this.el);
+        var value = pIdEl ? pIdEl.textContent.trim().replace(/\s/g, ' ') : '';
         Object.defineProperty(this, 'posterId', {
           value: value
         });
@@ -20042,7 +20076,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       key: "_buildPview",
       value: function () {
         var _buildPview2 = _asyncToGenerator( regeneratorRuntime.mark(function _callee12(post) {
-          var num, pv, isMyPost, isOpsPost, isOp, f, isFav, isCached, pCountHtml, pText, btnsEl, link;
+          var num, pv, isMyPost, isHighlighted, isOpsPost, isOp, f, isFav, isCached, pCountHtml, pText, thr, posterId, posterIdEl, btnsEl, link;
           return regeneratorRuntime.wrap(function _callee12$(_context16) {
             while (1) {
               switch (_context16.prev = _context16.next) {
@@ -20052,8 +20086,9 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                   pv = this.el = post.el.cloneNode(true);
                   pByEl.set(pv, this);
                   isMyPost = MyPosts.has(num);
-                  isOpsPost = post.thr.opPosterId === post.posterId;
-                  pv.className = "".concat(aib.cReply, " de-pview").concat(post.isViewed ? ' de-viewed' : '').concat(isMyPost ? ' de-mypost' : '') + "".concat(post.el.classList.contains('de-mypost-reply') ? ' de-mypost-reply' : '');
+                  isHighlighted = HighlightedPosts.has(post.posterId);
+                  isOpsPost = post.thr.opPosterId && post.thr.opPosterId === post.posterId;
+                  pv.className = "".concat(aib.cReply, " de-pview") + "".concat(post.isViewed ? ' de-viewed' : '') + "".concat(isMyPost ? ' de-mypost' : '') + "".concat(isHighlighted ? ' de-highlighted' : '') + "".concat(post.el.classList.contains('de-mypost-reply') ? ' de-mypost-reply' : '');
                   $show(pv);
                   $each($Q('.de-post-hiddencontent', pv), function (el) {
                     return el.classList.remove('de-post-hiddencontent');
@@ -20071,52 +20106,101 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
                   _context16.t0 = isOp;
 
                   if (!_context16.t0) {
-                    _context16.next = 28;
+                    _context16.next = 29;
                     break;
                   }
 
                   _context16.t1 = post.thr.isFav;
 
                   if (_context16.t1) {
-                    _context16.next = 27;
+                    _context16.next = 28;
                     break;
                   }
 
-                  _context16.next = 19;
+                  _context16.next = 20;
                   return readFavorites();
 
-                case 19:
+                case 20:
                   _context16.t4 = aib.host;
                   _context16.t3 = f = _context16.sent[_context16.t4];
 
                   if (!_context16.t3) {
-                    _context16.next = 23;
+                    _context16.next = 24;
                     break;
                   }
 
                   _context16.t3 = f = f[this.brd];
 
-                case 23:
+                case 24:
                   _context16.t2 = _context16.t3;
 
                   if (!_context16.t2) {
-                    _context16.next = 26;
+                    _context16.next = 27;
                     break;
                   }
 
                   _context16.t2 = num in f;
 
-                case 26:
+                case 27:
                   _context16.t1 = _context16.t2;
 
-                case 27:
+                case 28:
                   _context16.t0 = _context16.t1;
 
-                case 28:
+                case 29:
                   isFav = _context16.t0;
                   isCached = post instanceof CacheItem;
                   pCountHtml = (post.isDeleted ? " de-post-counter-deleted\">".concat(Lng.deleted[lang], "</span>") : "\">".concat(isOp ? '(OP)' : post.count + +!(aib.JsonBuilder && isCached), "</span>")) + (isOpsPost ? '<span class="de-post-counter-op">(OP)</span>' : '') + (isMyPost ? '<span class="de-post-counter-you">(You)</span>' : '');
                   pText = '<svg class="de-btn-reply"><use xlink:href="#de-symbol-post-reply"/></svg>' + (isOp ? "<svg class=\"".concat(isFav ? 'de-btn-fav-sel' : 'de-btn-fav', "\">") + '<use xlink:href="#de-symbol-post-fav"></use></svg>' : '') + (post.sage ? '<svg class="de-btn-sage"><use xlink:href="#de-symbol-post-sage"/></svg>' : '') + '<svg class="de-btn-stick"><use xlink:href="#de-symbol-post-stick"/></svg>' + '<span class="de-post-counter' + pCountHtml;
+                  thr = post.thr, posterId = post.posterId;
+                  posterIdEl = $q(aib.qPosterId, pv);
+
+                  if (posterIdEl) {
+                    posterIdEl.addEventListener('click', function (e) {
+                      var isAdd = !HighlightedPosts.has(post.posterId);
+
+                      if (isAdd) {
+                        HighlightedPosts.set(post.posterId, post.thr.num);
+                      } else {
+                        HighlightedPosts.removeStorage(post.posterId);
+                      }
+
+                      var allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', document.body);
+
+                      for (var i = 0; i < allPosts.length; i++) {
+                        var _post4 = allPosts[i];
+
+                        var _posterIdEl3 = $q(aib.qPosterId, _post4);
+
+                        if (_posterIdEl3 && _posterIdEl3.textContent === posterId) {
+                          _post4.classList.toggle('de-highlighted', isAdd);
+                        }
+                      }
+                    }, true);
+
+                    if (typeof thr.Tip !== 'undefined') {
+                      posterIdEl.addEventListener('mouseover', function (e) {
+                        var t = e.target.textContent;
+                        var o = 0;
+                        var allPosts = $Q(aib.qRPost, thr.el);
+
+                        for (var i = 0; i < allPosts.length; i++) {
+                          var _post5 = allPosts[i];
+
+                          var _posterIdEl4 = $q(aib.qPosterId, _post5);
+
+                          if (_posterIdEl4 && _posterIdEl4.textContent === t) {
+                            o++;
+                          }
+                        }
+
+                        thr.Tip.show(e.target, o + ' post' + (o !== 1 ? 's' : '') + ' by this ID');
+                      }, true);
+                      posterIdEl.addEventListener('mouseout', function (e) {
+                        thr.Tip.hide();
+                      }, true);
+                    }
+                  }
 
                   if (isCached) {
                     if (isOp) {
@@ -20183,7 +20267,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
                   this._showPview(pv);
 
-                case 35:
+                case 39:
                 case "end":
                   return _context16.stop();
               }
@@ -21787,9 +21871,9 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         els = $Q('.de-img-embed', post.el);
 
         for (var _i16 = 0, _len10 = els.length; _i16 < _len10; ++_i16) {
-          var _el8 = els[_i16];
-          last = new EmbeddedImage(post, _el8, last);
-          filesMap.set(_el8, last);
+          var _el9 = els[_i16];
+          last = new EmbeddedImage(post, _el9, last);
+          filesMap.set(_el9, last);
 
           if (!first) {
             first = last;
@@ -23668,8 +23752,8 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         var len = pBuilder.length;
         var maybeSpells = new Maybe(SpellsRunner);
         var maybeVParser = new Maybe(Cfg.embedYTube ? VideosParser : null);
-        var _post4 = post,
-            count = _post4.count;
+        var _post6 = post,
+            count = _post6.count;
 
         if (count !== 0 && (aib.dobrochan || count > len || pBuilder.getPNum(count - 1) !== post.num)) {
           post = this.op.nextNotDeleted;
@@ -23677,9 +23761,9 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           var firstChangedPost = null;
 
           for (; i < len && post;) {
-            var _post5 = post,
-                num = _post5.num,
-                prev = _post5.prev;
+            var _post7 = post,
+                num = _post7.num,
+                prev = _post7.prev;
             var iNum = pBuilder.getPNum(i);
 
             if (num === iNum) {
@@ -25118,7 +25202,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       this.qImgInfo = '.filesize';
       this.qOmitted = '.omittedposts';
       this.qOPost = '.oppost';
-      this.qPosterId = '.posteruid span';
+      this.qPosterId = '.postInfo .posteruid span, .poster_hash';
       this.qPages = 'table[border="1"] > tbody > tr > td:nth-child(2) > a:last-of-type';
       this.qPostHeader = '.de-post-btns';
       this.qPostImg = '.thumb, .ca_thumb, img[src*="thumb"], img[src*="/spoiler"], img[src^="blob:"]';
