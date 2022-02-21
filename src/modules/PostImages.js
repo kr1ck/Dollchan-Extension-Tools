@@ -845,7 +845,19 @@ class AttachedImage extends ExpandableImage {
 	_getImageSrc() {
 		// XXX: DON'T USE aib.getImgSrcLink(this.el).href
 		// If #ihash spells enabled, Chrome reads href in ajaxed posts as empty -> image can't be expanded!
-		return aib.getImgSrcLink(this.el).getAttribute('href');
+		const src = aib.getImgSrcLink(this.el).getAttribute('href');
+		if (/effectivegatetocontent/i.test(src)) {
+		    const extensionRegex = /\.([0-9a-z]+)(?:[\?#]|$)/i;
+		    const m = this.name.trim().match(extensionRegex);
+		    const extension = m[1] || null;
+		    let fixedSrc = this.el.currentSrc.replace('thumb', 'image');
+		    fixedSrc = fixedSrc.replace(/(\d{9,})(s)/, '$1')
+		    if (extension) {
+			fixedSrc = fixedSrc.replace(/\.([0-9a-z]+)(?:[\?#]|$)/i, `.${extension}`);
+		    }
+		    return fixedSrc;
+		}
+		return src;
 	}
 }
 AttachedImage.viewer = null;
