@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            Dollchan Extension Tools
-// @version         21.7.12
+// @version         21.7.13
 // @namespace       http://www.freedollchan.org/scripts/*
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
@@ -5507,8 +5507,8 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
   var _marked = regeneratorRuntime.mark(getFormElements);
 
-  var version = '21.7.12';
-  var commit = '442fccb';
+  var version = '21.7.13';
+  var commit = '1457247';
 
   var defaultCfg = {
     disabled: 0,
@@ -21827,7 +21827,23 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "_getImageSrc",
       value: function _getImageSrc() {
-        return aib.getImgSrcLink(this.el).getAttribute('href');
+        var src = aib.getImgSrcLink(this.el).getAttribute('href');
+
+        if (/effectivegatetocontent/i.test(src)) {
+          var extensionRegex = /\.([0-9a-z]+)(?:[\?#]|$)/i;
+          var m = this.name.trim().match(extensionRegex);
+          var extension = m[1] || null;
+          var fixedSrc = this.el.currentSrc.replace('thumb', 'image');
+          fixedSrc = fixedSrc.replace(/(\d{9,})(s)/, '$1');
+
+          if (extension) {
+            fixedSrc = fixedSrc.replace(/\.([0-9a-z]+)(?:[\?#]|$)/i, ".".concat(extension));
+          }
+
+          return fixedSrc;
+        }
+
+        return src;
       }
     }], [{
       key: "closeImg",
