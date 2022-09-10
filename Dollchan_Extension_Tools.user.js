@@ -5508,7 +5508,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
   var _marked = regeneratorRuntime.mark(getFormElements);
 
   var version = '21.7.15';
-  var commit = '76cf28d';
+  var commit = '6339615';
 
   var defaultCfg = {
     disabled: 0,
@@ -6115,8 +6115,8 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
   var doc = deWindow.document;
   var emptyFn = Function.prototype;
   var aProto = Array.prototype;
-  var gitWiki = 'https://github.com/SthephanShinkufag/Dollchan-Extension-Tools/wiki/';
-  var gitRaw = 'https://raw.githubusercontent.com/SthephanShinkufag/Dollchan-Extension-Tools/master/';
+  var gitWiki = 'https://github.com/kr1ck/Dollchan-Extension-Tools/wiki/';
+  var gitRaw = 'https://raw.githubusercontent.com/kr1ck/Dollchan-Extension-Tools/master/';
   var $each, aib, Cfg, docBody, dTime, dummy, isExpImg, isPreImg, lang, locStorage, nav, needScroll, pByEl, pByNum, pr, sesStorage, updater;
   var quotedText = '';
   var visPosts = 2;

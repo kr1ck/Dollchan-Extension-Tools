@@ -7,10 +7,10 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/SthephanShinkufag/Dollchan-Extension-Tools.git"
+		"url": "https://github.com/kr1ck/Dollchan-Extension-Tools.git"
 	},
 	"bugs": {
-		"url": "https://github.com/SthephanShinkufag/Dollchan-Extension-Tools/issues"
+		"url": "https://github.com/kr1ck/Dollchan-Extension-Tools/issues"
 	},
 	"scripts": {
 		"build": "./node_modules/.bin/gulp make:es6",
