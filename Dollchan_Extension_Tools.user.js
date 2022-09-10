@@ -5508,7 +5508,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
   var _marked = regeneratorRuntime.mark(getFormElements);
 
   var version = '21.7.15';
-  var commit = '6339615';
+  var commit = 'ac6239b';
 
   var defaultCfg = {
     disabled: 0,
@@ -19360,7 +19360,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
             {
               var fixedId = this.posterId;
 
-              if (fixedId && dixedId.length) {
+              if (fixedId && fixedId.length) {
                 fixedId = _toConsumableArray(fixedId).map(function (c) {
                   return /[A-Za-z0-9]/.test(c) ? c : '\\' + c;
                 }).join('');

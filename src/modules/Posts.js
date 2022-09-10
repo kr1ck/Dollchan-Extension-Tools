@@ -845,7 +845,7 @@ class Post extends AbstractPost {
 		case 'hide-name': Spells.addSpell(6 /* #name */, this.posterName, false); return;
 		case 'hide-uid': {
 			let fixedId = this.posterId;
-			if(fixedId && dixedId.length) {
+			if(fixedId && fixedId.length) {
 				fixedId = [...fixedId].map(c => /[A-Za-z0-9]/.test(c) ? c : '\\' + c).join('');
 			}
 			const exph = `/(?:<span.*>)\s?${ fixedId }/`;
