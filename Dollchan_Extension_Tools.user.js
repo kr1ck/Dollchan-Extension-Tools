@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            Dollchan Extension Tools
-// @version         21.7.13
+// @version         21.7.14
 // @namespace       http://www.freedollchan.org/scripts/*
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
@@ -5507,8 +5507,8 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
   var _marked = regeneratorRuntime.mark(getFormElements);
 
-  var version = '21.7.13';
-  var commit = '1457247';
+  var version = '21.7.14';
+  var commit = '68cab1c';
 
   var defaultCfg = {
     disabled: 0,
@@ -19358,7 +19358,15 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
           case 'hide-uid':
             {
-              var exph = "/(?:<span.*>)s?".concat(this.posterId, "/");
+              var fixedId = this.posterId;
+
+              if (fixedId && dixedId.length) {
+                fixedId = _toConsumableArray(fixedId).map(function (c) {
+                  return /[A-Za-z0-9]/.test(c) ? c : '\\' + c;
+                }).join('');
+              }
+
+              var exph = "/(?:<span.*>)s?".concat(fixedId, "/");
               Spells.addSpell(2
               , exph, false);
               return;

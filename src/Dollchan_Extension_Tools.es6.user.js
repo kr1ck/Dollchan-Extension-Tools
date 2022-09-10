@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            Dollchan Extension Tools
-// @version         21.7.13
+// @version         21.7.14
 // @namespace       http://www.freedollchan.org/scripts/*
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
@@ -29,8 +29,8 @@
 (function deMainFuncInner(deWindow, prestoStorage, FormData, scrollTo, localData) {
 'use strict';
 
-const version = '21.7.13';
-const commit = '1457247';
+const version = '21.7.14';
+const commit = '68cab1c';
 
 /* ==[ DefaultCfg.js ]========================================================================================
                                                 DEFAULT CONFIG
@@ -11370,7 +11370,11 @@ class Post extends AbstractPost {
 		}
 		case 'hide-name': Spells.addSpell(6 /* #name */, this.posterName, false); return;
 		case 'hide-uid': {
-			const exph = `/(?:<span.*>)\s?${ this.posterId }/`;
+			let fixedId = this.posterId;
+			if(fixedId && dixedId.length) {
+				fixedId = [...fixedId].map(c => /[A-Za-z0-9]/.test(c) ? c : '\\' + c).join('');
+			}
+			const exph = `/(?:<span.*>)\s?${ fixedId }/`;
 			Spells.addSpell(2 /* #id */, exph, false); return;
 		}
 		case 'hide-trip': Spells.addSpell(7 /* #trip */, this.posterTrip, false); return;

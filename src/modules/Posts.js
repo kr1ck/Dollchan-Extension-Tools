@@ -844,7 +844,11 @@ class Post extends AbstractPost {
 		}
 		case 'hide-name': Spells.addSpell(6 /* #name */, this.posterName, false); return;
 		case 'hide-uid': {
-			const exph = `/(?:<span.*>)\s?${ this.posterId }/`;
+			let fixedId = this.posterId;
+			if(fixedId && dixedId.length) {
+				fixedId = [...fixedId].map(c => /[A-Za-z0-9]/.test(c) ? c : '\\' + c).join('');
+			}
+			const exph = `/(?:<span.*>)\s?${ fixedId }/`;
 			Spells.addSpell(2 /* #id */, exph, false); return;
 		}
 		case 'hide-trip': Spells.addSpell(7 /* #trip */, this.posterTrip, false); return;
