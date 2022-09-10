@@ -56,7 +56,7 @@ const defaultCfg = {
 	linksOver    : 100,  //    delay appearance (ms)
 	linksOut     : 100, //    delay disappearance (ms)
 	markViewed   : 0,    //    mark viewed posts
-	strikeHidd   : 0,    //    strike >>links to hidden posts
+	strikeHidd   : 1,    //    strike >>links to hidden posts
 	removeHidd   : 0,    //        also remove from reply maps
 	noNavigHidd  : 0,    //    don't show previews for hidden posts
 	markMyLinks  : 1,    // mark links to my posts with (You)

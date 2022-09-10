@@ -427,7 +427,7 @@ function updateCSS() {
 		Cfg.imgNames === 2 ? '.de-img-name { text-decoration: none !important; text-transform: capitalize; }' : '' }
 	${ Cfg.widePosts ? '.de-reply { float: none; width: 99.9%; margin-left: 0; }' : '' }
 	${ aib.qPostMsg } { max-width: ${ Cfg.limitPostMsg }px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; }
-	${ Cfg.strikeHidd ? '.de-link-hid { text-decoration: line-through !important; }' : '' }
+	${ Cfg.strikeHidd ? '.de-link-hid { text-decoration: line-through !important; opacity: .5 !important; }' : '' }
 	${ Cfg.noSpoilers === 1 ?
 		`.spoiler, s { color: #F5F5F5 !important; background-color: #888 !important; }
 			.spoiler > a, s > a:not(:hover) { color: #F5F5F5 !important; background-color: #888 !important; }` : '' }

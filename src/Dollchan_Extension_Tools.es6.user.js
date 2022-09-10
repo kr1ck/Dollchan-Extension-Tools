@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            Dollchan Extension Tools
-// @version         21.7.14
+// @version         21.7.15
 // @namespace       http://www.freedollchan.org/scripts/*
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
@@ -29,8 +29,8 @@
 (function deMainFuncInner(deWindow, prestoStorage, FormData, scrollTo, localData) {
 'use strict';
 
-const version = '21.7.14';
-const commit = '68cab1c';
+const version = '21.7.15';
+const commit = '76cf28d';
 
 /* ==[ DefaultCfg.js ]========================================================================================
                                                 DEFAULT CONFIG
@@ -90,7 +90,7 @@ const defaultCfg = {
 	linksOver    : 100,  //    delay appearance (ms)
 	linksOut     : 100, //    delay disappearance (ms)
 	markViewed   : 0,    //    mark viewed posts
-	strikeHidd   : 0,    //    strike >>links to hidden posts
+	strikeHidd   : 1,    //    strike >>links to hidden posts
 	removeHidd   : 0,    //        also remove from reply maps
 	noNavigHidd  : 0,    //    don't show previews for hidden posts
 	markMyLinks  : 1,    // mark links to my posts with (You)
@@ -18896,7 +18896,7 @@ function updateCSS() {
 		Cfg.imgNames === 2 ? '.de-img-name { text-decoration: none !important; text-transform: capitalize; }' : '' }
 	${ Cfg.widePosts ? '.de-reply { float: none; width: 99.9%; margin-left: 0; }' : '' }
 	${ aib.qPostMsg } { max-width: ${ Cfg.limitPostMsg }px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; }
-	${ Cfg.strikeHidd ? '.de-link-hid { text-decoration: line-through !important; }' : '' }
+	${ Cfg.strikeHidd ? '.de-link-hid { text-decoration: line-through !important; opacity: .5 !important; }' : '' }
 	${ Cfg.noSpoilers === 1 ?
 		`.spoiler, s { color: #F5F5F5 !important; background-color: #888 !important; }
 			.spoiler > a, s > a:not(:hover) { color: #F5F5F5 !important; background-color: #888 !important; }` : '' }
