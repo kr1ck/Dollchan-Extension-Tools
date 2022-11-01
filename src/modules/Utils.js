@@ -713,6 +713,7 @@ function getFileType(url) {
 	case 'm4v': return 'video/mp4';
 	case 'ogv': return 'video/ogv';
 	case 'png': return 'image/png';
+	case 'web':
 	case 'webm': return 'video/webm';
 	case 'webp': return 'image/webp';
 	default: return '';

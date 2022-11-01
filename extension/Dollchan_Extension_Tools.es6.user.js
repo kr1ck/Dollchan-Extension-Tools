@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            Dollchan Extension Tools
-// @version         21.7.16
+// @version         21.7.17
 // @namespace       http://www.freedollchan.org/scripts/*
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
@@ -29,8 +29,8 @@
 (function deMainFuncInner(deWindow, prestoStorage, FormData, scrollTo, localData) {
 'use strict';
 
-const version = '21.7.16';
-const commit = '845d936';
+const version = '21.7.17';
+const commit = '01d93ce';
 
 /* ==[ DefaultCfg.js ]========================================================================================
                                                 DEFAULT CONFIG
@@ -2416,6 +2416,7 @@ function getFileType(url) {
 	case 'm4v': return 'video/mp4';
 	case 'ogv': return 'video/ogv';
 	case 'png': return 'image/png';
+	case 'web':
 	case 'webm': return 'video/webm';
 	case 'webp': return 'image/webp';
 	default: return '';
@@ -12539,7 +12540,7 @@ class ExpandableImage {
 		return value;
 	}
 	get isVideo() {
-		const value = /(webm|mp4|m4v|ogv)(&|$)/i.test(this.src) ||
+		const value = /(web|webm|mp4|m4v|ogv)(&|$)/i.test(this.src) ||
 			(this.src.startsWith('blob:') && this.el.hasAttribute('de-video'));
 		Object.defineProperty(this, 'isVideo', { value });
 		return value;
@@ -12769,7 +12770,7 @@ class ExpandableImage {
 
 		// Expand videos: WEBM, MP4
 		// FIXME: handle null size videos
-		const isWebm = getFileExt(origSrc) === 'webm';
+		const isWebm = getFileExt(origSrc) === 'webm' || getFileExt(origSrc) === 'web';
 		const needTitle = isWebm && Cfg.webmTitles;
 		let inPostSize = '';
 		if(inPost) {
@@ -15611,7 +15612,7 @@ class BaseBoard {
 		const value = cssMatches(this.qImgInfo.split(', ').join(' a, ') + ' a',
 			'[href$=".jpg"]', '[href$=".jpeg"]', '[href$=".png"]', '[href$=".gif"]', '[href$=".webm"]',
 			'[href$=".webp"]', '[href$=".mp4"]', '[href$=".m4v"]', '[href$=".ogv"]', '[href$=".apng"]',
-			', [href^="blob:"]');
+			'[href$=".web"]', '[href^="blob:"]');
 		Object.defineProperty(this, 'qImgNameLink', { value });
 		return value;
 	}

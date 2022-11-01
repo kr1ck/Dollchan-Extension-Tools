@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            Dollchan Extension Tools
-// @version         21.7.16
+// @version         21.7.17
 // @namespace       http://www.freedollchan.org/scripts/*
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
@@ -5507,8 +5507,8 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
   var _marked = regeneratorRuntime.mark(getFormElements);
 
-  var version = '21.7.16';
-  var commit = '845d936';
+  var version = '21.7.17';
+  var commit = '01d93ce';
 
   var defaultCfg = {
     disabled: 0,
@@ -7127,6 +7127,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       case 'png':
         return 'image/png';
 
+      case 'web':
       case 'webm':
         return 'video/webm';
 
@@ -21193,7 +21194,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "isVideo",
       get: function get() {
-        var value = /(webm|mp4|m4v|ogv)(&|$)/i.test(this.src) || this.src.startsWith('blob:') && this.el.hasAttribute('de-video');
+        var value = /(web|webm|mp4|m4v|ogv)(&|$)/i.test(this.src) || this.src.startsWith('blob:') && this.el.hasAttribute('de-video');
         Object.defineProperty(this, 'isVideo', {
           value: value
         });
@@ -21502,7 +21503,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         } 
 
 
-        var isWebm = getFileExt(origSrc) === 'webm';
+        var isWebm = getFileExt(origSrc) === 'webm' || getFileExt(origSrc) === 'web';
         var needTitle = isWebm && Cfg.webmTitles;
         var inPostSize = '';
 
@@ -25291,7 +25292,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }, {
       key: "qImgNameLink",
       get: function get() {
-        var value = cssMatches(this.qImgInfo.split(', ').join(' a, ') + ' a', '[href$=".jpg"]', '[href$=".jpeg"]', '[href$=".png"]', '[href$=".gif"]', '[href$=".webm"]', '[href$=".webp"]', '[href$=".mp4"]', '[href$=".m4v"]', '[href$=".ogv"]', '[href$=".apng"]', ', [href^="blob:"]');
+        var value = cssMatches(this.qImgInfo.split(', ').join(' a, ') + ' a', '[href$=".jpg"]', '[href$=".jpeg"]', '[href$=".png"]', '[href$=".gif"]', '[href$=".webm"]', '[href$=".webp"]', '[href$=".mp4"]', '[href$=".m4v"]', '[href$=".ogv"]', '[href$=".apng"]', '[href$=".web"]', '[href^="blob:"]');
         Object.defineProperty(this, 'qImgNameLink', {
           value: value
         });
