@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            Dollchan Extension Tools
-// @version         24.9.16.03
+// @version         24.9.16.05
 // @namespace       http://www.freedollchan.org/scripts/*
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
@@ -8181,7 +8181,6 @@ try {
 
 var _window$opera;
 function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
-function _readOnlyError(r) { throw new TypeError('"' + r + '" is read-only'); }
 function _toConsumableArray(r) { return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread(); }
 function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 function _iterableToArray(r) { if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r); }
@@ -8218,8 +8217,8 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
 
   var _this27 = this;
   var _marked = _regeneratorRuntime().mark(getFormElements);
-  var version = '24.9.16.03';
-  var commit = '83a599d';
+  var version = '24.9.16.05';
+  var commit = 'ffb6c82';
 
 
   var doc = deWindow.document;
@@ -24785,11 +24784,8 @@ Spells.addSpell(9, '', false);
         if (thread && this._wsPort && (_this$_refreshParamet = this._refreshParameters) !== null && _this$_refreshParamet !== void 0 && _this$_refreshParamet.threadId) {
           var _thread$socket3;
           var isOnion = unsafeWindow.location.hostname.endsWith('.onion');
-          var protocol = 'ws';
+          var protocol = unsafeWindow.location.protocol == 'https:' && !isOnion ? 'wss' : 'ws';
           var portToUse = thread.wsPort;
-          if (location.protocol == 'https:' && !isOnion) {
-            'wss', _readOnlyError("protocol");
-          }
           this._socketUrl = protocol + '://' + unsafeWindow.location.hostname + ':' + portToUse;
           if (((_thread$socket3 = thread.socket) === null || _thread$socket3 === void 0 ? void 0 : _thread$socket3.readyState) !== 1 || this._socketState === -1) {
             var _thread$socket4;

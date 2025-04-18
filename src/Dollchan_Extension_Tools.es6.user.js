@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            Dollchan Extension Tools
-// @version         24.9.16.04
+// @version         24.9.16.05
 // @namespace       http://www.freedollchan.org/scripts/*
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
@@ -27,8 +27,8 @@
 (function deMainFuncInner(deWindow, prestoStorage, FormData, scrollTo, localData) {
 'use strict';
 
-const version = '24.9.16.04';
-const commit = '83a599d';
+const version = '24.9.16.05';
+const commit = 'ffb6c82';
 
 /* ==[ GlobalVars.js ]== */
 
@@ -15254,13 +15254,8 @@ function initThreadUpdater(title, enableUpdate) {
 
 			if (thread && this._wsPort && this._refreshParameters?.threadId) {
 				const isOnion = unsafeWindow.location.hostname.endsWith('.onion');
-				const protocol = 'ws';
+				const protocol = (unsafeWindow.location.protocol == 'https:' && !isOnion) ? 'wss' : 'ws';
 				const portToUse = thread.wsPort;
-
-				if (location.protocol == 'https:' && !isOnion) {
-					protocol = 'wss';
-
-				}
 
 				this._socketUrl = protocol + '://' + unsafeWindow.location.hostname + ':' + portToUse;
 

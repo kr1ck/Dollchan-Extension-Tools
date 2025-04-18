@@ -407,13 +407,8 @@ function initThreadUpdater(title, enableUpdate) {
 
 			if (thread && this._wsPort && this._refreshParameters?.threadId) {
 				const isOnion = unsafeWindow.location.hostname.endsWith('.onion');
-				const protocol = 'ws';
+				const protocol = (unsafeWindow.location.protocol == 'https:' && !isOnion) ? 'wss' : 'ws';
 				const portToUse = thread.wsPort;
-
-				if (location.protocol == 'https:' && !isOnion) {
-					protocol = 'wss';
-
-				}
 
 				this._socketUrl = protocol + '://' + unsafeWindow.location.hostname + ':' + portToUse;
 
