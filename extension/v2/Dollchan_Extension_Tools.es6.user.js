@@ -28,7 +28,7 @@
 'use strict';
 
 const version = '24.9.16.03';
-const commit = 'f24d211';
+const commit = '83a599d';
 
 /* ==[ GlobalVars.js ]== */
 
@@ -11166,7 +11166,7 @@ class Post extends AbstractPost {
 		if(isHighlighted) {
 			this.el.classList.add('de-highlighted');
 		}
-		const isOpsPost = thr.opPosterId && thr.opPosterId === this.posterId;
+		const isOpsPost = thr?.opPosterId && thr.opPosterId === this.posterId;
 		el.classList.add(isOp ? 'de-oppost' : 'de-reply');
 		this.btns = $aEnd(this._pref = $q(aib.qPostRef, el),
 			'<span class="de-post-btns">' + Post.getPostBtns(isOp, aib.t) +
@@ -11183,7 +11183,7 @@ class Post extends AbstractPost {
 		if(posterIdEl && thr.IDColors) {
 			thr.IDColors.apply(posterIdEl);
 		}
-		const allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', thr.el);
+		const allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', thr?.el);
 
 		if(posterIdEl) {
 			posterIdEl.addEventListener('click', e => {
@@ -12085,7 +12085,7 @@ class Pview extends AbstractPost {
 		pByEl.set(pv, this);
 		const isMyPost = MyPosts.has(num);
 		const isHighlighted = HighlightedPosts.has(post.posterId);
-		const isOpsPost = post.thr.opPosterId && post.thr.opPosterId === post.posterId;
+		const isOpsPost = post.thr?.opPosterId && post.thr.opPosterId === post.posterId;
 		pv.className = `${ aib.cReply } de-pview` +
 			`${ post.isViewed ? ' de-viewed' : '' }` +
 			`${ isMyPost ? ' de-mypost' : '' }` +
@@ -12113,7 +12113,7 @@ class Pview extends AbstractPost {
 
 		const { thr, posterId } = post;
 		const posterIdEl = $q(aib.qPosterId, pv);
-		const allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', thr.el);
+		const allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', thr?.el);
 
 		if(posterIdEl) {
 			posterIdEl.addEventListener('click', e => {
@@ -14149,7 +14149,7 @@ class Thread {
 		this.IDColors = new IDColor();
 		this.Tip = new Tip();
 		let lastPost = this.op = new Post(aib.getOp(el), this, num, 0, true, prev ? prev.last : null);
-		this.opPosterId = this.op.posterId;
+		this.opPosterId = this.op?.posterId;
 		pByEl.set(el, lastPost);
 		for(let i = 0; i < len; ++i) {
 			const pEl = els[i];
@@ -14257,6 +14257,7 @@ class Thread {
 			case 'de-thr-collapse-link': this.loadPosts(Thread.visPosts, true); break;
 			case 'de-thr-updater':
 			case 'de-thr-updater-link':
+				console.log({'aib.t': aib})
 				if(aib.t) {
 					updater.forceLoad();
 				} else {
@@ -14838,6 +14839,10 @@ function initThreadUpdater(title, enableUpdate) {
 
 	const counter = {
 		count(delayMS, useCounter, callback) {
+			if (this._socketState === 1) {
+				this._set(10);
+				_stopCounter();
+			}
 			if(!this._enabled || !useCounter) {
 				this._countingTO = setTimeout(() => {
 					this._countingTO = null;
@@ -14869,6 +14874,11 @@ function initThreadUpdater(title, enableUpdate) {
 		setWait() {
 			this._stopCounter();
 			if(this._enabled) {
+				if (this._socketState === 1) {
+					this._el.innerHTML = '⬤ Live';
+					this._el.style.color = 'green';
+					return;
+				}
 				this._el.innerHTML = '<svg class="de-wait"><use xlink:href="#de-symbol-wait"/></svg>';
 			}
 		},
@@ -14882,6 +14892,11 @@ function initThreadUpdater(title, enableUpdate) {
 			return value;
 		},
 		_set(seconds) {
+			if (this._socketState === 1) {
+				this._el.innerHTML = '⬤ Live';
+				this._el.style.color = 'green';
+				 return;
+			}
 			this._el.innerHTML = seconds;
 		},
 		_stopCounter() {
@@ -14901,7 +14916,7 @@ function initThreadUpdater(title, enableUpdate) {
 			return Cfg.favIcoBlink && !!this.originalIcon;
 		},
 		get originalIcon() {
-			return this._iconEl ? this._iconEl.href : null;
+			return this._iconEl ? (this._cachedFavicon || this._iconEl.href) : null;
 		},
 		initIcons() {
 			if(this._isInited) {
@@ -14978,7 +14993,7 @@ function initThreadUpdater(title, enableUpdate) {
 				$bEnd(doc.head, '<link href="/favicon.ico" rel="shortcut icon"/>');
 			Object.defineProperties(this, {
 				_iconEl      : { value: el, writable: true },
-				originalIcon : { value: el.href }
+				originalIcon : { value: this._cachedFavicon || el.href }
 			});
 			return el;
 		},
@@ -15022,6 +15037,10 @@ function initThreadUpdater(title, enableUpdate) {
 			canvas.width = canvas.height = wh;
 			ctx.drawImage(icon, 0, 0, wh, wh);
 			const original = ctx.getImageData(0, 0, wh, wh);
+			this._cachedFavicon = canvas.toDataURL();
+			Object.defineProperties(this, {
+				originalIcon : { value: this._cachedFavicon }
+			});
 			// Error (red cross)
 			this._drawCanvLines(ctx, [15, 15, 7, 7], [7, 15, 15, 7], '#780000', 3, scale);
 			this._drawCanvLines(ctx, [14.5, 14.5, 7.5, 7.5], [7.5, 14.5, 14.5, 7.5], '#fa2020', 1.5, scale);
@@ -15110,8 +15129,56 @@ function initThreadUpdater(title, enableUpdate) {
 		}
 	};
 
+
 	const updMachine = {
+		initSocket(needSleep, loadOnce) {
+			// counter.setWait();
+			thread.stopWs()
+
+			this._socketState = 0;
+			console.log('queueing socket reconnect')
+			clearTimeout(this._socketReconnect);
+			this._socketReconnect = setTimeout(() => {
+				console.log('initializing socket')
+
+				const thread = unsafeWindow.thread;
+				if (thread.socket?.readyState !== 1 || this._socketState !== 1) {
+					thread.socket = new WebSocket(this._socketUrl);
+				}
+
+				thread.socket.onopen = () => {
+					console.log('socket opened');
+					thread.socket.send(this._refreshParameters.boardUri + '-' + this._refreshParameters.threadId);
+
+					this._socketState = 1;
+
+					//this.stopUpdater();
+					//this._delay = 9999999999 * 1e3;
+
+					this._state = 0;
+					this._makeStep(true);
+				}
+				thread.socket.onmessage = message => {
+					console.log('reseived message', message);
+					this._state = 1;
+					this._makeStep();
+				}
+				thread.socket.onclose = () => {
+					console.log('socket closed');
+
+					this.initSocket();
+				}
+				thread.socket.onerror = (error) => {
+					console.log('socket errored:', error);
+
+					this.initSocket();
+				}
+
+			}, (Cfg.updThrDelay - 1) * 1e3)
+		},
+
 		start(needSleep = false, loadOnce = false) {
+			this._socketState = this._socketState || -1;
 			if(this._state !== -1) {
 				this.stopUpdater(false);
 			}
@@ -15120,6 +15187,37 @@ function initThreadUpdater(title, enableUpdate) {
 			this._delay = this._initDelay = Cfg.updThrDelay * 1e3;
 			if(!loadOnce) {
 				this._setUpdateStatus('on');
+			}
+			const thread = unsafeWindow.thread;
+			this._socketUrl = this._socketUrl || thread.socket?.url;
+			this._refreshParameters = thread.refreshParameters;
+			this._wsPort = thread.wsPort;
+
+
+			if (thread && this._wsPort && this._refreshParameters?.threadId) {
+				const isOnion = unsafeWindow.location.hostname.endsWith('.onion');
+				const protocol = 'ws';
+				const portToUse = thread.wsPort;
+
+				if (location.protocol == 'https:' && !isOnion) {
+					protocol = 'wss';
+
+				}
+
+				this._socketUrl = protocol + '://' + unsafeWindow.location.hostname + ':' + portToUse;
+
+				if (thread.socket?.readyState !== 1 || this._socketState === -1) {
+					console.log('should reinitialize, initial state on start 11:', thread.socket?.readyState);
+					this.initSocket();
+					this._makeStep(needSleep);
+					// return;
+				} else {
+					console.log('socket connected, disabling timer 11')
+					this._socketState = 1;
+					this._state = 0;
+					this._makeStep(true);
+				}
+				return;
 			}
 			this._makeStep(needSleep);
 		},
@@ -17379,10 +17477,13 @@ function getImageBoard(checkDomains, checkEngines) {
 		constructor(...args) {
 			super(...args);
 			this.qPosterId = '.spanId > .labelId';
+			this.JsonBuilder = null; // should probably switch to this, they use json data
+			this._8chan = true;
 		}
 		get css() {
 			return `${ super.css }
 				.reloadCaptchaButton { display: none !important; }
+				.divRefresh { display: block !important; }
 				${ Cfg.addSageBtn ? '#useSageSpan { display: none; }' : '' }`;
 		}
 		captchaUpdate() {
@@ -17391,6 +17492,7 @@ function getImageBoard(checkDomains, checkEngines) {
 		}
 	}
 	ibDomains['8chan.moe'] = _8chan;
+	ibDomains['8chan.se'] = _8chan;
 
 	class _8kun extends Vichan {
 		getEmptyFile(field, name) {

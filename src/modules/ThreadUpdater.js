@@ -50,6 +50,10 @@ function initThreadUpdater(title, enableUpdate) {
 
 	const counter = {
 		count(delayMS, useCounter, callback) {
+			if (this._socketState === 1) {
+				this._set(10);
+				_stopCounter();
+			}
 			if(!this._enabled || !useCounter) {
 				this._countingTO = setTimeout(() => {
 					this._countingTO = null;
@@ -81,6 +85,11 @@ function initThreadUpdater(title, enableUpdate) {
 		setWait() {
 			this._stopCounter();
 			if(this._enabled) {
+				if (this._socketState === 1) {
+					this._el.innerHTML = '⬤ Live';
+					this._el.style.color = 'green';
+					return;
+				}
 				this._el.innerHTML = '<svg class="de-wait"><use xlink:href="#de-symbol-wait"/></svg>';
 			}
 		},
@@ -94,6 +103,11 @@ function initThreadUpdater(title, enableUpdate) {
 			return value;
 		},
 		_set(seconds) {
+			if (this._socketState === 1) {
+				this._el.innerHTML = '⬤ Live';
+				this._el.style.color = 'green';
+				 return;
+			}
 			this._el.innerHTML = seconds;
 		},
 		_stopCounter() {
@@ -113,7 +127,7 @@ function initThreadUpdater(title, enableUpdate) {
 			return Cfg.favIcoBlink && !!this.originalIcon;
 		},
 		get originalIcon() {
-			return this._iconEl ? this._iconEl.href : null;
+			return this._iconEl ? (this._cachedFavicon || this._iconEl.href) : null;
 		},
 		initIcons() {
 			if(this._isInited) {
@@ -190,7 +204,7 @@ function initThreadUpdater(title, enableUpdate) {
 				$bEnd(doc.head, '<link href="/favicon.ico" rel="shortcut icon"/>');
 			Object.defineProperties(this, {
 				_iconEl      : { value: el, writable: true },
-				originalIcon : { value: el.href }
+				originalIcon : { value: this._cachedFavicon || el.href }
 			});
 			return el;
 		},
@@ -234,6 +248,10 @@ function initThreadUpdater(title, enableUpdate) {
 			canvas.width = canvas.height = wh;
 			ctx.drawImage(icon, 0, 0, wh, wh);
 			const original = ctx.getImageData(0, 0, wh, wh);
+			this._cachedFavicon = canvas.toDataURL();
+			Object.defineProperties(this, {
+				originalIcon : { value: this._cachedFavicon }
+			});
 			// Error (red cross)
 			this._drawCanvLines(ctx, [15, 15, 7, 7], [7, 15, 15, 7], '#780000', 3, scale);
 			this._drawCanvLines(ctx, [14.5, 14.5, 7.5, 7.5], [7.5, 14.5, 14.5, 7.5], '#fa2020', 1.5, scale);
@@ -322,8 +340,56 @@ function initThreadUpdater(title, enableUpdate) {
 		}
 	};
 
+
 	const updMachine = {
+		initSocket(needSleep, loadOnce) {
+			// counter.setWait();
+			thread.stopWs()
+
+			this._socketState = 0;
+			console.log('queueing socket reconnect')
+			clearTimeout(this._socketReconnect);
+			this._socketReconnect = setTimeout(() => {
+				console.log('initializing socket')
+
+				const thread = unsafeWindow.thread;
+				if (thread.socket?.readyState !== 1 || this._socketState !== 1) {
+					thread.socket = new WebSocket(this._socketUrl);
+				}
+
+				thread.socket.onopen = () => {
+					console.log('socket opened');
+					thread.socket.send(this._refreshParameters.boardUri + '-' + this._refreshParameters.threadId);
+
+					this._socketState = 1;
+
+					//this.stopUpdater();
+					//this._delay = 9999999999 * 1e3;
+
+					this._state = 0;
+					this._makeStep(true);
+				}
+				thread.socket.onmessage = message => {
+					console.log('reseived message', message);
+					this._state = 1;
+					this._makeStep();
+				}
+				thread.socket.onclose = () => {
+					console.log('socket closed');
+
+					this.initSocket();
+				}
+				thread.socket.onerror = (error) => {
+					console.log('socket errored:', error);
+
+					this.initSocket();
+				}
+
+			}, (Cfg.updThrDelay - 1) * 1e3)
+		},
+
 		start(needSleep = false, loadOnce = false) {
+			this._socketState = this._socketState || -1;
 			if(this._state !== -1) {
 				this.stopUpdater(false);
 			}
@@ -332,6 +398,37 @@ function initThreadUpdater(title, enableUpdate) {
 			this._delay = this._initDelay = Cfg.updThrDelay * 1e3;
 			if(!loadOnce) {
 				this._setUpdateStatus('on');
+			}
+			const thread = unsafeWindow.thread;
+			this._socketUrl = this._socketUrl || thread.socket?.url;
+			this._refreshParameters = thread.refreshParameters;
+			this._wsPort = thread.wsPort;
+
+
+			if (thread && this._wsPort && this._refreshParameters?.threadId) {
+				const isOnion = unsafeWindow.location.hostname.endsWith('.onion');
+				const protocol = 'ws';
+				const portToUse = thread.wsPort;
+
+				if (location.protocol == 'https:' && !isOnion) {
+					protocol = 'wss';
+
+				}
+
+				this._socketUrl = protocol + '://' + unsafeWindow.location.hostname + ':' + portToUse;
+
+				if (thread.socket?.readyState !== 1 || this._socketState === -1) {
+					console.log('should reinitialize, initial state on start 11:', thread.socket?.readyState);
+					this.initSocket();
+					this._makeStep(needSleep);
+					// return;
+				} else {
+					console.log('socket connected, disabling timer 11')
+					this._socketState = 1;
+					this._state = 0;
+					this._makeStep(true);
+				}
+				return;
 			}
 			this._makeStep(needSleep);
 		},

@@ -571,7 +571,7 @@ class Post extends AbstractPost {
 		if(isHighlighted) {
 			this.el.classList.add('de-highlighted');
 		}
-		const isOpsPost = thr.opPosterId && thr.opPosterId === this.posterId;
+		const isOpsPost = thr?.opPosterId && thr.opPosterId === this.posterId;
 		el.classList.add(isOp ? 'de-oppost' : 'de-reply');
 		this.btns = $aEnd(this._pref = $q(aib.qPostRef, el),
 			'<span class="de-post-btns">' + Post.getPostBtns(isOp, aib.t) +
@@ -588,7 +588,7 @@ class Post extends AbstractPost {
 		if(posterIdEl && thr.IDColors) {
 			thr.IDColors.apply(posterIdEl);
 		}
-		const allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', thr.el);
+		const allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', thr?.el);
 
 		if(posterIdEl) {
 			posterIdEl.addEventListener('click', e => {

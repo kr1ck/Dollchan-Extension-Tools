@@ -235,7 +235,7 @@ class Pview extends AbstractPost {
 		pByEl.set(pv, this);
 		const isMyPost = MyPosts.has(num);
 		const isHighlighted = HighlightedPosts.has(post.posterId);
-		const isOpsPost = post.thr.opPosterId && post.thr.opPosterId === post.posterId;
+		const isOpsPost = post.thr?.opPosterId && post.thr.opPosterId === post.posterId;
 		pv.className = `${ aib.cReply } de-pview` +
 			`${ post.isViewed ? ' de-viewed' : '' }` +
 			`${ isMyPost ? ' de-mypost' : '' }` +
@@ -263,7 +263,7 @@ class Pview extends AbstractPost {
 
 		const { thr, posterId } = post;
 		const posterIdEl = $q(aib.qPosterId, pv);
-		const allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', thr.el);
+		const allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', thr?.el);
 
 		if(posterIdEl) {
 			posterIdEl.addEventListener('click', e => {

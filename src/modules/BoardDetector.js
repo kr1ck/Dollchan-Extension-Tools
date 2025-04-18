@@ -1249,10 +1249,13 @@ function getImageBoard(checkDomains, checkEngines) {
 		constructor(...args) {
 			super(...args);
 			this.qPosterId = '.spanId > .labelId';
+			this.JsonBuilder = null; // should probably switch to this, they use json data
+			this._8chan = true;
 		}
 		get css() {
 			return `${ super.css }
 				.reloadCaptchaButton { display: none !important; }
+				.divRefresh { display: block !important; }
 				${ Cfg.addSageBtn ? '#useSageSpan { display: none; }' : '' }`;
 		}
 		captchaUpdate() {
@@ -1261,6 +1264,7 @@ function getImageBoard(checkDomains, checkEngines) {
 		}
 	}
 	ibDomains['8chan.moe'] = _8chan;
+	ibDomains['8chan.se'] = _8chan;
 
 	class _8kun extends Vichan {
 		getEmptyFile(field, name) {
