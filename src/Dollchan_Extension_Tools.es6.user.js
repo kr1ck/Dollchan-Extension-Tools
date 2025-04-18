@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            Dollchan Extension Tools
-// @version         21.7.6.0
+// @version         24.9.16.01
 // @namespace       http://www.freedollchan.org/scripts/*
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
@@ -27,8 +27,23 @@
 (function deMainFuncInner(deWindow, prestoStorage, FormData, scrollTo, localData) {
 'use strict';
 
-const version = '21.7.6.0';
-const commit = '19c4044';
+const version = '24.9.16.01';
+const commit = '0f36491';
+
+/* ==[ GlobalVars.js ]== */
+
+const doc = deWindow.document;
+const emptyFn = Function.prototype;
+const aProto = Array.prototype;
+const gitWiki = 'https://github.com/kr1ck/Dollchan-Extension-Tools/wiki/';
+const gitRaw = 'https://raw.githubusercontent.com/kr1ck/Dollchan-Extension-Tools/master/';
+
+let aib, Cfg, dTime, dummy, isExpImg, isPreImg, lang, locStorage, nav, needScroll, pByEl, pByNum, postform,
+	sesStorage, updater;
+let topWinZ = 10;
+
+/* global chrome, GM, GM_deleteValue, GM_getValue, GM_info, GM_openInTab, GM_setValue, GM_xmlhttpRequest,
+	unsafeWindow */
 
 /* ==[ DefaultCfg.js ]========================================================================================
                                                 DEFAULT CONFIG
@@ -1714,20 +1729,6 @@ const Lng = {
 		'Firefox аддон</a> доступний!']
 };
 
-/* ==[ GlobalVars.js ]== */
-
-const doc = deWindow.document;
-const emptyFn = Function.prototype;
-const aProto = Array.prototype;
-const gitWiki = 'https://github.com/SthephanShinkufag/Dollchan-Extension-Tools/wiki/';
-const gitRaw = 'https://raw.githubusercontent.com/SthephanShinkufag/Dollchan-Extension-Tools/master/';
-
-let $each, aib, Cfg, docBody, dTime, dummy, isExpImg, isPreImg, lang, locStorage, nav, needScroll, pByEl,
-	pByNum, pr, sesStorage, updater;
-let quotedText = '';
-let visPosts = 2;
-let topWinZ = 10;
-
 /* ==[ Utils.js ]=============================================================================================
                                                     UTILS
 =========================================================================================================== */
@@ -2423,81 +2424,6 @@ WebmParser.Element = function(elData, dataLength, offset) {
 	this.size = size;
 };
 
-function getErrorMessage(err) {
-	if(err instanceof AjaxError) {
-		return err.toString();
-	}
-	if(typeof err === 'string') {
-		return err;
-	}
-	const { stack, name, message } = err;
-	return Lng.internalError[lang] + (
-		!stack ? `${ name }: ${ message }` :
-		nav.isWebkit ? stack : `${ name }: ${ message }\n${ !nav.isFirefox ? stack : stack.replace(
-			/^([^@]*).*\/(.+)$/gm,
-			(str, fName, line) => `    at ${ fName ? `${ fName } (${ line })` : line }`
-		) }`
-	);
-}
-
-async function readFile(file, asText = false) {
-	return new Promise(resolve => {
-		const fr = new FileReader();
-		// XXX: firefox hack to prevent 'XrayWrapper denied access to property "then"' errors
-		fr.onload = e => resolve({ data: e.target.result });
-		if(asText) {
-			fr.readAsText(file);
-		} else {
-			fr.readAsArrayBuffer(file);
-		}
-	});
-}
-
-function getFileType(url) {
-	const dotIdx = url.lastIndexOf('.') + 1;
-	switch(dotIdx && url.substr(dotIdx).toLowerCase()) {
-	case 'gif': return 'image/gif';
-	case 'jpeg':
-	case 'jpg': return 'image/jpeg';
-	case 'mp4':
-	case 'm4v': return 'video/mp4';
-	case 'ogv': return 'video/ogv';
-	case 'png': return 'image/png';
-	case 'webm': return 'video/webm';
-	case 'webp': return 'image/webp';
-	default: return '';
-	}
-}
-
-function downloadBlob(blob, name) {
-	const url = nav.isMsEdge ? navigator.msSaveOrOpenBlob(blob, name) : deWindow.URL.createObjectURL(blob);
-	const link = $bEnd(docBody, `<a href="${ url }" download="${ name }"></a>`);
-	link.click();
-	setTimeout(() => {
-		deWindow.URL.revokeObjectURL(url);
-		link.remove();
-	}, 2e5);
-}
-
-function showDonateMsg() {
-	const font = ' style="font: 13px monospace; color: green;"';
-	$popup('donate', Lng.donateMsg[lang] + ':<br style="margin-bottom: 8px;">' +
-		'<div class="de-logo"><svg><use xlink:href="#de-symbol-panel-logo"/></svg></div>' +
-		'<div style="display: inline-block;"><b><i>Yandex.Money</i></b><br>' +
-		`<span class="de-list de-depend"><i${
-			font }>410012122418236</i></span><br><b><i>WebMoney</i></b><br>` +
-		`<span class="de-list de-depend">WMZ &ndash; <i${ font }>Z100197626370</i></span><br>` +
-		`<span class="de-list de-depend">WMR &ndash; <i${ font }>R266614957054</i></span><br>` +
-		`<span class="de-list de-depend">WMU &ndash; <i${ font }>U142375546253</i></span><br>` +
-		`<b><i>Bitcoin</i></b><br><span class="de-list de-depend">P2PKH &ndash; <i${
-			font }>15xEo7BVQ3zjztJqKSRVhTq3tt3rNSHFpC</i></span><br>` +
-		`<span class="de-list de-depend">P2SH &ndash; <i${
-			font }>3AhNPPpvtxQoFCLXk5e9Hzh6Ex9h7EoNzq</i></span></div>` +
-		(nav.firefoxVer >= 56 && nav.scriptHandler !== 'WebExtension' ?
-			`<br><br>New: <a href="https://addons.mozilla.org/${ lang === 1 ? 'en-US' : 'ru' }` +
-			'/firefox/addon/dollchan-extension/" target="_blank">' + Lng.firefoxAddon[lang] : ''));
-}
-
 /* ==[ Storage.js ]===========================================================================================
                                                    STORAGE
 =========================================================================================================== */
@@ -3093,7 +3019,8 @@ function initStorageEvent() {
 			updateFavWindow(...data);
 			return;
 		}
-		case '__de-mypost': MyPosts.purge(); return;
+		case '__de-mypost': MyPosts.update(); return;
+		case '__de-highlighted': HighlightedPosts.purge(); return;
 		case '__de-webmvolume':
 			val = +val || 0;
 			Cfg.webmVolume = val;
@@ -11702,6 +11629,14 @@ class Post extends AbstractPost {
 			return;
 		}
 		case 'hide-name': Spells.addSpell(6 /* #name */, this.posterName, false); return;
+		case 'hide-uid': {
+			let fixedId = this.posterId;
+			if(fixedId && fixedId.length) {
+				fixedId = [...fixedId].map(c => /[A-Za-z0-9]/.test(c) ? c : '\\' + c).join('');
+			}
+			const exph = `/(?:<span.*>)\s?${ fixedId }/`;
+			Spells.addSpell(2 /* #id */, exph, false); return;
+		}
 		case 'hide-trip': Spells.addSpell(7 /* #trip */, this.posterTrip, false); return;
 		case 'hide-img': {
 			const { weight: w, width: wi, height: h } = this.images.firstAttach;
@@ -11770,6 +11705,7 @@ class Post extends AbstractPost {
 			this._selRange = sel.getRangeAt(0);
 		}
 		return `${ ssel ? item('sel') : '' }${
+			this.posterId ? item('uid') : '' }${
 			this.posterName ? item('name') : '' }${
 			this.posterTrip ? item('trip') : '' }${
 			this.images.hasAttachments ? item('img') + item('imgn') + item('ihash') : item('noimg') }${
@@ -12225,7 +12161,47 @@ class Pview extends AbstractPost {
 				'<use xlink:href="#de-symbol-post-fav"></use></svg>' : '') +
 			(post.sage ? '<svg class="de-btn-sage"><use xlink:href="#de-symbol-post-sage"/></svg>' : '') +
 			'<svg class="de-btn-stick"><use xlink:href="#de-symbol-post-stick"/></svg>' +
-			'<span class="de-post-counter' + pCountHtml;
+			'<span class="de-post-counter' + postsCountHtml;
+
+		const { thr, posterId } = post;
+		const posterIdEl = $q(aib.qPosterId, pv);
+		if(posterIdEl) {
+			posterIdEl.addEventListener('click', e => {
+				const isAdd = !HighlightedPosts.has(post.posterId);
+				if(isAdd) {
+					HighlightedPosts.set(post.posterId, post.thr.num);
+				} else {
+					HighlightedPosts.removeStorage(post.posterId);
+				}
+				const allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', document.body);
+				for(let i = 0; i < allPosts.length; i++) {
+					const post = allPosts[i];
+					const posterIdEl = $q(aib.qPosterId, post);
+					if(posterIdEl && posterIdEl.textContent === posterId) {
+						post.classList.toggle('de-highlighted', isAdd);
+					}
+				}
+			}, true);
+
+			if(typeof thr.Tip !== 'undefined') {
+				posterIdEl.addEventListener('mouseover', e => {
+					const t = e.target.textContent;
+					let o = 0;
+					const allPosts = $Q(aib.qRPost, thr.el);
+					for(let i = 0; i < allPosts.length; i++) {
+						const post = allPosts[i];
+						const posterIdEl = $q(aib.qPosterId, post);
+						if(posterIdEl && posterIdEl.textContent === t) {
+							o++;
+						}
+					}
+					thr.Tip.show(e.target, o + ' post' + (o !== 1 ? 's' : '') + ' by this ID');
+				}, true);
+				posterIdEl.addEventListener('mouseout', e => {
+					thr.Tip.hide();
+				}, true);
+			}
+		}
 		if(isCached) {
 			if(isOp) {
 				this.remoteThr = post.thr;
@@ -12876,8 +12852,8 @@ class ExpandableImage {
 		return value;
 	}
 	get isVideo() {
-		const value = /(webm|mp4|m4v|ogv)(&|$)/i.test(this.src) ||
-			(this.src.startsWith('blob:') && this.el.hasAttribute('de-video'));
+		const value = /(webm|mov|mp4|m4v|ogv)(&|$)/i.test(this.src) ||
+			this.src.startsWith('blob:') && this.el.hasAttribute('de-video');
 		Object.defineProperty(this, 'isVideo', { value });
 		return value;
 	}
@@ -13355,9 +13331,21 @@ class AttachedImage extends ExpandableImage {
 		return null;
 	}
 	_getImageSrc() {
-		// XXX: DON'T USE aib.getImgSrcLink(this.el).href
-		// If #ihash spells enabled, Chrome reads href in ajaxed posts as empty -> image can't be expanded!
-		return aib.getImgSrcLink(this.el).getAttribute('href');
+		// Donʼt use aib.getImgSrcLink(this.el).href
+		// If #ihash spells enabled, Chrome reads href in ajaxed posts as empty -> image canʼt be expanded!
+		const src = aib.getImgSrcLink(this.el).getAttribute('href');
+		if (/effectivegatetocontent/i.test(src)) {
+		    const extensionRegex = /\.([0-9a-z]+)(?:[\?#]|$)/i;
+		    const m = this.name.trim().match(extensionRegex);
+		    const extension = m[1] || null;
+		    let fixedSrc = this.el.currentSrc.replace('thumb', 'image');
+		    fixedSrc = fixedSrc.replace(/(\d{9,})(s)/, '$1')
+		    if (extension) {
+			fixedSrc = fixedSrc.replace(/\.([0-9a-z]+)(?:[\?#]|$)/i, `.${extension}`);
+		    }
+		    return fixedSrc;
+		}
+		return src;
 	}
 }
 AttachedImage.viewer = null;
@@ -15823,6 +15811,8 @@ class BaseBoard {
 		this.qFormTxta = 'tr:not([style*="none"]) textarea:not([style*="display:none"])';
 		this.qOmitted = '.omittedposts';
 		this.qOPost = '.oppost';
+		this.qOPostEnd = 'form > table, div > table, div[id^="repl"]';
+		this.qPosterId = '.postInfo .posteruid span, .poster_hash';
 		this.qPages = 'table[border="1"] > tbody > tr > td:nth-child(2) > a:last-of-type';
 		this.qPost = '.reply';
 		this.qPostHeader = '.de-post-btns';
@@ -15877,19 +15867,19 @@ class BaseBoard {
 		return $match('tr:not([style*="none"]) input:not([type="hidden"]):not([style*="none"])',
 			'[name="subject"]', '[name="field3"]');
 	}
-	get qImgNameLink() {
-		const value = cssMatches(this.qImgInfo.split(', ').join(' a, ') + ' a',
-			'[href$=".jpg"]', '[href$=".jpeg"]', '[href$=".png"]', '[href$=".gif"]', '[href$=".webm"]',
-			'[href$=".webp"]', '[href$=".mp4"]', '[href$=".m4v"]', '[href$=".ogv"]', '[href$=".apng"]',
-			', [href^="blob:"]');
-		Object.defineProperty(this, 'qImgNameLink', { value });
+	get qMsgImgLink() {
+		const value = $match(this.qPostMsg.split(', ').join(' a, ') + ' a',
+			'[href$=".jfif"]', '[href$=".jpg"]', '[href$=".jpeg"]', '[href$=".png"]', '[href$=".gif"]',
+			'[href$=".webp"]');
+		Object.defineProperty(this, 'qMsgImgLink', { value });
 		return value;
 	}
 	get qPostImgNameLink() {
 		const value = $match(this.qPostImgInfo.split(', ').join(' a, ') + ' a',
 			'[href$=".jfif"]', '[href$=".jpg"]', '[href$=".jpeg"]', '[href$=".png"]', '[href$=".gif"]',
 			'[href$=".webm"]', '[href$=".webp"]', '[href$=".mov"]', '[href$=".mp4"]', '[href$=".m4v"]',
-			'[href$=".ogv"]', '[href$=".apng"]', ', [href^="blob:"]');
+			'[href$=".ogv"]', '[href$=".apng"]', ', [href^="blob:"]',
+			'[href$=".web"]', '[href^="blob:"]');
 		Object.defineProperty(this, 'qPostImgNameLink', { value });
 		return value;
 	}

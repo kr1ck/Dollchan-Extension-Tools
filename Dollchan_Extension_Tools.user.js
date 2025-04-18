@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            Dollchan Extension Tools
-// @version         24.9.16.0.01
+// @version         24.9.16.01
 // @namespace       http://www.freedollchan.org/scripts/*
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
@@ -8215,15 +8215,17 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
 (function deMainFuncInner(deWindow, prestoStorage, FormData, scrollTo, localData) {
   'use strict';
 
-  var _this26 = this;
+  var _this27 = this;
   var _marked = _regeneratorRuntime().mark(getFormElements);
-  var version = '24.9.16.0.01';
-  var commit = '44dbfcf';
+  var version = '24.9.16.01';
+  var commit = '0f36491';
 
 
   var doc = deWindow.document;
-  var gitWiki = 'https://github.com/SthephanShinkufag/Dollchan-Extension-Tools/wiki/';
-  var gitRaw = 'https://raw.githubusercontent.com/SthephanShinkufag/Dollchan-Extension-Tools/master/';
+  var emptyFn = Function.prototype;
+  var aProto = Array.prototype;
+  var gitWiki = 'https://github.com/kr1ck/Dollchan-Extension-Tools/wiki/';
+  var gitRaw = 'https://raw.githubusercontent.com/kr1ck/Dollchan-Extension-Tools/master/';
   var aib, Cfg, dTime, dummy, isExpImg, isPreImg, lang, locStorage, nav, needScroll, pByEl, pByNum, postform, sesStorage, updater;
   var topWinZ = 10;
 
@@ -10348,6 +10350,33 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       }
     }]);
   }(PostsStorage))();
+  var HighlightedPosts = new (function (_PostsStorage4) {
+    function HighlightedPostsClass() {
+      var _this12;
+      _classCallCheck(this, HighlightedPostsClass);
+      _this12 = _callSuper(this, HighlightedPostsClass);
+      _this12.storageName = 'de-highlighted';
+      return _this12;
+    }
+    _inherits(HighlightedPostsClass, _PostsStorage4);
+    return _createClass(HighlightedPostsClass, [{
+      key: "hideHidden",
+      value: function hideHidden(post, num) {
+        var uHideData = HighlightedPosts.get(num);
+        if (!uHideData) {
+          post.setUserVisib(true);
+        } else {
+          post.setUserVisib(!!uHideData, false);
+        }
+      }
+    }, {
+      key: "_readStorage",
+      value: function _readStorage() {
+        PostsStorage._migrateOld(this.storageName, 'de-threads-new');
+        return _superPropGet(HighlightedPostsClass, "_readStorage", this, 3)([]);
+      }
+    }]);
+  }(PostsStorage))();
   function sendStorageEvent(name, value) {
     locStorage[name] = typeof value === 'string' ? value : JSON.stringify(value);
     locStorage.removeItem(name);
@@ -10372,6 +10401,9 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
           }
         case '__de-mypost':
           MyPosts.update();
+          return;
+        case '__de-highlighted':
+          HighlightedPosts.purge();
           return;
         case '__de-webmvolume':
           val = +val || 0;
@@ -10466,7 +10498,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
     isVidEnabled: false,
     initPanel: function initPanel(formEl) {
       var _postform,
-        _this12 = this;
+        _this13 = this;
       var filesCount = $Q(aib.qPostImg, formEl).length;
       var isThr = aib.t;
       (((_postform = postform) === null || _postform === void 0 ? void 0 : _postform.pArea[0]) || formEl).insertAdjacentHTML('beforebegin', "<div id=\"de-main\">\n\t\t\t<div id=\"de-panel\">\n\t\t\t\t<div id=\"de-panel-logo\" title=\"".concat(Lng.panelBtn.attach[lang], "\">\n\t\t\t\t\t<svg id=\"de-panel-logo-svg\">\n\t\t\t\t\t\t<use xlink:href=\"#de-symbol-panel-logo\"/>\n\t\t\t\t\t</svg>\n\t\t\t\t</div>\n\t\t\t\t<span id=\"de-panel-buttons\"").concat(!Cfg.expandPanel ? ' style="display: none;"' : '', ">\n\t\t\t\t").concat(Cfg.disabled ? this._getButton('enable') : this._getButton('cfg') + this._getButton('hid') + this._getButton('fav') + (Cfg.embedYTube ? this._getButton('vid') : '') + (!localData ? this._getButton('refresh') + (isThr || aib.page !== aib.firstPage ? this._getButton('goback') : '') + (!isThr && aib.page !== aib.lastPage ? this._getButton('gonext') : '') : '') + this._getButton('goup') + this._getButton('godown') + (filesCount ? this._getButton('expimg') + this._getButton('maskimg') : '') + (!localData && !nav.isPresto ? (filesCount && !Cfg.preLoadImgs ? this._getButton('preimg') : '') + (isThr ? this._getButton('savethr') : '') : '') + (!localData && isThr ? this._getButton(Cfg.ajaxUpdThr && !aib.isArchived ? 'upd-on' : 'upd-off') + (!nav.isSafari ? this._getButton('audio-off') : '') : '') + (aib.hasCatalog ? this._getButton('catalog') : '') + this._getButton('enable') + (isThr && Thread.first ? "<span id=\"de-panel-info\">\n\t\t\t\t\t\t<span id=\"de-panel-info-posts\" title=\"".concat(Lng.panelBtn[Cfg.panelCounter !== 2 ? 'postsCount' : 'postsNotHid'][lang], "\">").concat(Thread.first.postsCount, "</span>\n\t\t\t\t\t\t<span id=\"de-panel-info-files\" title=\"").concat(Lng.panelBtn.filesCount[lang], "\">").concat(filesCount, "</span>\n\t\t\t\t\t\t<span id=\"de-panel-info-posters\" title=\"").concat(Lng.panelBtn.postersCount[lang], "\">").concat(aib.postersCount, "</span>\n\t\t\t\t\t</span>") : ''), "\n\t\t\t\t</span>\n\t\t\t</div>\n\t\t\t").concat(Cfg.disabled ? '' : '<div id="de-wrapper-popup"></div><hr style="clear: both;">', "\n\t\t</div>"));
@@ -10474,17 +10506,17 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       this._el.addEventListener('click', this, true);
       if (!nav.isMobile) {
         ['mouseover', 'mouseout'].forEach(function (e) {
-          return _this12._el.addEventListener(e, _this12);
+          return _this13._el.addEventListener(e, _this13);
         });
       }
       this._buttons = $id('de-panel-buttons');
     },
     removeMain: function removeMain() {
-      var _this13 = this;
+      var _this14 = this;
       this._el.removeEventListener('click', this, true);
       if (!nav.isMobile) {
         ['mouseover', 'mouseout'].forEach(function (e) {
-          return _this13._el.removeEventListener(e, _this13);
+          return _this14._el.removeEventListener(e, _this14);
         });
       }
       delete this._postsCountEl;
@@ -10493,10 +10525,10 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       $id('de-main').remove();
     },
     handleEvent: function handleEvent(e) {
-      var _this14 = this;
+      var _this15 = this;
       return _asyncToGenerator(_regeneratorRuntime().mark(function _callee5() {
         var _$q;
-        var el, post, _iterator2, _step2, _el3, _this14$_menu;
+        var el, post, _iterator2, _step2, _el3, _this15$_menu;
         return _regeneratorRuntime().wrap(function _callee5$(_context5) {
           while (1) switch (_context5.prev = _context5.next) {
             case 0:
@@ -10525,10 +10557,10 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
             case 13:
               if (Cfg.expandPanel) {
                 if (!$q('.de-win-active')) {
-                  $hide(_this14._buttons);
+                  $hide(_this15._buttons);
                 }
               } else {
-                $show(_this14._buttons);
+                $show(_this15._buttons);
               }
               _context5.next = 16;
               return toggleCfg('expandPanel');
@@ -10544,12 +10576,12 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               toggleWindow('fav', false);
               return _context5.abrupt("return");
             case 23:
-              _this14.isVidEnabled = !_this14.isVidEnabled;
+              _this15.isVidEnabled = !_this15.isVidEnabled;
               toggleWindow('vid', false);
               return _context5.abrupt("return");
             case 26:
               if (nav.isMobile && !aib.t) {
-                _this14._menuToggleClickBtn(el);
+                _this15._menuToggleClickBtn(el);
               } else {
                 deWindow.location.reload();
               }
@@ -10601,7 +10633,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
                 _context5.next = 57;
                 break;
               }
-              _this14._menuToggleClickBtn(el);
+              _this15._menuToggleClickBtn(el);
               return _context5.abrupt("return");
             case 57:
               if (updater.toggleAudio(0)) {
@@ -10611,14 +10643,14 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
                 el.id = 'de-panel-audio-off';
               }
             case 58:
-              if (_this14._menu) {
-                _this14._menu.removeMenu();
-                _this14._menu = null;
+              if (_this15._menu) {
+                _this15._menu.removeMenu();
+                _this15._menu = null;
               }
               return _context5.abrupt("return");
             case 60:
               if (nav.isMobile) {
-                _this14._menuToggleClickBtn(el);
+                _this15._menuToggleClickBtn(el);
               }
               return _context5.abrupt("return");
             case 62:
@@ -10631,8 +10663,8 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               return _context5.abrupt("return");
             case 67:
               if (!Cfg.expandPanel) {
-                clearTimeout(_this14._hideTO);
-                $show(_this14._buttons);
+                clearTimeout(_this15._hideTO);
+                $show(_this15._buttons);
               }
               _context5.t2 = el.id;
               _context5.next = _context5.t2 === 'de-panel-cfg' ? 71 : _context5.t2 === 'de-panel-hid' ? 73 : _context5.t2 === 'de-panel-fav' ? 75 : _context5.t2 === 'de-panel-vid' ? 77 : _context5.t2 === 'de-panel-goback' ? 79 : _context5.t2 === 'de-panel-gonext' ? 81 : _context5.t2 === 'de-panel-maskimg' ? 83 : _context5.t2 === 'de-panel-refresh' ? 85 : _context5.t2 === 'de-panel-savethr' ? 87 : _context5.t2 === 'de-panel-audio-off' ? 87 : 90;
@@ -10665,33 +10697,33 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               }
               return _context5.abrupt("return");
             case 87:
-              if (!(((_this14$_menu = _this14._menu) === null || _this14$_menu === void 0 ? void 0 : _this14$_menu.parentEl) === el)) {
+              if (!(((_this15$_menu = _this15._menu) === null || _this15$_menu === void 0 ? void 0 : _this15$_menu.parentEl) === el)) {
                 _context5.next = 89;
                 break;
               }
               return _context5.abrupt("return");
             case 89:
-              _this14._menuTO = setTimeout(function () {
-                _this14._menu = Menu.addMenu(el);
-                _this14._menu.onover = function () {
-                  return clearTimeout(_this14._hideTO);
+              _this15._menuTO = setTimeout(function () {
+                _this15._menu = Menu.addMenu(el);
+                _this15._menu.onover = function () {
+                  return clearTimeout(_this15._hideTO);
                 };
-                _this14._menu.onout = function () {
-                  return _this14._setHideTimeout(null);
+                _this15._menu.onout = function () {
+                  return _this15._setHideTimeout(null);
                 };
-                _this14._menu.onremove = function () {
-                  return _this14._menu = null;
+                _this15._menu.onremove = function () {
+                  return _this15._menu = null;
                 };
               }, Cfg.linksOver);
             case 90:
               return _context5.abrupt("return");
             case 91:
-              _this14._setHideTimeout(nav.fixEventEl(e.relatedTarget));
+              _this15._setHideTimeout(nav.fixEventEl(e.relatedTarget));
               switch (el.id) {
                 case 'de-panel-refresh':
                 case 'de-panel-savethr':
                 case 'de-panel-audio-off':
-                  clearTimeout(_this14._menuTO);
+                  clearTimeout(_this15._menuTO);
               }
             case 93:
             case "end":
@@ -10786,10 +10818,10 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       this._menu = Menu.addMenu(buttonEl);
     },
     _setHideTimeout: function _setHideTimeout(targetEl) {
-      var _this15 = this;
+      var _this16 = this;
       if (!Cfg.expandPanel && !$q('.de-win-active') && !$contains(this._el, targetEl)) {
         this._hideTO = setTimeout(function () {
-          return $hide(_this15._buttons);
+          return $hide(_this16._buttons);
         }, 500);
       }
     }
@@ -10812,7 +10844,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       _Y: 0,
       _Z: 0,
       handleEvent: function handleEvent(e) {
-        var _this16 = this;
+        var _this17 = this;
         return _asyncToGenerator(_regeneratorRuntime().mark(function _callee6() {
           var curX, curY, maxX, maxY, cr, x, y, width;
           return _regeneratorRuntime().wrap(function _callee6$(_context6) {
@@ -10829,37 +10861,37 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
                 _context6.next = _context6.t0 === 'mousedown' ? 6 : _context6.t0 === 'mousemove' ? 14 : _context6.t0 === 'mouseleave' ? 26 : _context6.t0 === 'mouseup' ? 26 : 29;
                 break;
               case 6:
-                _this16._oldX = curX;
-                _this16._oldY = curY;
-                _this16._X = Cfg[name + 'WinX'];
-                _this16._Y = Cfg[name + 'WinY'];
-                if (_this16._Z < topWinZ) {
-                  _this16._Z = _this16._wStyle.zIndex = ++topWinZ;
+                _this17._oldX = curX;
+                _this17._oldY = curY;
+                _this17._X = Cfg[name + 'WinX'];
+                _this17._Y = Cfg[name + 'WinY'];
+                if (_this17._Z < topWinZ) {
+                  _this17._Z = _this17._wStyle.zIndex = ++topWinZ;
                 }
                 ['mouseleave', 'mousemove', 'mouseup'].forEach(function (e) {
-                  return doc.body.addEventListener(e, _this16);
+                  return doc.body.addEventListener(e, _this17);
                 });
                 e.preventDefault();
                 return _context6.abrupt("return");
               case 14:
-                maxX = Post.sizing.wWidth - _this16._win.offsetWidth;
-                maxY = Post.sizing.wHeight - _this16._win.offsetHeight - 25;
-                cr = _this16._win.getBoundingClientRect();
-                x = cr.left + curX - _this16._oldX;
-                y = cr.top + curY - _this16._oldY;
-                _this16._X = x >= maxX || curX > _this16._oldX && x > maxX - 20 ? 'right: 0' : x < 0 || curX < _this16._oldX && x < 20 ? 'left: 0' : "left: ".concat(x, "px");
-                _this16._Y = y >= maxY || curY > _this16._oldY && y > maxY - 20 ? 'bottom: 25px' : y < 0 || curY < _this16._oldY && y < 20 ? 'top: 0' : "top: ".concat(y, "px");
-                width = _this16._wStyle.width;
-                _this16._win.setAttribute('style', "".concat(_this16._X, "; ").concat(_this16._Y, "; z-index: ").concat(_this16._Z).concat(width ? '; width: ' + width : ''));
-                _this16._oldX = curX;
-                _this16._oldY = curY;
+                maxX = Post.sizing.wWidth - _this17._win.offsetWidth;
+                maxY = Post.sizing.wHeight - _this17._win.offsetHeight - 25;
+                cr = _this17._win.getBoundingClientRect();
+                x = cr.left + curX - _this17._oldX;
+                y = cr.top + curY - _this17._oldY;
+                _this17._X = x >= maxX || curX > _this17._oldX && x > maxX - 20 ? 'right: 0' : x < 0 || curX < _this17._oldX && x < 20 ? 'left: 0' : "left: ".concat(x, "px");
+                _this17._Y = y >= maxY || curY > _this17._oldY && y > maxY - 20 ? 'bottom: 25px' : y < 0 || curY < _this17._oldY && y < 20 ? 'top: 0' : "top: ".concat(y, "px");
+                width = _this17._wStyle.width;
+                _this17._win.setAttribute('style', "".concat(_this17._X, "; ").concat(_this17._Y, "; z-index: ").concat(_this17._Z).concat(width ? '; width: ' + width : ''));
+                _this17._oldX = curX;
+                _this17._oldY = curY;
                 return _context6.abrupt("return");
               case 26:
                 ['mouseleave', 'mousemove', 'mouseup'].forEach(function (e) {
-                  return doc.body.removeEventListener(e, _this16);
+                  return doc.body.removeEventListener(e, _this17);
                 });
                 _context6.next = 29;
-                return CfgSaver.save(name + 'WinX', _this16._X, name + 'WinY', _this16._Y);
+                return CfgSaver.save(name + 'WinX', _this17._X, name + 'WinY', _this17._Y);
               case 29:
               case "end":
                 return _context6.stop();
@@ -10885,7 +10917,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       key: "handleEvent",
       value: function () {
         var _handleEvent = _asyncToGenerator(_regeneratorRuntime().mark(function _callee7(e) {
-          var _this17 = this;
+          var _this18 = this;
           var val, x, y, _Post$sizing, maxX, maxY, width, cr, z;
           return _regeneratorRuntime().wrap(function _callee7$(_context7) {
             while (1) switch (_context7.prev = _context7.next) {
@@ -10922,7 +10954,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               case 18:
                 this.winEl.setAttribute('style', val);
                 ['mousemove', 'mouseup'].forEach(function (e) {
-                  return doc.body.addEventListener(e, _this17);
+                  return doc.body.addEventListener(e, _this18);
                 });
                 e.preventDefault();
                 return _context7.abrupt("return");
@@ -10937,7 +10969,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
                 return _context7.abrupt("return");
               case 24:
                 ['mousemove', 'mouseup'].forEach(function (e) {
-                  return doc.body.removeEventListener(e, _this17);
+                  return doc.body.removeEventListener(e, _this18);
                 });
                 _context7.next = 27;
                 return CfgSaver.save(this.cfgName, parseInt(this.vertical ? this.tStyle.height : this.tStyle.width, 10));
@@ -11913,9 +11945,9 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
 
   var CfgWindow = {
     initCfgWindow: function initCfgWindow(winBody) {
-      var _this18 = this;
+      var _this19 = this;
       ['click', 'mouseover', 'mouseout', 'change', 'keyup', 'keydown', 'scroll'].forEach(function (e) {
-        return winBody.addEventListener(e, _this18);
+        return winBody.addEventListener(e, _this19);
       });
 
       var div = $bEnd(winBody, "<div id=\"de-cfg-bar\">".concat(this._getTab('filters') + this._getTab('posts') + this._getTab('images') + this._getTab('links') + (postform.form || postform.oeForm ? this._getTab('form') : '') + this._getTab('common') + this._getTab('info'), "</div><div id=\"de-cfg-buttons\">").concat(this._getSel('language'), "</div>"));
@@ -12008,7 +12040,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
         el.insertAdjacentHTML('beforeend', "<hr><small>".concat(Lng.descrGlobal[lang], "</small>"));
       }) : '',
       !nav.isPresto ? $button(Lng.file[lang], Lng.fileImpExp[lang], function () {
-        var list = _this18._getList([Lng.panelBtn.cfg[lang] + ' ' + Lng.allDomains[lang], Lng.panelBtn.fav[lang], Lng.hidPostThr[lang] + " (".concat(aib.domain, ")"), Lng.myPosts[lang] + " (".concat(aib.domain, ")")]);
+        var list = _this19._getList([Lng.panelBtn.cfg[lang] + ' ' + Lng.allDomains[lang], Lng.panelBtn.fav[lang], Lng.hidPostThr[lang] + " (".concat(aib.domain, ")"), Lng.myPosts[lang] + " (".concat(aib.domain, ")")]);
         $popup('cfg-file', "<b>".concat(Lng.fileImpExp[lang], ":</b><hr><!--\n\t\t\t\t\t--><div class=\"de-list\">").concat(Lng.fileToData[lang], ":<div class=\"de-depend\"><!--\n\t\t\t\t\t\t--><input type=\"file\" accept=\".json\" id=\"de-import-file\"></div></div><hr><!--\n\t\t\t\t\t--><div class=\"de-list\"><a id=\"de-export-file\" href=\"#\">").concat(Lng.dataToFile[lang], ":<!--\n\t\t\t\t\t--><div class=\"de-depend\">").concat(list, "</div></div>"));
         $id('de-import-file').onchange = function (e) {
           var file = e.target.files[0];
@@ -12150,7 +12182,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
         }(), true);
       }) : '',
       $button(Lng.reset[lang] + '…', Lng.resetCfg[lang], function () {
-        return $popup('cfg-reset', "<b>".concat(Lng.resetData[lang], ":</b><hr>") + "<div class=\"de-list\"><b>".concat(aib.domain, ":</b>").concat(_this18._getList([Lng.panelBtn.cfg[lang], Lng.hidPostThr[lang], Lng.myPosts[lang]]), "</div><hr>") + "<div class=\"de-list\"><b>".concat(Lng.allDomains[lang], ":</b>").concat(_this18._getList([Lng.panelBtn.cfg[lang], Lng.panelBtn.fav[lang]]), "</div><hr>")).append($button(Lng.clear[lang], '', function (e) {
+        return $popup('cfg-reset', "<b>".concat(Lng.resetData[lang], ":</b><hr>") + "<div class=\"de-list\"><b>".concat(aib.domain, ":</b>").concat(_this19._getList([Lng.panelBtn.cfg[lang], Lng.hidPostThr[lang], Lng.myPosts[lang]]), "</div><hr>") + "<div class=\"de-list\"><b>".concat(Lng.allDomains[lang], ":</b>").concat(_this19._getList([Lng.panelBtn.cfg[lang], Lng.panelBtn.fav[lang]]), "</div><hr>")).append($button(Lng.clear[lang], '', function (e) {
           var els = $Q('input[type="checkbox"]', e.target.parentNode);
           for (var i = 1, len = els.length; i < len; ++i) {
             if (!els[i].checked) {
@@ -12186,7 +12218,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       }));
     },
     handleEvent: function handleEvent(e) {
-      var _this19 = this;
+      var _this20 = this;
       return _asyncToGenerator(_regeneratorRuntime().mark(function _callee15() {
         var type, el, tag, classList, info, _info, isHide, post, _iterator3, _step3, _el4, _info2, _post4, img, _iterator4, _step4, _el5, perf, arr, i, len, _info3, isValidColor, color, image, val;
         return _regeneratorRuntime().wrap(function _callee15$(_context16) {
@@ -12203,7 +12235,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
                 break;
               }
               info = el.getAttribute('info');
-              _this19._clickTab(info);
+              _this20._clickTab(info);
               _context16.next = 9;
               return CfgSaver.save('cfgTab', info);
             case 9:
@@ -12215,7 +12247,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               _context16.next = 13;
               return CfgSaver.save(_info, el.selectedIndex);
             case 13:
-              _this19._updateDependant();
+              _this20._updateDependant();
               _context16.t0 = _info;
               _context16.next = _context16.t0 === 'language' ? 17 : _context16.t0 === 'delHiddPost' ? 24 : _context16.t0 === 'postBtnsCSS' ? 28 : _context16.t0 === 'thrBtns' ? 31 : _context16.t0 === 'noSpoilers' ? 31 : _context16.t0 === 'resizeImgs' ? 31 : _context16.t0 === 'expandImgs' ? 33 : _context16.t0 === 'imgNames' ? 36 : _context16.t0 === 'fileInputs' ? 39 : _context16.t0 === 'addPostForm' ? 43 : _context16.t0 === 'addTextBtns' ? 46 : _context16.t0 === 'scriptStyle' ? 47 : _context16.t0 === 'panelCounter' ? 47 : _context16.t0 === 'favThrOrder' ? 49 : 50;
               break;
@@ -12232,7 +12264,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
                   });
                 }
               }
-              _this19._updateCSS();
+              _this20._updateCSS();
               Panel.initPanel(DelForm.first.el);
               toggleWindow('cfg', false);
               return _context16.abrupt("break", 50);
@@ -12284,7 +12316,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
             case 46:
               postform.addMarkupPanel();
             case 47:
-              _this19._updateCSS();
+              _this20._updateCSS();
               return _context16.abrupt("break", 50);
             case 49:
               readFavorites().then(function (favObj) {
@@ -12303,7 +12335,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               _context16.next = 55;
               return toggleCfg(_info2);
             case 55:
-              _this19._updateDependant();
+              _this20._updateDependant();
               _context16.t1 = _info2;
               _context16.next = _context16.t1 === 'expandTrunc' ? 59 : _context16.t1 === 'widePosts' ? 59 : _context16.t1 === 'showHideBtn' ? 59 : _context16.t1 === 'showRepBtn' ? 59 : _context16.t1 === 'noPostNames' ? 59 : _context16.t1 === 'imgNavBtns' ? 59 : _context16.t1 === 'strikeHidd' ? 59 : _context16.t1 === 'removeHidd' ? 59 : _context16.t1 === 'noBoardRule' ? 59 : _context16.t1 === 'favFolders' ? 59 : _context16.t1 === 'userCSS' ? 59 : _context16.t1 === 'hideBySpell' ? 61 : _context16.t1 === 'sortSpells' ? 64 : _context16.t1 === 'hideRefPsts' ? 68 : _context16.t1 === 'ajaxUpdThr' ? 70 : _context16.t1 === 'updCount' ? 72 : _context16.t1 === 'desktNotif' ? 74 : _context16.t1 === 'markNewPosts' ? 76 : _context16.t1 === 'markMyPosts' ? 78 : _context16.t1 === 'markMyLinks' ? 78 : _context16.t1 === 'correctTime' ? 81 : _context16.t1 === 'imgInfoLink' ? 84 : _context16.t1 === 'imgSrcBtns' ? 88 : _context16.t1 === 'addSageBtn' ? 90 : _context16.t1 === 'altCaptcha' ? 94 : _context16.t1 === 'txtBtnsLoc' ? 96 : _context16.t1 === 'userPassw' ? 99 : _context16.t1 === 'userName' ? 102 : _context16.t1 === 'noPassword' ? 105 : _context16.t1 === 'noName' ? 107 : _context16.t1 === 'noSubj' ? 109 : _context16.t1 === 'inftyScroll' ? 111 : _context16.t1 === 'hotKeys' ? 113 : 114;
               break;
@@ -12657,7 +12689,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               return _context16.abrupt("return");
             case 223:
               if (tag === 'textarea' && el.id === 'de-spell-txt' && (type === 'keydown' || type === 'scroll')) {
-                _this19._updateRowMeter(el);
+                _this20._updateRowMeter(el);
               }
             case 224:
             case "end":
@@ -12891,7 +12923,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
   }
   var Menu = function () {
     function Menu(parentEl, html, clickFn) {
-      var _this20 = this;
+      var _this21 = this;
       var isFixed = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
       _classCallCheck(this, Menu);
       this.onout = null;
@@ -12910,7 +12942,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       this._clickFn = clickFn;
       this.parentEl = parentEl;
       ['mouseover', 'mouseout'].forEach(function (e) {
-        return el.addEventListener(e, _this20, true);
+        return el.addEventListener(e, _this21, true);
       });
       el.addEventListener('click', this);
       parentEl.addEventListener('mouseout', this);
@@ -12918,7 +12950,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
     return _createClass(Menu, [{
       key: "handleEvent",
       value: function handleEvent(e) {
-        var _this21 = this;
+        var _this22 = this;
         var isOverEvent = false;
         switch (e.type) {
           case 'click':
@@ -12943,7 +12975,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
                 } else if (!$contains(this.parentEl, targetEl)) {
                   var _this$onout;
                   this._closeTO = setTimeout(function () {
-                    return _this21.removeMenu();
+                    return _this22.removeMenu();
                   }, 75);
                   (_this$onout = this.onout) === null || _this$onout === void 0 || _this$onout.call(this);
                 }
@@ -12955,13 +12987,13 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       key: "removeMenu",
       value: function removeMenu() {
         var _this$onremove,
-          _this22 = this;
+          _this23 = this;
         if (!this.el) {
           return;
         }
         (_this$onremove = this.onremove) === null || _this$onremove === void 0 || _this$onremove.call(this);
         ['mouseover', 'mouseout'].forEach(function (e) {
-          return _this22.el.removeEventListener(e, _this22, true);
+          return _this23.el.removeEventListener(e, _this23, true);
         });
         this.parentEl.removeEventListener('mouseout', this);
         this.el.removeEventListener('click', this);
@@ -13079,17 +13111,17 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       }
     },
     enableHotKeys: function enableHotKeys() {
-      var _this23 = this;
+      var _this24 = this;
       if (!this.enabled) {
         this.enabled = true;
         this._paused = false;
         Promise.resolve(this.readKeys()).then(function (keys) {
-          if (_this23.enabled) {
+          if (_this24.enabled) {
             var _keys = _slicedToArray(keys, 5);
-            _this23.gKeys = _keys[2];
-            _this23.ntKeys = _keys[3];
-            _this23.tKeys = _keys[4];
-            doc.addEventListener('keydown', _this23, true);
+            _this24.gKeys = _keys[2];
+            _this24.ntKeys = _keys[3];
+            _this24.tKeys = _keys[4];
+            doc.addEventListener('keydown', _this24, true);
           }
         });
       }
@@ -13283,7 +13315,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       this._paused = true;
     },
     readKeys: function readKeys() {
-      var _this24 = this;
+      var _this25 = this;
       return _asyncToGenerator(_regeneratorRuntime().mark(function _callee17() {
         var str, keys, tKeys, mapFunc;
         return _regeneratorRuntime().wrap(function _callee17$(_context18) {
@@ -13297,7 +13329,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
                 _context18.next = 5;
                 break;
               }
-              return _context18.abrupt("return", _this24.getDefaultKeys());
+              return _context18.abrupt("return", _this25.getDefaultKeys());
             case 5:
               try {
                 keys = JSON.parse(str);
@@ -13306,10 +13338,10 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
                 _context18.next = 8;
                 break;
               }
-              return _context18.abrupt("return", _this24.getDefaultKeys());
+              return _context18.abrupt("return", _this25.getDefaultKeys());
             case 8:
-              if (keys[0] !== _this24.version) {
-                tKeys = _this24.getDefaultKeys();
+              if (keys[0] !== _this25.version) {
+                tKeys = _this25.getDefaultKeys();
                 switch (keys[0]) {
                   case 1:
                     keys[2][11] = tKeys[2][11];
@@ -13328,7 +13360,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
                   case 6:
                     keys[2][18] = tKeys[2][18];
                 }
-                keys[0] = _this24.version;
+                keys[0] = _this25.version;
                 setStored('DESU_keys', JSON.stringify(keys));
               }
               if (keys[1] ^ nav.isFirefox) {
@@ -13630,7 +13662,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
     isLoading: false,
     popupId: null,
     downloadThread: function downloadThread(imgOnly) {
-      var _this25 = this;
+      var _this26 = this;
       var progress, counter;
       var current = 1;
       var warnings = '';
@@ -13643,7 +13675,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
         return str.replace(/[\\/:*?"<>|]/g, r);
       };
       this._thrPool = new TasksPool(4, function (num, data) {
-        return _this25.loadFileData(data[0]).then(function (fileData) {
+        return _this26.loadFileData(data[0]).then(function (fileData) {
           var _data3 = _slicedToArray(data, 4),
             url = _data3[0],
             fName = _data3[1],
@@ -13666,12 +13698,12 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               warnings += "<br>".concat(Lng.cantLoad[lang], " <a href=\"").concat(url, "\">").concat(url, "</a>") + "<br>".concat(Lng.willSavePview[lang]);
               $popup('err-files', Lng.loadErrors[lang] + warnings);
               if (imgOnly) {
-                return _this25.getDataFromImg(el).then(function (data) {
+                return _this26.getDataFromImg(el).then(function (data) {
                   return tar.addFile(thumbName, data);
                 }, Function.prototype);
               }
             }
-            return imgOnly ? null : _this25.getDataFromImg(el).then(function (data) {
+            return imgOnly ? null : _this26.getDataFromImg(el).then(function (data) {
               return tar.addFile(el.src = thumbName, data);
             }, function () {
               return el.src = safeName;
@@ -13711,7 +13743,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               html = html.replace('</head>', "<style type=\"text/css\">\n\t\t\t\t\t\t.bfl { background-image: url(data/flags-pol.png); }\n\t\t\t\t\t\t.flag { background-image: url(data/flags-country.png); }\n\t\t\t\t\t</style></head>");
               _context19.t0 = tar;
               _context19.next = 15;
-              return _this25.loadFileData('//s.4cdn.org/image/flags.8.png', false);
+              return _this26.loadFileData('//s.4cdn.org/image/flags.8.png', false);
             case 15:
               _context19.t1 = _context19.sent;
               _context19.t0.addFile.call(_context19.t0, 'data/flags-country.png', _context19.t1);
@@ -13721,7 +13753,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               }
               _context19.t2 = tar;
               _context19.next = 21;
-              return _this25.loadFileData('//s.4cdn.org/image/flags/pol/flags.png?2', false);
+              return _this26.loadFileData('//s.4cdn.org/image/flags/pol/flags.png?2', false);
             case 21:
               _context19.t3 = _context19.sent;
               _context19.t2.addFile.call(_context19.t2, 'data/flags-pol.png', _context19.t3);
@@ -13731,7 +13763,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               title = delSymbols(Thread.first.op.title.trim());
               downloadBlob(tar.get(), "".concat(docName).concat(imgOnly ? '-images' : '').concat(title ? ' - ' + title : '', ".tar"));
               closePopup('load-files');
-              _this25._thrPool = tar = warnings = count = current = imgOnly = progress = counter = null;
+              _this26._thrPool = tar = warnings = count = current = imgOnly = progress = counter = null;
             case 28:
             case "end":
               return _context19.stop();
@@ -13742,7 +13774,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
         var parentLink = el.closest('a');
         if (parentLink) {
           var url = parentLink.href;
-          _this25._thrPool.runTask([url, parentLink.getAttribute('download') || getFileName(url), el, parentLink]);
+          _this26._thrPool.runTask([url, parentLink.getAttribute('download') || getFileName(url), el, parentLink]);
         }
       });
       if (!imgOnly) {
@@ -13788,7 +13820,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
             fName = temp;
           }
           files.push(fName);
-          _this25._thrPool.runTask([url, fName, el, null]);
+          _this26._thrPool.runTask([url, fName, el, null]);
           count++;
         });
       }
@@ -13832,11 +13864,11 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
           return txt.charCodeAt(i) & 0xFF;
         });
       }, function (err) {
-        return err.code !== 404 && repeatOnError ? _this26.loadFileData(url, false) : null;
+        return err.code !== 404 && repeatOnError ? _this27.loadFileData(url, false) : null;
       });
     },
     preloadImages: function preloadImages(data) {
-      var _this27 = this;
+      var _this28 = this;
       if (!Cfg.preLoadImgs && !Cfg.openImgs && !isPreImg) {
         return;
       }
@@ -13851,7 +13883,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
           return console.error('File detector error:', "line: ".concat(err.lineno, " - ").concat(err.message));
         });
         preloadPool = new TasksPool(mReqs, function (num, data) {
-          return _this27.loadFileData(data[0]).then(function (fileData) {
+          return _this28.loadFileData(data[0]).then(function (fileData) {
             var _data4 = _slicedToArray(data, 6),
               url = _data4[0],
               parentLink = _data4[1],
@@ -13878,20 +13910,20 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               }
               if (rarJpgFinder) {
                 rarJpgFinder.runWorker(fileData.buffer, [fileData.buffer], function (info) {
-                  return _this27._addImgFileIcon(nameLink, fName, info);
+                  return _this28._addImgFileIcon(nameLink, fName, info);
                 });
               }
             }
-            if (_this27.popupId) {
-              $popup(_this27.popupId, "".concat(Lng.loadImage[lang], ": ").concat(cImg, "/").concat(len), true);
+            if (_this28.popupId) {
+              $popup(_this28.popupId, "".concat(Lng.loadImage[lang], ": ").concat(cImg, "/").concat(len), true);
             }
             cImg++;
           });
         }, function () {
-          _this27.isLoading = false;
-          if (_this27.afterFn) {
-            _this27.afterFn();
-            _this27.afterFn = _this27.popupId = null;
+          _this28.isLoading = false;
+          if (_this28.afterFn) {
+            _this28.afterFn();
+            _this28.afterFn = _this28.popupId = null;
           }
           if (rarJpgFinder) {
             rarJpgFinder.clearWorkers();
@@ -14035,24 +14067,24 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
     return _createClass(DateTime, [{
       key: "genRFunc",
       value: function genRFunc(rPattern) {
-        var _this28 = this;
+        var _this29 = this;
         return function (dtime) {
-          return rPattern.replace('_o', (_this28.diff < 0 ? '' : '+') + _this28.diff).replace('_s', function () {
-            return _this28.pad2(dtime.getSeconds());
+          return rPattern.replace('_o', (_this29.diff < 0 ? '' : '+') + _this29.diff).replace('_s', function () {
+            return _this29.pad2(dtime.getSeconds());
           }).replace('_i', function () {
-            return _this28.pad2(dtime.getMinutes());
+            return _this29.pad2(dtime.getMinutes());
           }).replace('_h', function () {
-            return _this28.pad2(dtime.getHours());
+            return _this29.pad2(dtime.getHours());
           }).replace('_d', function () {
-            return _this28.pad2(dtime.getDate());
+            return _this29.pad2(dtime.getDate());
           }).replace('_w', function () {
-            return _this28.arrW[dtime.getDay()];
+            return _this29.arrW[dtime.getDay()];
           }).replace('_n', function () {
-            return _this28.pad2(dtime.getMonth() + 1);
+            return _this29.pad2(dtime.getMonth() + 1);
           }).replace('_m', function () {
-            return _this28.arrM[dtime.getMonth()];
+            return _this29.arrM[dtime.getMonth()];
           }).replace('_M', function () {
-            return _this28.arrFM[dtime.getMonth()];
+            return _this29.arrFM[dtime.getMonth()];
           }).replace('_y', function () {
             return ('' + dtime.getFullYear()).substring(2);
           }).replace('_Y', function () {
@@ -14090,7 +14122,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
     }, {
       key: "fix",
       value: function fix(txt) {
-        var _this29 = this;
+        var _this30 = this;
         if (this.disabled || !this.genDateTime && !this.getRPattern(txt)) {
           return txt;
         }
@@ -14098,7 +14130,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
           var second, minute, hour, day, month, year;
           for (var i = 0; i < 7; ++i) {
             var a = i + 1 < 1 || arguments.length <= i + 1 ? undefined : arguments[i + 1];
-            switch (_this29.pattern[i]) {
+            switch (_this30.pattern[i]) {
               case 's':
                 second = a;
                 break;
@@ -14123,8 +14155,8 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
             }
           }
           var dtime = new Date(year.length === 2 ? '20' + year : year, month, day, hour, minute, second || 0);
-          dtime.setHours(dtime.getHours() + _this29.diff);
-          return _this29.genDateTime(dtime);
+          dtime.setHours(dtime.getHours() + _this30.diff);
+          return _this30.genDateTime(dtime);
         });
       }
     }], [{
@@ -14790,7 +14822,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       return "".concat(url).concat(url.includes('?') ? '&' : '?', "nocache=").concat(Math.round(Math.random() * 1e12));
     },
     runCachedAjax: function runCachedAjax(url, useCache) {
-      var _this30 = this;
+      var _this31 = this;
       var _ref18 = this._data.get(url) || {},
         hasCacheControl = _ref18.hasCacheControl,
         params = _ref18.params;
@@ -14798,7 +14830,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       return $ajax(ajaxURL, useCache && params || {
         useTimeout: true
       }, aib._4chan).then(function (xhr) {
-        return _this30.saveData(url, xhr) ? xhr : $ajax(_this30.fixURL(url), useCache && params, aib._4chan);
+        return _this31.saveData(url, xhr) ? xhr : $ajax(_this31.fixURL(url), useCache && params, aib._4chan);
       });
     },
     saveData: function saveData(url, xhr) {
@@ -14926,7 +14958,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
 
   var Pages = {
     addPage: function addPage() {
-      var _this31 = this;
+      var _this32 = this;
       var needThreads = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
       var pageNum = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : DelForm.last.pageNum + 1;
       if (this._isAdding || pageNum > aib.lastPage || needThreads && pageNum > 4) {
@@ -14941,7 +14973,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
           return _regeneratorRuntime().wrap(function _callee21$(_context22) {
             while (1) switch (_context22.prev = _context22.next) {
               case 0:
-                newForm = _this31._addForm(formEl, pageNum);
+                newForm = _this32._addForm(formEl, pageNum);
                 if (!newForm.firstThr) {
                   _context22.next = 16;
                   break;
@@ -14950,11 +14982,11 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
                   _context22.next = 4;
                   break;
                 }
-                return _context22.abrupt("return", _this31._updateForms(DelForm.last));
+                return _context22.abrupt("return", _this32._updateForms(DelForm.last));
               case 4:
                 $hide(newForm.el);
                 _context22.next = 7;
-                return _this31._updateForms(DelForm.last);
+                return _this32._updateForms(DelForm.last);
               case 7:
                 firstForm = DelForm.first;
                 thr = newForm.firstThr;
@@ -14975,14 +15007,14 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
                 DelForm.last = firstForm;
                 firstForm.next = firstForm.lastThr.next = null;
                 newForm.el.remove();
-                _this31._endAdding();
+                _this32._endAdding();
                 if (needThreads) {
-                  _this31.addPage(needThreads, pageNum + 1);
+                  _this32.addPage(needThreads, pageNum + 1);
                 }
                 return _context22.abrupt("return", CancelablePromise.reject(new CancelError()));
               case 16:
-                _this31._endAdding();
-                _this31.addPage();
+                _this32._endAdding();
+                _this32.addPage();
                 return _context22.abrupt("return", CancelablePromise.reject(new CancelError()));
               case 19:
               case "end":
@@ -14994,11 +15026,11 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
           return _ref19.apply(this, arguments);
         };
       }()).then(function () {
-        return _this31._endAdding();
+        return _this32._endAdding();
       })["catch"](function (err) {
         if (!(err instanceof CancelError)) {
           $popup('add-page', getErrorMessage(err));
-          _this31._endAdding();
+          _this32._endAdding();
         }
       });
     },
@@ -15027,16 +15059,16 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       }
     },
     loadPages: function loadPages(count) {
-      var _this32 = this;
+      var _this33 = this;
       return _asyncToGenerator(_regeneratorRuntime().mark(function _callee22() {
         var _iterator5, _step5, form, i, len, first;
         return _regeneratorRuntime().wrap(function _callee22$(_context23) {
           while (1) switch (_context23.prev = _context23.next) {
             case 0:
               $popup('load-pages', Lng.loading[lang], true);
-              if (_this32._addingPromise) {
-                _this32._addingPromise.cancelPromise();
-                _this32._endAdding();
+              if (_this33._addingPromise) {
+                _this33._addingPromise.cancelPromise();
+                _this33._endAdding();
               }
               PviewsCache.purge();
               isExpImg = false;
@@ -15078,7 +15110,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
                 break;
               }
               _context23.prev = 23;
-              _context23.t0 = _this32;
+              _context23.t0 = _this33;
               _context23.next = 27;
               return ajaxLoad(aib.getPageUrl(aib.b, i));
             case 27:
@@ -15104,7 +15136,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               DelForm.first = first.next;
               first.el.remove();
               _context23.next = 44;
-              return _this32._updateForms(DelForm.first);
+              return _this33._updateForms(DelForm.first);
             case 44:
               closePopup('load-pages');
             case 45:
@@ -15115,13 +15147,13 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       }))();
     },
     toggleInfinityScroll: function toggleInfinityScroll() {
-      var _this33 = this;
+      var _this34 = this;
       if (aib.t) {
         return;
       }
       if (nav.isMobile) {
         ['touchmove', 'touchstart'].forEach(function (e) {
-          return doc.defaultView[Cfg.inftyScroll ? 'addEventListener' : 'removeEventListener'](e, _this33);
+          return doc.defaultView[Cfg.inftyScroll ? 'addEventListener' : 'removeEventListener'](e, _this34);
         });
       } else {
         doc.defaultView[Cfg.inftyScroll ? 'addEventListener' : 'removeEventListener']('onwheel' in doc.defaultView ? 'wheel' : 'mousewheel', this);
@@ -15238,7 +15270,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       return this.reps;
     },
     addSpell: function addSpell(type, arg, isNeg) {
-      var _this34 = this;
+      var _this35 = this;
       return _asyncToGenerator(_regeneratorRuntime().mark(function _callee24() {
         var inputEl, value, checkboxEl, spells, idx, isAdded, scope, sScope, sArg;
         return _regeneratorRuntime().wrap(function _callee24$(_context25) {
@@ -15247,7 +15279,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               inputEl = $id('de-spell-txt');
               value = inputEl === null || inputEl === void 0 ? void 0 : inputEl.value;
               checkboxEl = $q('input[info="hideBySpell"]');
-              spells = value && _this34.parseText(value);
+              spells = value && _this35.parseText(value);
               if (!(!value || spells)) {
                 _context25.next = 28;
                 break;
@@ -15319,16 +15351,16 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               }
             case 20:
               if (spells[1] && Cfg.sortSpells) {
-                _this34._sort(spells[1]);
+                _this35._sort(spells[1]);
               }
               _context25.next = 23;
               return CfgSaver.save('spells', JSON.stringify(spells));
             case 23:
               _context25.next = 25;
-              return _this34.setSpells(spells, true);
+              return _this35.setSpells(spells, true);
             case 25:
               if (inputEl) {
-                inputEl.value = _this34.list;
+                inputEl.value = _this35.list;
               }
               Pview.updatePosition(true);
               return _context25.abrupt("return");
@@ -15413,7 +15445,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       }
     },
     disableSpells: function disableSpells() {
-      var _this35 = this;
+      var _this36 = this;
       return _asyncToGenerator(_regeneratorRuntime().mark(function _callee25() {
         var value, configurable;
         return _regeneratorRuntime().wrap(function _callee25$(_context26) {
@@ -15421,7 +15453,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
             case 0:
               value = null;
               configurable = true;
-              Object.defineProperties(_this35, {
+              Object.defineProperties(_this36, {
                 hiders: {
                   configurable: configurable,
                   value: value
@@ -15472,14 +15504,14 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       return txt;
     },
     setSpells: function setSpells(spells, sync) {
-      var _this36 = this;
+      var _this37 = this;
       return _asyncToGenerator(_regeneratorRuntime().mark(function _callee26() {
         var sRunner, post;
         return _regeneratorRuntime().wrap(function _callee26$(_context27) {
           while (1) switch (_context27.prev = _context27.next) {
             case 0:
               if (sync) {
-                _this36._sync(spells);
+                _this37._sync(spells);
               }
               if (Cfg.hideBySpell) {
                 _context27.next = 6;
@@ -15487,12 +15519,12 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               }
               SpellsRunner.unhideAll();
               _context27.next = 5;
-              return _this36.disableSpells();
+              return _this37.disableSpells();
             case 5:
               return _context27.abrupt("return");
             case 6:
-              _this36._optimize(spells);
-              if (_this36.hiders) {
+              _this37._optimize(spells);
+              if (_this37.hiders) {
                 _context27.next = 10;
                 break;
               }
@@ -15512,7 +15544,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       }))();
     },
     toggle: function toggle() {
-      var _this37 = this;
+      var _this38 = this;
       return _asyncToGenerator(_regeneratorRuntime().mark(function _callee27() {
         var spells, inputEl, value;
         return _regeneratorRuntime().wrap(function _callee27$(_context28) {
@@ -15520,18 +15552,18 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
             case 0:
               inputEl = $id('de-spell-txt');
               value = inputEl.value;
-              if (!(value && (spells = _this37.parseText(value)))) {
+              if (!(value && (spells = _this38.parseText(value)))) {
                 _context28.next = 10;
                 break;
               }
               closePopup('err-spell');
               _context28.next = 6;
-              return _this37.setSpells(spells, true);
+              return _this38.setSpells(spells, true);
             case 6:
               _context28.next = 8;
               return CfgSaver.save('spells', JSON.stringify(spells));
             case 8:
-              inputEl.value = _this37.list;
+              inputEl.value = _this38.list;
               return _context28.abrupt("return");
             case 10:
               if (value) {
@@ -15541,7 +15573,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               closePopup('err-spell');
               SpellsRunner.unhideAll();
               _context28.next = 15;
-              return _this37.disableSpells();
+              return _this38.disableSpells();
             case 15:
               _context28.next = 17;
               return CfgSaver.save('spells', JSON.stringify([Date.now(), null, null, null]));
@@ -16234,10 +16266,10 @@ this.disableSpells();
     return _createClass(SpellsRunner, [{
       key: "endSpells",
       value: function endSpells() {
-        var _this38 = this;
+        var _this39 = this;
         if (this._endPromise) {
           this._endPromise.then(function () {
-            return _this38._savePostsHelper();
+            return _this39._savePostsHelper();
           });
         } else {
           this._savePostsHelper();
@@ -16246,11 +16278,11 @@ this.disableSpells();
     }, {
       key: "runSpells",
       value: function runSpells(post) {
-        var _this39 = this;
+        var _this40 = this;
         var res = new SpellsInterpreter(post, this._spells).runInterpreter();
         if (res instanceof Promise) {
           res = res.then(function (val) {
-            return _this39._checkRes(post, val);
+            return _this40._checkRes(post, val);
           });
           this._endPromise = this._endPromise ? this._endPromise.then(function () {
             return res;
@@ -16345,7 +16377,7 @@ this.disableSpells();
     return _createClass(SpellsInterpreter, [{
       key: "runInterpreter",
       value: function runInterpreter() {
-        var _this40 = this;
+        var _this41 = this;
         var rv, stopCheck;
         var isNegScope = this._ctx.pop();
         var i = this._ctx.pop();
@@ -16372,7 +16404,7 @@ this.disableSpells();
             if (val instanceof Promise) {
               this._ctx.push(len, scope, ++i, isNegScope);
               return val.then(function (v) {
-                return _this40._asyncContinue(v);
+                return _this41._asyncContinue(v);
               });
             }
             var _this$_checkRes = this._checkRes(scope[i], val, isNegScope);
@@ -16830,7 +16862,7 @@ this.disableSpells();
   }();
   var PostForm = function () {
     function PostForm(form) {
-      var _this41 = this;
+      var _this42 = this;
       var oeForm = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
       var ignoreForm = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
       _classCallCheck(this, PostForm);
@@ -16896,7 +16928,7 @@ this.disableSpells();
       if (Cfg.addSageBtn && this.mail) {
         PostForm.hideField(this.mail.closest('label') || this.mail);
         setTimeout(function () {
-          return _this41.toggleSage();
+          return _this42.toggleSage();
         }, 0);
       }
       if (Cfg.noPassword && this.passw) {
@@ -16927,7 +16959,7 @@ this.disableSpells();
     }, {
       key: "sageBtn",
       get: function get() {
-        var _this42 = this;
+        var _this43 = this;
         var value = $aEnd(this.subm, '<span id="de-sagebtn"><svg class="de-btn-sage">' + '<use xlink:href="#de-symbol-post-sage"/></svg></span>');
         value.onclick = _asyncToGenerator(_regeneratorRuntime().mark(function _callee29() {
           return _regeneratorRuntime().wrap(function _callee29$(_context30) {
@@ -16936,7 +16968,7 @@ this.disableSpells();
                 _context30.next = 2;
                 return toggleCfg('sageReply');
               case 2:
-                _this42.toggleSage();
+                _this43.toggleSage();
               case 3:
               case "end":
                 return _context30.stop();
@@ -16956,7 +16988,7 @@ this.disableSpells();
     }, {
       key: "addMarkupPanel",
       value: function addMarkupPanel() {
-        var _this43 = this;
+        var _this44 = this;
         var el = $id('de-txt-panel');
         if (!Cfg.addTextBtns) {
           aib.removeMarkupButtons(el);
@@ -16965,7 +16997,7 @@ this.disableSpells();
         if (!el) {
           el = $add('<span id="de-txt-panel"></span>');
           ['click', 'mouseover'].forEach(function (e) {
-            return el.addEventListener(e, _this43);
+            return el.addEventListener(e, _this44);
           });
         }
         el.style.cssFloat = Cfg.txtBtnsLoc ? 'none' : 'right';
@@ -17189,7 +17221,7 @@ this.disableSpells();
     }, {
       key: "_initAjaxPosting",
       value: function _initAjaxPosting() {
-        var _this44 = this;
+        var _this45 = this;
         var el;
         if (aib.qFormRedir && (el = $q(aib.qFormRedir, this.form))) {
           $hide(el.closest(aib.qFormTr));
@@ -17205,7 +17237,7 @@ this.disableSpells();
                   $popup('upload', Lng.sending[lang], true);
                   _context31.prev = 2;
                   _context31.next = 5;
-                  return html5Submit(_this44.form, _this44.subm, true);
+                  return html5Submit(_this45.form, _this45.subm, true);
                 case 5:
                   data = _context31.sent;
                   _context31.next = 8;
@@ -17231,7 +17263,7 @@ this.disableSpells();
     }, {
       key: "_initCaptcha",
       value: function _initCaptcha() {
-        var _this45 = this;
+        var _this46 = this;
         var capEl = $q('input[type="text"][name*="aptcha"], *[id*="captcha"], *[class*="captcha"]', this.form);
         if (!capEl) {
           this.cap = null;
@@ -17239,21 +17271,21 @@ this.disableSpells();
         }
         this.cap = new Captcha(capEl, this.tNum);
         var updCapFn = function updCapFn() {
-          _this45.cap.addCaptcha();
-          _this45.cap.updateOutdated();
+          _this46.cap.addCaptcha();
+          _this46.cap.updateOutdated();
         };
         this.txta.addEventListener('focus', updCapFn);
         if (this.files) {
           this.files.onchange = updCapFn;
         }
         this.form.addEventListener('click', function () {
-          return _this45.cap.addCaptcha();
+          return _this46.cap.addCaptcha();
         }, true);
       }
     }, {
       key: "_initFileInputs",
       value: function _initFileInputs() {
-        var _this46 = this;
+        var _this47 = this;
         var fileEl = $q(aib.qFormFile, this.form);
         if (!fileEl) {
           return;
@@ -17264,43 +17296,43 @@ this.disableSpells();
         this.files = new Files(this, $q(aib.qFormFile, this.form));
         deWindow.addEventListener('load', function () {
           return setTimeout(function () {
-            return !_this46.files.filesCount && _this46.files.clearInputs();
+            return !_this47.files.filesCount && _this47.files.clearInputs();
           }, 0);
         });
       }
     }, {
       key: "_initSubmit",
       value: function _initSubmit() {
-        var _this47 = this;
+        var _this48 = this;
         this.subm.addEventListener('click', function (e) {
-          var _this47$video$value;
-          if (Cfg.warnSubjTrip && _this47.subj && /#.|##./.test(_this47.subj.value)) {
+          var _this48$video$value;
+          if (Cfg.warnSubjTrip && _this48.subj && /#.|##./.test(_this48.subj.value)) {
             e.preventDefault();
             $popup('upload', Lng.subjHasTrip[lang]);
             return;
           }
-          var val = _this47.txta.value;
+          var val = _this48.txta.value;
           if (Spells.outreps) {
             val = Spells.outReplace(val);
           }
-          if (_this47.tNum && pByNum.get(_this47.tNum).subj === 'Dollchan Extension Tools') {
+          if (_this48.tNum && pByNum.get(_this48.tNum).subj === 'Dollchan Extension Tools') {
             var temp = "\n\n".concat(PostForm._wrapText(aib.markupTags[5], "".concat('-'.repeat(50), "\n").concat(nav.ua, "\nv").concat(version, ".").concat(commit).concat(nav.isESNext ? '.es6' : '', " [").concat(nav.scriptHandler, "]"))[1]);
             if (!val.includes(temp)) {
               val += temp;
             }
           }
-          _this47.txta.value = val;
-          _this47.toggleSage();
+          _this48.txta.value = val;
+          _this48.toggleSage();
           if (Cfg.ajaxPosting) {
             $popup('upload', Lng.checking[lang], true);
           }
-          if (_this47.video && (val = (_this47$video$value = _this47.video.value) === null || _this47$video$value === void 0 ? void 0 : _this47$video$value.match(Videos.ytReg))) {
-            _this47.video.value = 'http://www.youtube.com/watch?v=' + val[1];
+          if (_this48.video && (val = (_this48$video$value = _this48.video.value) === null || _this48$video$value === void 0 ? void 0 : _this48$video$value.match(Videos.ytReg))) {
+            _this48.video.value = 'http://www.youtube.com/watch?v=' + val[1];
           }
-          if (_this47.isQuick) {
-            $hide(_this47.pForm);
-            $hide(_this47.qArea);
-            _this47._pBtn[+_this47.isBottom].after(_this47.pForm);
+          if (_this48.isQuick) {
+            $hide(_this48.pForm);
+            $hide(_this48.qArea);
+            _this48._pBtn[+_this48.isBottom].after(_this48.pForm);
           }
           updater.pauseUpdater();
         });
@@ -17308,7 +17340,7 @@ this.disableSpells();
     }, {
       key: "_initTextarea",
       value: function _initTextarea() {
-        var _this48 = this;
+        var _this49 = this;
         var el = this.txta;
         el.classList.add('de-textarea');
         var style = el.style;
@@ -17336,7 +17368,7 @@ this.disableSpells();
                     break;
                   }
                   file = _step20.value;
-                  inputs = _this48.files._inputs;
+                  inputs = _this49.files._inputs;
                   i = 0, len = inputs.length;
                 case 6:
                   if (!(i < len)) {
@@ -17385,11 +17417,11 @@ this.disableSpells();
           _el: el,
           _elStyle: style,
           handleEvent: function handleEvent(e) {
-            var _this49 = this;
+            var _this50 = this;
             switch (e.type) {
               case 'mousedown':
                 ['mousemove', 'mouseup'].forEach(function (e) {
-                  return doc.body.addEventListener(e, _this49);
+                  return doc.body.addEventListener(e, _this50);
                 });
                 e.preventDefault();
                 return;
@@ -17402,7 +17434,7 @@ this.disableSpells();
                 }
               default:
                 ['mousemove', 'mouseup'].forEach(function (e) {
-                  return doc.body.removeEventListener(e, _this49);
+                  return doc.body.removeEventListener(e, _this50);
                 });
                 CfgSaver.save('textaWidth', parseInt(this._elStyle.width, 10), 'textaHeight', parseInt(this._elStyle.height, 10));
             }
@@ -17412,16 +17444,16 @@ this.disableSpells();
     }, {
       key: "_makeHideableContainer",
       value: function _makeHideableContainer() {
-        var _this50 = this;
+        var _this51 = this;
         (this.pForm = $add('<div id="de-pform" class="de-win-body"></div>')).append(this.form || '', this.oeForm || '');
         var html = '<div class="de-parea"><div>[<a href="#"></a>]</div><hr></div>';
         this.pArea = [$bBegin(DelForm.first.el, html), $aEnd(aib._4chan ? $q('.board', DelForm.first.el) : DelForm.first.el, html)];
         this._pBtn = [this.pArea[0].firstChild, this.pArea[1].firstChild];
         this._pBtn[0].firstElementChild.onclick = function (e) {
-          return _this50.showMainReply(false, e);
+          return _this51.showMainReply(false, e);
         };
         this._pBtn[1].firstElementChild.onclick = function (e) {
-          return _this50.showMainReply(true, e);
+          return _this51.showMainReply(true, e);
         };
         this.qArea = $add("<div style=\"display: none; ".concat(Cfg.replyWinX, "; ").concat(Cfg.replyWinY, "; z-index: ").concat(++topWinZ, ";\" id=\"de-win-reply\" class=\"").concat(aib.cReply + (Cfg.replyWinDrag ? ' de-win' : ' de-win-inpost'), "\"></div>"));
         this.isBottom = Cfg.addPostForm === 1;
@@ -17430,7 +17462,7 @@ this.disableSpells();
     }, {
       key: "_makeWindow",
       value: function _makeWindow() {
-        var _this51 = this;
+        var _this52 = this;
         makeDraggable('reply', this.qArea, $aBegin(this.qArea, "<div class=\"de-win-head\">\n\t\t\t<span class=\"de-win-title\"></span>\n\t\t\t<span class=\"de-win-buttons\">\n\t\t\t\t<svg class=\"de-win-btn-clear\"><use xlink:href=\"#de-symbol-unavail\"/></svg>\n\t\t\t\t<svg class=\"de-win-btn-toggle\"><use xlink:href=\"#de-symbol-win-arrow\"/></svg>\n\t\t\t\t<svg class=\"de-win-btn-close\"><use xlink:href=\"#de-symbol-win-close\"/></svg>\n\t\t\t</span>\n\t\t</div>\n\t\t<div class=\"de-resizer de-resizer-top\"></div>\n\t\t<div class=\"de-resizer de-resizer-left\"></div>\n\t\t<div class=\"de-resizer de-resizer-right\"></div>\n\t\t<div class=\"de-resizer de-resizer-bottom\"></div>"));
         var buttons = $q('.de-win-buttons', this.qArea);
         buttons.onmouseover = function (_ref28) {
@@ -17458,9 +17490,9 @@ this.disableSpells();
                 _context33.next = 2;
                 return CfgSaver.save('sageReply', 0);
               case 2:
-                _this51.toggleSage();
-                _this51.files.clearInputs();
-                [_this51.txta, _this51.name, _this51.mail, _this51.subj, _this51.video, _this51.cap && _this51.cap.textEl].forEach(function (el) {
+                _this52.toggleSage();
+                _this52.files.clearInputs();
+                [_this52.txta, _this52.name, _this52.mail, _this52.subj, _this52.video, _this52.cap && _this52.cap.textEl].forEach(function (el) {
                   return el && (el.value = '');
                 });
               case 5:
@@ -17477,11 +17509,11 @@ this.disableSpells();
                 return toggleCfg('replyWinDrag');
               case 2:
                 if (Cfg.replyWinDrag) {
-                  _this51.qArea.className = aib.cReply + ' de-win';
-                  updateWinZ(_this51.qArea);
+                  _this52.qArea.className = aib.cReply + ' de-win';
+                  updateWinZ(_this52.qArea);
                 } else {
-                  _this51.qArea.className = aib.cReply + ' de-win-inpost';
-                  _this51.txta.focus();
+                  _this52.qArea.className = aib.cReply + ' de-win-inpost';
+                  _this52.txta.focus();
                 }
               case 3:
               case "end":
@@ -17490,7 +17522,7 @@ this.disableSpells();
           }, _callee33);
         }));
         closeBtn.onclick = function () {
-          return _this51.closeReply();
+          return _this52.closeReply();
         };
       }
     }, {
@@ -18415,7 +18447,7 @@ this.disableSpells();
       key: "addUrlFile",
       value: function () {
         var _addUrlFile = _asyncToGenerator(_regeneratorRuntime().mark(function _callee36(url) {
-          var _this52 = this;
+          var _this53 = this;
           var file,
             _args38 = arguments;
           return _regeneratorRuntime().wrap(function _callee36$(_context38) {
@@ -18440,7 +18472,7 @@ this.disableSpells();
                     return;
                   }
                   closePopup('file-loading');
-                  _this52._isTxtEditable = _this52._isTxtEditName = false;
+                  _this53._isTxtEditable = _this53._isTxtEditName = false;
                   var name = ((_file = file) === null || _file === void 0 ? void 0 : _file.name) || getFileName(url);
                   var type = ((_file2 = file) === null || _file2 === void 0 ? void 0 : _file2.type) || getFileMime(name);
                   if (!type || name.includes('?')) {
@@ -18465,23 +18497,23 @@ this.disableSpells();
                       name = name.split('?').shift() + '.' + ext;
                     }
                   }
-                  _this52.imgFile = {
+                  _this53.imgFile = {
                     data: data.buffer,
                     name: name,
                     type: type || getFileMime(name)
                   };
                   if (!file) {
                     file = new Blob([data], {
-                      type: _this52.imgFile.type
+                      type: _this53.imgFile.type
                     });
                     file.name = name;
                   }
-                  _this52._parent._files[_this52._parent._inputs.indexOf(_this52)] = file;
-                  DollchanAPI.notify('filechange', _this52._parent._files);
+                  _this53._parent._files[_this53._parent._inputs.indexOf(_this53)] = file;
+                  DollchanAPI.notify('filechange', _this53._parent._files);
                   if (FileInput._isThumbMode) {
-                    $hide(_this52._txtWrap);
+                    $hide(_this53._txtWrap);
                   }
-                  _this52._onFileChange(true);
+                  _this53._onFileChange(true);
                 });
               case 6:
                 return _context38.abrupt("return", _context38.sent);
@@ -18558,7 +18590,7 @@ this.disableSpells();
     }, {
       key: "handleEvent",
       value: function handleEvent(e) {
-        var _this53 = this;
+        var _this54 = this;
         var el = e.target;
         var thumb = this._thumb;
         var isThumb = el === thumb || el.className === 'de-file-img';
@@ -18574,7 +18606,7 @@ this.disableSpells();
                 for (var i = 0; i < allowedLen; ++i) {
                   FileInput._readDroppedFile(inpArray[curInpIdx + i], el.files[i]).then(function () {
                     if (! --j) {
-                      _this53._removeFileHelper();
+                      _this54._removeFileHelper();
                     }
                   });
                   this._parent._files[curInpIdx + i] = el.files[i];
@@ -18582,7 +18614,7 @@ this.disableSpells();
               } else {
                 if (filesLen > 0) {
                   setTimeout(function () {
-                    return _this53._onFileChange(false);
+                    return _this54._onFileChange(false);
                   }, 20);
                   this._parent._files[curInpIdx] = el.files[0];
                 } else {
@@ -18652,15 +18684,15 @@ this.disableSpells();
                   var file = this._input.files[0];
                   readFile(file).then(function (_ref36) {
                     var data = _ref36.data;
-                    _this53.imgFile = {
+                    _this54.imgFile = {
                       data: data,
                       name: newName,
                       type: file.type,
                       isCustomName: true
                     };
-                    _this53._removeFileHelper();
+                    _this54._removeFileHelper();
                     if (FileInput._isThumbMode) {
-                      _this53._addThumbTitle(newName, data.byteLength);
+                      _this54._addThumbTitle(newName, data.byteLength);
                     }
                   });
                   return;
@@ -18751,20 +18783,20 @@ this.disableSpells();
     }, {
       key: "_addRarJpeg",
       value: function _addRarJpeg() {
-        var _this54 = this;
+        var _this55 = this;
         var el = this._parent.rarInput;
         el.onchange = function (e) {
-          $hide(_this54._btnRar);
-          var myBtn = _this54._rarMsg = $aBegin(_this54._utils, '<span><svg class="de-wait"><use xlink:href="#de-symbol-wait"/></svg></span>');
+          $hide(_this55._btnRar);
+          var myBtn = _this55._rarMsg = $aBegin(_this55._utils, '<span><svg class="de-wait"><use xlink:href="#de-symbol-wait"/></svg></span>');
           var file = e.target.files[0];
           readFile(file).then(function (_ref37) {
             var data = _ref37.data;
-            if (_this54._rarMsg === myBtn) {
+            if (_this55._rarMsg === myBtn) {
               myBtn.className = 'de-file-rarmsg';
-              var origFileName = _this54.imgFile ? _this54.imgFile.name : _this54._input.files[0].name;
+              var origFileName = _this55.imgFile ? _this55.imgFile.name : _this55._input.files[0].name;
               myBtn.title = origFileName + ' + ' + file.name;
               myBtn.textContent = getFileExt(origFileName) + ' + ' + getFileExt(file.name);
-              _this54.extraFile = data;
+              _this55.extraFile = data;
             }
           });
         };
@@ -18783,7 +18815,7 @@ this.disableSpells();
     }, {
       key: "_initThumbs",
       value: function _initThumbs() {
-        var _this55 = this;
+        var _this56 = this;
         var fileTr = this._parent.fileTr;
         $hide(fileTr);
         $hide(this._txtWrap);
@@ -18792,7 +18824,7 @@ this.disableSpells();
         (isTr ? txtArea.lastChild : txtArea).append(this._txtWrap);
         this._thumb = $bEnd(this._parent.thumbsEl, "<div class=\"de-file de-file-off\"><div class=\"de-file-img\"><div class=\"de-file-img\" title=\"".concat(Lng.youCanDrag[lang], "\"></div></div></div>"));
         ['click', 'dragenter'].forEach(function (e) {
-          return _this55._thumb.addEventListener(e, _this55);
+          return _this56._thumb.addEventListener(e, _this56);
         });
         this._thumb.append(this._utils);
         this._toggleDragEvents(this._thumb, true);
@@ -18866,7 +18898,7 @@ this.disableSpells();
     }, {
       key: "_showFileThumb",
       value: function _showFileThumb() {
-        var _this56 = this;
+        var _this57 = this;
         var imgFile = this.imgFile;
         if (imgFile) {
           this._addNewThumb(imgFile.data, imgFile.name, imgFile.type, imgFile.data.byteLength);
@@ -18876,8 +18908,8 @@ this.disableSpells();
         if (file) {
           readFile(file).then(function (_ref38) {
             var data = _ref38.data;
-            if (_this56._input.files[0] === file) {
-              _this56._addNewThumb(data, file.name, file.type, file.size);
+            if (_this57._input.files[0] === file) {
+              _this57._addNewThumb(data, file.name, file.type, file.size);
             }
           });
         }
@@ -18892,13 +18924,13 @@ this.disableSpells();
     }, {
       key: "_toggleDragEvents",
       value: function _toggleDragEvents(el, isAdd) {
-        var _this57 = this;
+        var _this58 = this;
         var name = isAdd ? 'addEventListener' : 'removeEventListener';
         el[name]('dragover', function (e) {
           return e.preventDefault();
         });
         ['dragenter', 'dragleave', 'drop'].forEach(function (e) {
-          return el[name](e, _this57);
+          return el[name](e, _this58);
         });
       }
     }], [{
@@ -18995,16 +19027,16 @@ this.disableSpells();
     }, {
       key: "initCapPromise",
       value: function initCapPromise() {
-        var _this58 = this;
+        var _this59 = this;
         var initPromise = aib.captchaInit ? aib.captchaInit(this) : null;
         if (initPromise) {
           initPromise.then(function () {
-            return _this58.showCaptcha();
+            return _this59.showCaptcha();
           }, function (err) {
             if (err instanceof AjaxError) {
-              _this58._setUpdateError(err);
+              _this59._setUpdateError(err);
             } else {
-              _this58.hasCaptcha = false;
+              _this59.hasCaptcha = false;
             }
           });
         } else if (this.hasCaptcha) {
@@ -19014,24 +19046,24 @@ this.disableSpells();
     }, {
       key: "initImage",
       value: function initImage(img) {
-        var _this59 = this;
+        var _this60 = this;
         img.title = Lng.refresh[lang];
         img.alt = Lng.loading[lang];
         img.style.cssText = 'vertical-align: text-bottom; border: none; cursor: pointer;';
         img.onclick = function () {
-          return _this59.refreshCaptcha(true);
+          return _this60.refreshCaptcha(true);
         };
       }
     }, {
       key: "initTextEl",
       value: function initTextEl() {
-        var _this60 = this;
+        var _this61 = this;
         this.textEl.autocomplete = 'off';
         if (!aib.formHeaders && (aib.multiFile || Cfg.fileInputs !== 2)) {
           this.textEl.placeholder = Lng.cap[lang];
         }
         ['keypress', 'focus'].forEach(function (e) {
-          return _this60.textEl.addEventListener(e, _this60);
+          return _this61.textEl.addEventListener(e, _this61);
         });
         this.textEl.onkeypress = null;
         this.textEl.onfocus = null;
@@ -19070,7 +19102,7 @@ this.disableSpells();
     }, {
       key: "refreshCaptcha",
       value: function refreshCaptcha(isFocus) {
-        var _this61 = this;
+        var _this62 = this;
         var isError = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var tNum = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.tNum;
         if (!this.isAdded || tNum !== this.tNum) {
@@ -19089,9 +19121,9 @@ this.disableSpells();
           var updatePromise = aib.captchaUpdate(this, isError);
           if (updatePromise) {
             updatePromise.then(function () {
-              return _this61._updateTextEl(isFocus);
+              return _this62._updateTextEl(isFocus);
             }, function (err) {
-              return _this61._setUpdateError(err);
+              return _this62._setUpdateError(err);
             });
           }
         } else if (this._isRecap) {
@@ -19144,13 +19176,13 @@ this.disableSpells();
     }, {
       key: "_setUpdateError",
       value: function _setUpdateError(e) {
-        var _this62 = this;
+        var _this63 = this;
         if (e) {
           this.parentEl.innerHTML = e.toString();
           this.isAdded = false;
           this.parentEl.onclick = function () {
-            _this62.parentEl.onclick = null;
-            _this62.addCaptcha();
+            _this63.parentEl.onclick = null;
+            _this63.addCaptcha();
           };
           $show(this.parentEl);
         }
@@ -19174,6 +19206,94 @@ this.disableSpells();
             this.textEl.focus();
           }
         }
+      }
+    }]);
+  }();
+  var Tip = function () {
+    function Tip() {
+      _classCallCheck(this, Tip);
+      this.node = null;
+      this.timeout = null;
+      this.delay = 300;
+      this.css = "\n\t\t\tposition: absolute;\n\t\t\tbackground-color: #000;\n\t\t\tfont-size: 11px;\n\t\t\tline-height: 13px;\n\t\t\tpadding: 3px 6px;\n\t\t\tz-index: 100000;\n\t\t\tword-wrap: break-word;\n\t\t\twhite-space: pre-line;\n\t\t\tmax-width: 400px;\n\t\t\tcolor: #fff;\n\t\t\ttext-align: center;\n\t\t";
+      this.init();
+    }
+    return _createClass(Tip, [{
+      key: "init",
+      value: function init() {
+        var e;
+        (e = document.createElement('style')).setAttribute('type', 'text/css');
+        e.textContent = "#de-tooltip {".concat(this.css, "}");
+        e.id = 'de-tooltip-style';
+        document.head.appendChild(e);
+      }
+    }, {
+      key: "onMouseOver",
+      value: function onMouseOver(e) {
+        var t, n, o;
+        o = e.target, this.timeout && (clearTimeout(this.timeout), this.timeout = null), o.hasAttribute('data-tip') && (n = null, o.hasAttribute('data-tip-cb') && (t = o.getAttribute('data-tip-cb'), window[t] && (n = window[t](o))), this.timeout = setTimeout(this.show, this.delay, e.target, n));
+      }
+    }, {
+      key: "onMouseOut",
+      value: function onMouseOut() {
+        this.timeout && (clearTimeout(this.timeout), this.timeout = null), this.hide();
+      }
+    }, {
+      key: "show",
+      value: function show(e, t, n) {
+        var o, a, i, l, r;
+        a = e.getBoundingClientRect(), (o = document.createElement('div')).id = 'de-tooltip', t ? o.innerHTML = t : o.textContent = e.getAttribute('data-tip'), n || (n = 'top'), o.className = 'tip-' + n, document.body.appendChild(o), (l = a.left - (o.offsetWidth - e.offsetWidth) / 2) < 0 ? (l = a.left + 2, o.className += '-right') : l + o.offsetWidth > document.documentElement.clientWidth && (l = a.left - o.offsetWidth + e.offsetWidth + 2, o.className += '-left'), r = a.top - o.offsetHeight - 5, (i = o.style).top = r + window.pageYOffset + 'px', i.left = l + window.pageXOffset + 'px', this.node = o;
+      }
+    }, {
+      key: "hide",
+      value: function hide() {
+        this.node && (document.body.removeChild(this.node), this.node = null);
+      }
+    }]);
+  }();
+  var IDColor = function () {
+    function IDColor() {
+      _classCallCheck(this, IDColor);
+      this.css = 'padding: 0 5px; border-radius: 6px; font-size: 0.8em; cursor: pointer;';
+      this.ids = {};
+      this.init();
+    }
+    return _createClass(IDColor, [{
+      key: "init",
+      value: function init() {
+        var e;
+        (e = document.createElement('style')).setAttribute('type', 'text/css');
+        e.textContent = "".concat(aib.qPosterId, " {").concat(this.css, "}");
+        e.id = 'de-id-style';
+        document.head.appendChild(e);
+      }
+    }, {
+      key: "hash",
+      value: function hash(e) {
+        var t,
+          a,
+          i = 0;
+        for (t = 0, a = e.length; t < a; ++t) {
+          i = (i << 5) - i + e.charCodeAt(t);
+        }
+        return i;
+      }
+    }, {
+      key: "compute",
+      value: function compute(e) {
+        var t, a;
+        return t = [], a = this.hash(e), t[0] = a >> 24 & 255, t[1] = a >> 16 & 255, t[2] = a >> 8 & 255, t[3] = 0.299 * t[0] + 0.587 * t[1] + 0.114 * t[2] > 125, this.ids[e] = t, t;
+      }
+    }, {
+      key: "apply",
+      value: function apply(e) {
+        var t;
+        t = this.ids[e.textContent] || this.compute(e.textContent.replace(/id:*/i, '')), e.style.cssText = '    background-color: rgb(' + t[0] + ',' + t[1] + ',' + t[2] + ');    color: ' + (t[3] ? 'black;' : 'white;');
+      }
+    }, {
+      key: "applyRemote",
+      value: function applyRemote(e) {
+        this.apply(e), e.style.cssText += this.css;
       }
     }]);
   }();
@@ -19304,7 +19424,7 @@ this.disableSpells();
       value: function handleEvent(e) {
         var _temp,
           _el$textContent$match,
-          _this63 = this;
+          _this64 = this;
         var temp;
         var el = nav.fixEventEl(e.target);
         var type = e.type;
@@ -19465,7 +19585,7 @@ Spells.addSpell(9, '', false);
         if (!this._hasEvents) {
           this._hasEvents = true;
           ['click', 'mouseout'].forEach(function (e) {
-            return _this63.el.addEventListener(e, _this63, true);
+            return _this64.el.addEventListener(e, _this64, true);
           });
         }
         if (Cfg.embedYTube === 2 && el.classList.contains('de-video-link')) {
@@ -19546,7 +19666,7 @@ Spells.addSpell(9, '', false);
                 return;
               }
               this._linkTO = setTimeout(function () {
-                return _this63.kid = Pview.showPview(_this63, el);
+                return _this64.kid = Pview.showPview(_this64, el);
               }, Cfg.linksOver);
             }
             e.preventDefault();
@@ -19598,11 +19718,11 @@ Spells.addSpell(9, '', false);
     }, {
       key: "changeMyMark",
       value: function changeMyMark(val) {
-        var _this64 = this;
+        var _this65 = this;
         this.el.classList.toggle('de-mypost', val);
         $Q("[de-form] ".concat(aib.qPostMsg, " a[href$=\"").concat(aib.anchor + this.num, "\"]")).forEach(function (el) {
           var post = aib.getPostOfEl(el);
-          if (post.el !== _this64.el) {
+          if (post.el !== _this65.el) {
             el.classList.toggle('de-ref-you', val);
             post.el.classList.toggle('de-mypost-reply', val);
           }
@@ -19659,7 +19779,7 @@ Spells.addSpell(9, '', false);
     }, {
       key: "_getFullMsg",
       value: function _getFullMsg(truncEl, isInit) {
-        var _this65 = this;
+        var _this66 = this;
         if (aib.deleteTruncMsg) {
           aib.deleteTruncMsg(this, truncEl, isInit);
           return;
@@ -19670,20 +19790,20 @@ Spells.addSpell(9, '', false);
         ajaxLoad(aib.getThrUrl(aib.b, this.tNum)).then(function (form) {
           var sourceEl;
           var maybeSpells = new Maybe(SpellsRunner);
-          if (_this65.isOp) {
+          if (_this66.isOp) {
             sourceEl = form;
           } else {
             var posts = $Q(aib.qPost, form);
             for (var i = 0, len = posts.length; i < len; ++i) {
               var post = posts[i];
-              if (_this65.num === aib.getPNum(post)) {
+              if (_this66.num === aib.getPNum(post)) {
                 sourceEl = post;
                 break;
               }
             }
           }
           if (sourceEl) {
-            _this65.updateMsg(aib.fixHTML(doc.adoptNode($q(aib.qPostMsg, sourceEl))), maybeSpells.value);
+            _this66.updateMsg(aib.fixHTML(doc.adoptNode($q(aib.qPostMsg, sourceEl))), maybeSpells.value);
             truncEl.remove();
           }
           if (maybeSpells.hasValue) {
@@ -19694,9 +19814,9 @@ Spells.addSpell(9, '', false);
     }, {
       key: "_menuAdd",
       value: function _menuAdd(el, html) {
-        var _this66 = this;
+        var _this67 = this;
         return new Menu(el, html, function (el, e) {
-          return (_this66 instanceof Pview ? pByNum.get(_this66.num) || _this66 : _this66)._menuClickOnOptions(el, e);
+          return (_this67 instanceof Pview ? pByNum.get(_this67.num) || _this67 : _this67)._menuClickOnOptions(el, e);
         }, false);
       }
     }, {
@@ -19847,11 +19967,11 @@ Spells.addSpell(9, '', false);
       key: "_menuShowOverBtn",
       value: function _menuShowOverBtn(el, html) {
         var _this$_menu2,
-          _this67 = this;
+          _this68 = this;
         (_this$_menu2 = this._menu) === null || _this$_menu2 === void 0 || _this$_menu2.removeMenu();
         this._menu = this._menuAdd(el, html);
         this._menu.onremove = function () {
-          return _this67._menu = null;
+          return _this68._menu = null;
         };
       }
     }, {
@@ -19869,7 +19989,7 @@ Spells.addSpell(9, '', false);
       key: "_menuToggleOverBtn",
       value: function _menuToggleOverBtn(el, isOutEvent, html) {
         var _this$_menu4,
-          _this68 = this;
+          _this69 = this;
         if (((_this$_menu4 = this._menu) === null || _this$_menu4 === void 0 ? void 0 : _this$_menu4.parentEl) === el) {
           return;
         }
@@ -19877,7 +19997,7 @@ Spells.addSpell(9, '', false);
           clearTimeout(this._menuTO);
         } else {
           this._menuTO = setTimeout(function () {
-            return _this68._menuShowOverBtn(el, html);
+            return _this69._menuShowOverBtn(el, html);
           }, Cfg.linksOver);
         }
       }
@@ -19885,41 +20005,86 @@ Spells.addSpell(9, '', false);
   }();
   var Post = function (_AbstractPost) {
     function Post(el, thr, num, count, isOp, prev) {
-      var _this69;
+      var _this70;
       _classCallCheck(this, Post);
-      _this69 = _callSuper(this, Post, [thr, num, isOp]);
-      _this69.count = count;
-      _this69.el = el;
-      _this69.isDeleted = false;
-      _this69.isHidden = false;
-      _this69.isOmitted = false;
-      _this69.isViewed = false;
-      _this69.next = null;
-      _this69.prev = prev;
-      _this69.spellHidden = false;
-      _this69.userToggled = false;
-      _this69._selRange = null;
-      _this69._selText = '';
+      _this70 = _callSuper(this, Post, [thr, num, isOp]);
+      _this70.count = count;
+      _this70.el = el;
+      _this70.isDeleted = false;
+      _this70.isHidden = false;
+      _this70.isOmitted = false;
+      _this70.isViewed = false;
+      _this70.next = null;
+      _this70.prev = prev;
+      _this70.spellHidden = false;
+      _this70.userToggled = false;
+      _this70._selRange = null;
+      _this70._selText = '';
       if (prev) {
-        prev.next = _this69;
+        prev.next = _this70;
       }
-      pByEl.set(el, _this69);
-      pByNum.set(num, _this69);
+      pByEl.set(el, _this70);
+      pByNum.set(num, _this70);
       var isMyPost = MyPosts.has(num);
       if (isMyPost) {
-        _this69.el.classList.add('de-mypost');
-      } else if (localData && _this69.el.classList.contains('de-mypost')) {
+        _this70.el.classList.add('de-mypost');
+      } else if (localData && _this70.el.classList.contains('de-mypost')) {
         MyPosts.set(num, thr.num);
         isMyPost = true;
       }
-      el.classList.add(isOp ? 'de-oppost' : 'de-reply');
-      _this69.btns = $aEnd(_this69._pref = $q(aib.qPostRef, el), '<span class="de-post-btns">' + Post.getPostBtns(isOp, aib.t) + (_this69.sage ? '<svg class="de-btn-sage"><use xlink:href="#de-symbol-post-sage"/></svg>' : '') + (isOp ? '' : "<span class=\"de-post-counter\">".concat(count + 1, "</span>")) + (isMyPost ? '<span class="de-post-counter-you">(You)</span>' : '') + '</span>');
-      _this69.counterEl = isOp ? null : $q('.de-post-counter', _this69.btns);
-      if (Cfg.expandTrunc && _this69.trunc) {
-        _this69._getFullMsg(_this69.trunc, true);
+      var isHighlighted = HighlightedPosts.has(_this70.posterId);
+      if (isHighlighted) {
+        _this70.el.classList.add('de-highlighted');
       }
-      el.addEventListener('mouseover', _this69, true);
-      return _this69;
+      var isOpsPost = thr.opPosterId && thr.opPosterId === _this70.posterId;
+      el.classList.add(isOp ? 'de-oppost' : 'de-reply');
+      _this70.btns = $aEnd(_this70._pref = $q(aib.qPostRef, el), '<span class="de-post-btns">' + Post.getPostBtns(isOp, aib.t) + (_this70.sage ? '<svg class="de-btn-sage"><use xlink:href="#de-symbol-post-sage"/></svg>' : '') + (isOp ? '' : "<span class=\"de-post-counter\">".concat(count + 1, "</span>")) + (isOpsPost ? '<span class="de-post-counter-op">(OP)</span>' : '') + (isMyPost ? '<span class="de-post-counter-you">(You)</span>' : '') + '</span>');
+      _this70.counterEl = isOp ? null : $q('.de-post-counter', _this70.btns);
+      if (Cfg.expandTrunc && _this70.trunc) {
+        _this70._getFullMsg(_this70.trunc, true);
+      }
+      var posterIdEl = $q(aib.qPosterId, _this70.el);
+      if (posterIdEl && thr.IDColors) {
+        thr.IDColors.apply(posterIdEl);
+      }
+      if (posterIdEl) {
+        posterIdEl.addEventListener('click', function (e) {
+          var isAdd = !HighlightedPosts.has(_this70.posterId);
+          if (isAdd) {
+            HighlightedPosts.set(_this70.posterId, _this70.thr.num);
+          } else {
+            HighlightedPosts.removeStorage(_this70.posterId);
+          }
+          var allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', document.body);
+          for (var i = 0; i < allPosts.length; i++) {
+            var post = allPosts[i];
+            var _posterIdEl = $q(aib.qPosterId, post);
+            if (_posterIdEl && _posterIdEl.textContent === _this70.posterId) {
+              post.classList.toggle('de-highlighted', isAdd);
+            }
+          }
+        }, true);
+        if (typeof thr.Tip !== 'undefined') {
+          posterIdEl.addEventListener('mouseover', function (e) {
+            var t = e.target.textContent;
+            var o = 0;
+            var allPosts = $Q(aib.qRPost, thr.el);
+            for (var i = 0; i < allPosts.length; i++) {
+              var post = allPosts[i];
+              var _posterIdEl2 = $q(aib.qPosterId, post);
+              if (_posterIdEl2 && _posterIdEl2.textContent === t) {
+                o++;
+              }
+            }
+            thr.Tip.show(e.target, o + ' post' + (o !== 1 ? 's' : '') + ' by this ID');
+          }, true);
+          posterIdEl.addEventListener('mouseout', function (e) {
+            thr.Tip.hide();
+          }, true);
+        }
+      }
+      el.addEventListener('mouseover', _this70, true);
+      return _this70;
     }
     _inherits(Post, _AbstractPost);
     return _createClass(Post, [{
@@ -20155,7 +20320,7 @@ Spells.addSpell(9, '', false);
     }, {
       key: "setVisib",
       value: function setVisib(isHide) {
-        var _this70 = this;
+        var _this71 = this;
         var note = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
         if (this.isHidden === isHide) {
           if (isHide && note) {
@@ -20171,14 +20336,14 @@ Spells.addSpell(9, '', false);
           } else {
             this._pref.onmouseover = this._pref.onmouseout = !isHide ? null : function (e) {
               var yOffset = deWindow.pageYOffset;
-              _this70.hideContent(e.type === 'mouseout');
+              _this71.hideContent(e.type === 'mouseout');
               scrollTo(deWindow.pageXOffset, yOffset);
             };
           }
         }
         if (Cfg.strikeHidd) {
           setTimeout(function () {
-            return _this70._strikePostNum(isHide);
+            return _this71._strikePostNum(isHide);
           }, 50);
         }
         if (isHide) {
@@ -20234,6 +20399,129 @@ Spells.addSpell(9, '', false);
         }
       }
     }, {
+      key: "_clickMenu",
+      value: function _clickMenu(el) {
+        var _this72 = this;
+        var isHide = !this.isHidden;
+        var isPview = this instanceof Pview;
+        var num = this.num;
+        switch (el.getAttribute('info')) {
+          case 'hide-sel':
+            {
+              var _this$_selRange2 = this._selRange,
+                start = _this$_selRange2.startContainer,
+                end = _this$_selRange2.endContainer;
+              if (start.nodeType === 3) {
+                start = start.parentNode;
+              }
+              if (end.nodeType === 3) {
+                end = end.parentNode;
+              }
+              var inMsgSel = "".concat(aib.qPostMsg, ", ").concat(aib.qPostMsg, " *");
+              if (nav.matchesSelector(start, inMsgSel) && nav.matchesSelector(end, inMsgSel) || nav.matchesSelector(start, aib.qPostSubj) && nav.matchesSelector(end, aib.qPostSubj)) {
+                if (this._selText.includes('\n')) {
+                  Spells.addSpell(1 , "/".concat(quoteReg(this._selText).replace(/\r?\n/g, '\\n'), "/"), false);
+                } else {
+                  Spells.addSpell(0 , this._selText.toLowerCase(), false);
+                }
+              } else {
+                dummy.innerHTML = '';
+                dummy.appendChild(this._selRange.cloneContents());
+                Spells.addSpell(2 , "/".concat(quoteReg(dummy.innerHTML.replace(/^<[^>]+>|<[^>]+>$/g, '')), "/"), false);
+              }
+              return;
+            }
+          case 'hide-name':
+            Spells.addSpell(6 , this.posterName, false);
+            return;
+          case 'hide-uid':
+            {
+              var fixedId = this.posterId;
+              if (fixedId && fixedId.length) {
+                fixedId = _toConsumableArray(fixedId).map(function (c) {
+                  return /[A-Za-z0-9]/.test(c) ? c : '\\' + c;
+                }).join('');
+              }
+              var exph = "/(?:<span.*>)s?".concat(fixedId, "/");
+              Spells.addSpell(2 , exph, false);
+              return;
+            }
+          case 'hide-trip':
+            Spells.addSpell(7 , this.posterTrip, false);
+            return;
+          case 'hide-img':
+            {
+              var _this$images$firstAtt2 = this.images.firstAttach,
+                w = _this$images$firstAtt2.weight,
+                wi = _this$images$firstAtt2.width,
+                h = _this$images$firstAtt2.height;
+              Spells.addSpell(8 , [0, [w, w], [wi, wi, h, h]], false);
+              return;
+            }
+          case 'hide-imgn':
+            Spells.addSpell(3 , "/".concat(quoteReg(this.images.firstAttach.name), "/"), false);
+            return;
+          case 'hide-ihash':
+            ImagesHashStorage.getHash(this.images.firstAttach).then(function (hash) {
+              if (hash !== -1) {
+                Spells.addSpell(4 , hash, false);
+              }
+            });
+            return;
+          case 'hide-noimg':
+            Spells.addSpell(0x108 , '', true);
+            return;
+          case 'hide-text':
+            {
+              var words = Post.getWrds(this.text);
+              for (var post = Thread.first.op; post; post = post.next) {
+                Post.findSameText(num, !isHide, words, post);
+              }
+              return;
+            }
+          case 'hide-notext':
+            Spells.addSpell(0x10B , '', true);
+            return;
+          case 'hide-refs':
+            this.ref.toggleRef(isHide, true);
+            this.setUserVisib(isHide);
+            return;
+          case 'hide-refsonly':
+            Spells.addSpell(0 , '>>' + num, false);
+            return;
+          case 'post-markmy':
+            {
+              var isAdd = !MyPosts.has(num);
+              if (isAdd) {
+                MyPosts.set(num, this.thr.num);
+              } else {
+                MyPosts.removeStorage(num);
+              }
+              this.el.classList.toggle('de-mypost', isAdd);
+              $each($Q("[de-form] ".concat(aib.qPostMsg, " a[href$=\"").concat(aib.anchor + num, "\"]")), function (el) {
+                var post = aib.getPostOfEl(el);
+                if (post.el !== _this72.el) {
+                  el.classList.toggle('de-ref-you', isAdd);
+                  post.el.classList.toggle('de-mypost-reply', isAdd);
+                }
+              });
+              return;
+            }
+          case 'post-reply':
+            pr.showQuickReply(isPview ? Pview.topParent : this, num, !isPview, false);
+            quotedText = '';
+            return;
+          case 'post-report':
+            aib.reportForm(num, this.thr.num);
+            return;
+          case 'thr-exp':
+            {
+              var task = +el.textContent.match(/\d+/);
+              this.thr.loadPosts(!task ? 'all' : task === 10 ? 'more' : task);
+            }
+        }
+      }
+    }, {
       key: "_getMenuHide",
       value: function _getMenuHide() {
         var item = function item(name) {
@@ -20245,7 +20533,7 @@ Spells.addSpell(9, '', false);
           this._selText = ssel;
           this._selRange = sel.getRangeAt(0);
         }
-        return "".concat(nav.isMobile ? "<span info=\"hide-post\" class=\"de-menu-item\">".concat(this.isOp ? Lng.toggleThr[lang] : Lng.togglePost[lang], "</span>") : '').concat(ssel ? item('sel') : '').concat(this.posterName ? item('name') : '').concat(this.posterTrip ? item('trip') : '').concat(this.images.hasAttachments ? item('img') + item('imgn') + item('ihash') : item('noimg')).concat(this.text ? item('text') : item('notext')).concat(!Cfg.hideRefPsts && this.ref.hasMap ? item('refs') : '').concat(item('refsonly'));
+        return "".concat(ssel ? item('sel') : '').concat(this.posterId ? item('uid') : '').concat(this.posterName ? item('name') : '').concat(this.posterTrip ? item('trip') : '').concat(this.images.hasAttachments ? item('img') + item('imgn') + item('ihash') : item('noimg')).concat(this.text ? item('text') : item('notext')).concat(!Cfg.hideRefPsts && this.ref.hasMap ? item('refs') : '').concat(item('refsonly'));
       }
     }, {
       key: "_getMenuReply",
@@ -20365,7 +20653,6 @@ Spells.addSpell(9, '', false);
           for (var el = headerEl.nextElementSibling; el; el = el.nextElementSibling) {
             el.classList.add('de-post-hiddencontent');
           }
-
           for (var _el8 = headerEl.previousElementSibling; _el8; _el8 = _el8.previousElementSibling) {
             _el8.classList.add('de-post-hiddencontent');
           }
@@ -20377,16 +20664,16 @@ Spells.addSpell(9, '', false);
   Post.hiddenNums = new Set();
   Post.Сontent = function (_TemporaryContent) {
     function PostContent(post) {
-      var _this71;
+      var _this73;
       _classCallCheck(this, PostContent);
-      _this71 = _callSuper(this, PostContent, [post]);
-      if (_this71._isInited) {
-        return _possibleConstructorReturn(_this71);
+      _this73 = _callSuper(this, PostContent, [post]);
+      if (_this73._isInited) {
+        return _possibleConstructorReturn(_this73);
       }
-      _this71._isInited = true;
-      _this71.el = post.el;
-      _this71.post = post;
-      return _this71;
+      _this73._isInited = true;
+      _this73.el = post.el;
+      _this73.post = post;
+      return _this73;
     }
     _inherits(PostContent, _TemporaryContent);
     return _createClass(PostContent, [{
@@ -20511,16 +20798,16 @@ Spells.addSpell(9, '', false);
     }, {
       key: "set",
       value: function set(note) {
-        var _this72 = this;
+        var _this74 = this;
         this.text = note;
         var text;
         if (this.isHideThr) {
           this._aEl.onmouseover = this._aEl.onmouseout = function (e) {
-            return _this72._post.hideContent(e.type === 'mouseout');
+            return _this74._post.hideContent(e.type === 'mouseout');
           };
           this._aEl.onclick = function (e) {
             e.preventDefault();
-            _this72._post.setUserVisib(!_this72._post.isHidden);
+            _this74._post.setUserVisib(!_this74._post.isHidden);
           };
           text = (this._post.title ? "(".concat(this._post.title, ") ") : '') + (note ? "[autohide: ".concat(note, "]") : '');
         } else {
@@ -20588,44 +20875,44 @@ Spells.addSpell(9, '', false);
 
   var Pview = function (_AbstractPost2) {
     function Pview(parent, link, pNum, tNum) {
-      var _this73;
+      var _this75;
       _classCallCheck(this, Pview);
-      _this73 = _callSuper(this, Pview, [parent.thr, pNum, pNum === tNum]);
-      _this73.isSticky = false;
-      _this73.parent = parent;
-      _this73.remoteThr = null;
-      _this73.tNum = tNum;
-      _this73._isCached = false;
-      _this73._isLeft = false;
-      _this73._isTop = false;
-      _this73._link = link;
-      _this73._newPos = null;
-      _this73._offsetTop = 0;
-      _this73._readDelay = 0;
+      _this75 = _callSuper(this, Pview, [parent.thr, pNum, pNum === tNum]);
+      _this75.isSticky = false;
+      _this75.parent = parent;
+      _this75.remoteThr = null;
+      _this75.tNum = tNum;
+      _this75._isCached = false;
+      _this75._isLeft = false;
+      _this75._isTop = false;
+      _this75._link = link;
+      _this75._newPos = null;
+      _this75._offsetTop = 0;
+      _this75._readDelay = 0;
       var post = pByNum.get(pNum);
       if (post && (!post.isOp || !(parent instanceof Pview) || !parent._isCached)) {
-        _this73._buildPview(post);
-        return _possibleConstructorReturn(_this73);
+        _this75._buildPview(post);
+        return _possibleConstructorReturn(_this75);
       }
-      _this73._isCached = true;
-      _this73.board = link.pathname.match(/^\/?(.+\/)/)[1].replace(aib.res, '').replace(/\/$/, '');
-      if (PviewsCache.has(_this73.board + tNum)) {
-        post = PviewsCache.get(_this73.board + tNum).getPost(pNum);
+      _this75._isCached = true;
+      _this75.board = link.pathname.match(/^\/?(.+\/)/)[1].replace(aib.res, '').replace(/\/$/, '');
+      if (PviewsCache.has(_this75.board + tNum)) {
+        post = PviewsCache.get(_this75.board + tNum).getPost(pNum);
         if (post) {
-          _this73._buildPview(post);
+          _this75._buildPview(post);
         } else {
-          _this73._showPview(_this73.el = $add("<div class=\"".concat(aib.cReply, " de-pview-info de-pview\">\n\t\t\t\t\t").concat(Lng.postNotFound[lang], "</div>")));
+          _this75._showPview(_this75.el = $add("<div class=\"".concat(aib.cReply, " de-pview-info de-pview\">\n\t\t\t\t\t").concat(Lng.postNotFound[lang], "</div>")));
         }
-        return _possibleConstructorReturn(_this73);
+        return _possibleConstructorReturn(_this75);
       }
-      _this73._showPview(_this73.el = $add("<div class=\"".concat(aib.cReply, " de-pview-info de-pview\">\n\t\t\t<svg class=\"de-wait\"><use xlink:href=\"#de-symbol-wait\"/></svg>").concat(Lng.loading[lang], "</div>")));
+      _this75._showPview(_this75.el = $add("<div class=\"".concat(aib.cReply, " de-pview-info de-pview\">\n\t\t\t<svg class=\"de-wait\"><use xlink:href=\"#de-symbol-wait\"/></svg>").concat(Lng.loading[lang], "</div>")));
 
-      _this73._loadPromise = ajaxPostsLoad(_this73.board, tNum, false, false).then(function (pBuilder) {
-        return _this73._onload(pBuilder);
+      _this75._loadPromise = ajaxPostsLoad(_this75.board, tNum, false, false).then(function (pBuilder) {
+        return _this75._onload(pBuilder);
       }, function (err) {
-        return _this73._onerror(err);
+        return _this75._onerror(err);
       });
-      return _this73;
+      return _this75;
     }
     _inherits(Pview, _AbstractPost2);
     return _createClass(Pview, [{
@@ -20724,10 +21011,10 @@ Spells.addSpell(9, '', false);
     }, {
       key: "markToDel",
       value: function markToDel() {
-        var _this74 = this;
+        var _this76 = this;
         clearTimeout(Pview._delTO);
         Pview._delTO = setTimeout(function () {
-          return _this74.deleteNonSticky();
+          return _this76.deleteNonSticky();
         }, nav.isMobile ? 0 : Cfg.linksOut);
       }
     }, {
@@ -20760,10 +21047,10 @@ Spells.addSpell(9, '', false);
     }, {
       key: "_menuShowOverBtn",
       value: function _menuShowOverBtn(el, html) {
-        var _this75 = this;
+        var _this77 = this;
         _superPropGet(Pview, "_menuShowOverBtn", this, 3)([el, html]);
         this._menu.onover = function () {
-          return _this75.mouseEnter();
+          return _this77.mouseEnter();
         };
         this._menu.onout = function () {
           return Pview.top.markToDel();
@@ -20774,7 +21061,7 @@ Spells.addSpell(9, '', false);
       value: function () {
         var _buildPview2 = _asyncToGenerator(_regeneratorRuntime().mark(function _callee39(post) {
           var _this$el, _yield$readFavorites$;
-          var isOp, num, pv, isMyPost, isFav, isCached, postsCountHtml, pText, _$q7, btnsEl, link;
+          var isOp, num, pv, isMyPost, isHighlighted, isOpsPost, isFav, isCached, postsCountHtml, pText, thr, posterId, posterIdEl, _$q7, btnsEl, link;
           return _regeneratorRuntime().wrap(function _callee39$(_context42) {
             while (1) switch (_context42.prev = _context42.next) {
               case 0:
@@ -20783,7 +21070,9 @@ Spells.addSpell(9, '', false);
                 pv = this.el = post.el.cloneNode(true);
                 pByEl.set(pv, this);
                 isMyPost = MyPosts.has(num);
-                pv.className = "".concat(aib.cReply, " de-pview").concat(post.isViewed ? ' de-viewed' : '').concat(isMyPost ? ' de-mypost' : '') + "".concat(post.el.classList.contains('de-mypost-reply') ? ' de-mypost-reply' : '');
+                isHighlighted = HighlightedPosts.has(post.posterId);
+                isOpsPost = post.thr.opPosterId && post.thr.opPosterId === post.posterId;
+                pv.className = "".concat(aib.cReply, " de-pview") + "".concat(post.isViewed ? ' de-viewed' : '') + "".concat(isMyPost ? ' de-mypost' : '') + "".concat(isHighlighted ? ' de-highlighted' : '') + "".concat(post.el.classList.contains('de-mypost-reply') ? ' de-mypost-reply' : '');
                 $show(pv);
                 $Q('.de-post-hiddencontent', pv).forEach(function (el) {
                   return el.classList.remove('de-post-hiddencontent');
@@ -20795,51 +21084,89 @@ Spells.addSpell(9, '', false);
                 this._link.classList.add('de-link-parent');
                 _context42.t0 = isOp;
                 if (!_context42.t0) {
-                  _context42.next = 32;
+                  _context42.next = 34;
                   break;
                 }
                 _context42.t1 = post.thr.isFav;
                 if (_context42.t1) {
-                  _context42.next = 31;
+                  _context42.next = 33;
                   break;
                 }
-                _context42.next = 17;
+                _context42.next = 19;
                 return readFavorites();
-              case 17:
+              case 19:
                 _context42.t4 = aib.host;
                 _context42.t5 = _yield$readFavorites$ = _context42.sent[_context42.t4];
                 _context42.t3 = _context42.t5 === null;
                 if (_context42.t3) {
-                  _context42.next = 22;
+                  _context42.next = 24;
                   break;
                 }
                 _context42.t3 = _yield$readFavorites$ === void 0;
-              case 22:
+              case 24:
                 _context42.t2 = _context42.t3;
                 if (_context42.t2) {
-                  _context42.next = 25;
+                  _context42.next = 27;
                   break;
                 }
                 _context42.t2 = (_yield$readFavorites$ = _yield$readFavorites$[this.board]) === null || _yield$readFavorites$ === void 0;
-              case 25:
+              case 27:
                 if (!_context42.t2) {
-                  _context42.next = 29;
+                  _context42.next = 31;
                   break;
                 }
                 _context42.t6 = void 0;
-                _context42.next = 30;
+                _context42.next = 32;
                 break;
-              case 29:
-                _context42.t6 = _yield$readFavorites$[num];
-              case 30:
-                _context42.t1 = _context42.t6;
               case 31:
-                _context42.t0 = _context42.t1;
+                _context42.t6 = _yield$readFavorites$[num];
               case 32:
+                _context42.t1 = _context42.t6;
+              case 33:
+                _context42.t0 = _context42.t1;
+              case 34:
                 isFav = _context42.t0;
                 isCached = post instanceof CacheItem;
-                postsCountHtml = (post.isDeleted ? " de-post-counter-deleted\">".concat(Lng.deleted[lang], "</span>") : "\">".concat(isOp ? '(OP)' : post.count + +!(aib.JsonBuilder && isCached), "</span>")) + (isMyPost ? '<span class="de-post-counter-you">(You)</span>' : '');
+                postsCountHtml = (post.isDeleted ? " de-post-counter-deleted\">".concat(Lng.deleted[lang], "</span>") : "\">".concat(isOp ? '(OP)' : post.count + +!(aib.JsonBuilder && isCached), "</span>")) + (isOpsPost ? '<span class="de-post-counter-op">(OP)</span>' : '') + (isMyPost ? '<span class="de-post-counter-you">(You)</span>' : '');
                 pText = '<svg class="de-btn-reply"><use xlink:href="#de-symbol-post-reply"/></svg>' + (isOp ? "<svg class=\"".concat(isFav ? 'de-btn-fav-sel' : 'de-btn-fav', "\">") + '<use xlink:href="#de-symbol-post-fav"></use></svg>' : '') + (post.sage ? '<svg class="de-btn-sage"><use xlink:href="#de-symbol-post-sage"/></svg>' : '') + '<svg class="de-btn-stick"><use xlink:href="#de-symbol-post-stick"/></svg>' + '<span class="de-post-counter' + postsCountHtml;
+                thr = post.thr, posterId = post.posterId;
+                posterIdEl = $q(aib.qPosterId, pv);
+                if (posterIdEl) {
+                  posterIdEl.addEventListener('click', function (e) {
+                    var isAdd = !HighlightedPosts.has(post.posterId);
+                    if (isAdd) {
+                      HighlightedPosts.set(post.posterId, post.thr.num);
+                    } else {
+                      HighlightedPosts.removeStorage(post.posterId);
+                    }
+                    var allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', document.body);
+                    for (var i = 0; i < allPosts.length; i++) {
+                      var _post6 = allPosts[i];
+                      var _posterIdEl3 = $q(aib.qPosterId, _post6);
+                      if (_posterIdEl3 && _posterIdEl3.textContent === posterId) {
+                        _post6.classList.toggle('de-highlighted', isAdd);
+                      }
+                    }
+                  }, true);
+                  if (typeof thr.Tip !== 'undefined') {
+                    posterIdEl.addEventListener('mouseover', function (e) {
+                      var t = e.target.textContent;
+                      var o = 0;
+                      var allPosts = $Q(aib.qRPost, thr.el);
+                      for (var i = 0; i < allPosts.length; i++) {
+                        var _post7 = allPosts[i];
+                        var _posterIdEl4 = $q(aib.qPosterId, _post7);
+                        if (_posterIdEl4 && _posterIdEl4.textContent === t) {
+                          o++;
+                        }
+                      }
+                      thr.Tip.show(e.target, o + ' post' + (o !== 1 ? 's' : '') + ' by this ID');
+                    }, true);
+                    posterIdEl.addEventListener('mouseout', function (e) {
+                      thr.Tip.hide();
+                    }, true);
+                  }
+                }
                 if (isCached) {
                   if (isOp) {
                     this.remoteThr = post.thr;
@@ -20891,7 +21218,7 @@ Spells.addSpell(9, '', false);
                 }
                 pv.addEventListener('click', this, true);
                 this._showPview(pv);
-              case 39:
+              case 44:
               case "end":
                 return _context42.stop();
             }
@@ -20969,9 +21296,9 @@ Spells.addSpell(9, '', false);
     }, {
       key: "_showPview",
       value: function _showPview(el) {
-        var _this76 = this;
+        var _this78 = this;
         ['mouseover', 'mouseout'].forEach(function (e) {
-          return el.addEventListener(e, _this76, true);
+          return el.addEventListener(e, _this78, true);
         });
         this.thr.form.el.append(el);
         this._setPosition(this._link, false);
@@ -21141,7 +21468,7 @@ Spells.addSpell(9, '', false);
     }, {
       key: "thr",
       get: function get() {
-        var _this77 = this;
+        var _this79 = this;
         var value = null;
         if (this.isOp) {
           var postsCount = this._pBuilder.length;
@@ -21151,7 +21478,7 @@ Spells.addSpell(9, '', false);
           };
           Object.defineProperty(value, 'title', {
             get: function get() {
-              return _this77.title;
+              return _this79.title;
             }
           });
         }
@@ -21164,13 +21491,13 @@ Spells.addSpell(9, '', false);
   }();
   var PviewsCache = function (_TemporaryContent2) {
     function PviewsCache(pBuilder, board, tNum) {
-      var _this78;
+      var _this80;
       _classCallCheck(this, PviewsCache);
-      _this78 = _callSuper(this, PviewsCache, [board + tNum]);
-      if (_this78._isInited) {
-        return _possibleConstructorReturn(_this78);
+      _this80 = _callSuper(this, PviewsCache, [board + tNum]);
+      if (_this80._isInited) {
+        return _possibleConstructorReturn(_this80);
       }
-      _this78._isInited = true;
+      _this80._isInited = true;
       var lPByNum = new Map();
       var thrUrl = aib.getThrUrl(board, tNum);
       lPByNum.set(tNum, new CacheItem(pBuilder, thrUrl, 0));
@@ -21178,12 +21505,12 @@ Spells.addSpell(9, '', false);
         lPByNum.set(pBuilder.getPNum(i), new CacheItem(pBuilder, thrUrl, i + 1));
       }
       DelForm.tNums.add(tNum);
-      _this78._b = board;
-      _this78._posts = lPByNum;
+      _this80._b = board;
+      _this80._posts = lPByNum;
       if (Cfg.linksNavig) {
         RefMap.gen(lPByNum);
       }
-      return _this78;
+      return _this80;
     }
     _inherits(PviewsCache, _TemporaryContent2);
     return _createClass(PviewsCache, [{
@@ -21227,7 +21554,7 @@ Spells.addSpell(9, '', false);
     return _createClass(ImagesNavigBtns, [{
       key: "handleEvent",
       value: function handleEvent(e) {
-        var _this79 = this;
+        var _this81 = this;
         switch (e.type) {
           case 'mousemove':
             {
@@ -21244,7 +21571,7 @@ Spells.addSpell(9, '', false);
             if (!this.hasEvents) {
               this.hasEvents = true;
               ['mouseout', 'click'].forEach(function (e) {
-                return _this79._btns.addEventListener(e, _this79);
+                return _this81._btns.addEventListener(e, _this81);
               });
             }
             if (!this._isHidden) {
@@ -21305,10 +21632,10 @@ Spells.addSpell(9, '', false);
     }, {
       key: "_setHideTimeout",
       value: function _setHideTimeout() {
-        var _this80 = this;
+        var _this82 = this;
         clearTimeout(this._hideTO);
         this._hideTO = setTimeout(function () {
-          return _this80.hideBtns();
+          return _this82.hideBtns();
         }, 2e3);
       }
     }]);
@@ -21344,7 +21671,7 @@ Spells.addSpell(9, '', false);
     }, {
       key: "handleEvent",
       value: function handleEvent(e) {
-        var _this81 = this;
+        var _this83 = this;
         switch (e.type) {
           case 'click':
             {
@@ -21372,7 +21699,7 @@ Spells.addSpell(9, '', false);
             this._oldX = e.clientX;
             this._oldY = e.clientY;
             ['mousemove', 'mouseup'].forEach(function (e) {
-              return doc.body.addEventListener(e, _this81, true);
+              return doc.body.addEventListener(e, _this83, true);
             });
             break;
           case 'mousemove':
@@ -21380,7 +21707,7 @@ Spells.addSpell(9, '', false);
             return;
           case 'mouseup':
             ['mousemove', 'mouseup'].forEach(function (e) {
-              return doc.body.removeEventListener(e, _this81, true);
+              return doc.body.removeEventListener(e, _this83, true);
             });
             return;
           case 'mousewheel':
@@ -21608,16 +21935,16 @@ Spells.addSpell(9, '', false);
     }, {
       key: "_showFullImg",
       value: function _showFullImg(data) {
-        var _this82 = this;
+        var _this84 = this;
         var _data$computeFullSize = data.computeFullSize(),
           _data$computeFullSize2 = _slicedToArray(_data$computeFullSize, 3),
           width = _data$computeFullSize2[0],
           height = _data$computeFullSize2[1],
           minSize = _data$computeFullSize2[2];
         this._fullEl = data.getFullImg(false, function (el) {
-          return _this82._resizeFullImg(el);
+          return _this84._resizeFullImg(el);
         }, function (el) {
-          return _this82._rotateFullImg(el);
+          return _this84._rotateFullImg(el);
         });
         this._width = width;
         this._height = height;
@@ -21636,7 +21963,7 @@ Spells.addSpell(9, '', false);
         this._parentEl = el;
         var events = nav.isMobile ? ['click', 'touchend', 'touchmove', 'touchstart'] : ['click', 'mousedown', 'onwheel' in el ? 'wheel' : 'mousewheel'];
         events.forEach(function (e) {
-          return el.addEventListener(e, _this82, true);
+          return el.addEventListener(e, _this84, true);
         });
         data.srcBtnEvents(this);
         if (data.inPview && !data.post.isSticky) {
@@ -21738,17 +22065,17 @@ Spells.addSpell(9, '', false);
     }, {
       key: "checkForRedirect",
       value: function checkForRedirect(fullEl) {
-        var _this83 = this;
+        var _this85 = this;
         if (!aib.getImgRedirectSrc || this.redirected) {
           return;
         }
         aib.getImgRedirectSrc(this.src).then(function (newSrc) {
-          _this83.redirected = true;
-          Object.defineProperty(_this83, 'src', {
+          _this85.redirected = true;
+          Object.defineProperty(_this85, 'src', {
             value: newSrc
           });
-          $q('img, video', fullEl).src = _this83.el.src = _this83.el.parentNode.href = getImgNameLink(_this83.el).href = newSrc;
-          if (!_this83.isVideo) {
+          $q('img, video', fullEl).src = _this85.el.src = _this85.el.parentNode.href = getImgNameLink(_this85.el).href = newSrc;
+          if (!_this85.isVideo) {
             $q('a', fullEl).href = newSrc;
           }
         });
@@ -21835,7 +22162,7 @@ Spells.addSpell(9, '', false);
     }, {
       key: "expandImg",
       value: function expandImg(inPost, e) {
-        var _this84 = this;
+        var _this86 = this;
         if (e && !e.bubbles) {
           return;
         }
@@ -21861,7 +22188,7 @@ Spells.addSpell(9, '', false);
         (aib.hasPicWrap ? this._getImageParent : this.el.parentNode).insertAdjacentHTML('afterend', '<div class="de-fullimg-after"></div>');
         var fullEl = this._fullEl = this.getFullImg(true, null, null);
         fullEl.addEventListener('click', function (e) {
-          return _this84.collapseImg(e);
+          return _this86.collapseImg(e);
         }, true);
         this.srcBtnEvents(this);
         var parent = this.el.parentNode;
@@ -21911,7 +22238,7 @@ Spells.addSpell(9, '', false);
     }, {
       key: "getFullImg",
       value: function getFullImg(inPost, onsizechange, onrotate) {
-        var _this85 = this;
+        var _this87 = this;
         var wrapEl, name, origSrc;
         var src = this._getImageSrc();
         var parent = this._getImageParent;
@@ -21942,10 +22269,10 @@ Spells.addSpell(9, '', false);
             var newW = img.naturalWidth,
               newH = img.naturalHeight,
               scrollWidth = img.scrollWidth;
-            var ar = _this85._size ? _this85._size[1] / _this85._size[0] : newH / newW;
+            var ar = _this87._size ? _this87._size[1] / _this87._size[0] : newH / newW;
             var isRotated = scrollWidth ? img.scrollHeight / scrollWidth > 1 ? ar < 1 : ar > 1 : false;
-            if (!_this85._size || isRotated) {
-              _this85._size = isRotated ? [newH, newW] : [newW, newH];
+            if (!_this87._size || isRotated) {
+              _this87._size = isRotated ? [newH, newW] : [newW, newH];
             }
             var parentEl = img.parentNode.parentNode;
             var waitEl = $q('.de-fullimg-load', parentEl);
@@ -21991,7 +22318,7 @@ Spells.addSpell(9, '', false);
         if (!this._size) {
           videoEl.addEventListener('loadedmetadata', function (_ref43) {
             var el = _ref43.target;
-            _this85._size = [el.videoWidth, el.videoHeight];
+            _this87._size = [el.videoWidth, el.videoHeight];
             onsizechange(wrapEl);
           });
         }
@@ -22053,7 +22380,7 @@ Spells.addSpell(9, '', false);
               }
             }
             var loadedTitle = decodeURIComponent(escape(str));
-            _this85.el.setAttribute('de-metatitle', loadedTitle);
+            _this87.el.setAttribute('de-metatitle', loadedTitle);
             if (str) {
               $q('.de-webm-title', wrapEl).textContent = videoEl.title = loadedTitle.replaceAll('.', ' ');
             }
@@ -22089,7 +22416,7 @@ Spells.addSpell(9, '', false);
     }, {
       key: "srcBtnEvents",
       value: function srcBtnEvents(_ref46) {
-        var _this86 = this;
+        var _this88 = this;
         var _fullEl = _ref46._fullEl;
         if (!Cfg.imgSrcBtns) {
           return;
@@ -22104,14 +22431,14 @@ Spells.addSpell(9, '', false);
               srcBtnEl._menu = null;
               return;
             }
-            var menuHtml = !_this86.isVideo ? Menu.getMenuImg(srcBtnEl) : Menu.getMenuImg(srcBtnEl, true) + "<span class=\"de-menu-item de-menu-getframe\">".concat(Lng.getFrameLinks[lang], "</span>");
-            srcBtnEl._menu = new Menu(srcBtnEl, menuHtml, !_this86.isVideo ? Function.prototype : function (optiontEl) {
+            var menuHtml = !_this88.isVideo ? Menu.getMenuImg(srcBtnEl) : Menu.getMenuImg(srcBtnEl, true) + "<span class=\"de-menu-item de-menu-getframe\">".concat(Lng.getFrameLinks[lang], "</span>");
+            srcBtnEl._menu = new Menu(srcBtnEl, menuHtml, !_this88.isVideo ? Function.prototype : function (optiontEl) {
               if (!optiontEl.classList.contains('de-menu-getframe')) {
                 return;
               }
               ContentLoader.getDataFromImg($q('video', _fullEl)).then(function (arr) {
                 $popup('upload', Lng.sending[lang], true);
-                var name = cutFileExt(_this86.name) + '.png';
+                var name = cutFileExt(_this88.name) + '.png';
                 var blob = new Blob([arr], {
                   type: 'image/png'
                 });
@@ -22265,21 +22592,17 @@ Spells.addSpell(9, '', false);
       key: "_getImageSrc",
       value: function _getImageSrc() {
         var src = aib.getImgSrcLink(this.el).getAttribute('href');
-
         if (/effectivegatetocontent/i.test(src)) {
           var extensionRegex = /\.([0-9a-z]+)(?:[\?#]|$)/i;
           var m = this.name.trim().match(extensionRegex);
           var extension = m[1] || null;
           var fixedSrc = this.el.currentSrc.replace('thumb', 'image');
           fixedSrc = fixedSrc.replace(/(\d{9,})(s)/, '$1');
-
           if (extension) {
             fixedSrc = fixedSrc.replace(/\.([0-9a-z]+)(?:[\?#]|$)/i, ".".concat(extension));
           }
-
           return fixedSrc;
         }
-
         return src;
       }
     }], [{
@@ -22315,9 +22638,9 @@ Spells.addSpell(9, '', false);
       if (Cfg.addImgs || localData) {
         els = $Q('.de-img-embed', post.el);
         for (var _i13 = 0, _len6 = els.length; _i13 < _len6; ++_i13) {
-          var _el8 = els[_i13];
-          last = new EmbeddedImage(post, _el8, last);
-          filesMap.set(_el8, last);
+          var _el9 = els[_i13];
+          last = new EmbeddedImage(post, _el9, last);
+          filesMap.set(_el9, last);
           if (!first) {
             first = last;
           }
@@ -22452,18 +22775,18 @@ Spells.addSpell(9, '', false);
       };
     },
     _getHashHelper: function _getHashHelper(_ref49) {
-      var _this87 = this;
+      var _this89 = this;
       return _asyncToGenerator(_regeneratorRuntime().mark(function _callee41() {
         var el, src, data, val, w, h, cnv, ctx, buffer;
         return _regeneratorRuntime().wrap(function _callee41$(_context45) {
           while (1) switch (_context45.prev = _context45.next) {
             case 0:
               el = _ref49.el, src = _ref49.src;
-              if (!(src in _this87._storage)) {
+              if (!(src in _this89._storage)) {
                 _context45.next = 3;
                 break;
               }
-              return _context45.abrupt("return", _this87._storage[src]);
+              return _context45.abrupt("return", _this89._storage[src]);
             case 3:
               if (el.complete) {
                 _context45.next = 6;
@@ -22485,7 +22808,7 @@ Spells.addSpell(9, '', false);
             case 9:
               val = -1;
               w = el.naturalWidth, h = el.naturalHeight;
-              cnv = _this87._canvas;
+              cnv = _this89._canvas;
               cnv.width = w;
               cnv.height = h;
               ctx = cnv.getContext('2d');
@@ -22497,7 +22820,7 @@ Spells.addSpell(9, '', false);
               }
               _context45.next = 20;
               return new Promise(function (resolve) {
-                return _this87._workers.runWorker([buffer, w, h], [buffer], function (val) {
+                return _this89._workers.runWorker([buffer, w, h], [buffer], function (val) {
                   return resolve(val);
                 });
               });
@@ -22507,7 +22830,7 @@ Spells.addSpell(9, '', false);
                 val = data.hash;
               }
             case 22:
-              _this87._storage[src] = val;
+              _this89._storage[src] = val;
               return _context45.abrupt("return", val);
             case 24:
             case "end":
@@ -23258,7 +23581,7 @@ Spells.addSpell(9, '', false);
   var Thread = function () {
     function Thread(el, num, prev, form) {
       var _$q8,
-        _this88 = this;
+        _this90 = this;
       _classCallCheck(this, Thread);
       this.hasNew = false;
       this.hiddenCount = 0;
@@ -23278,6 +23601,8 @@ Spells.addSpell(9, '', false);
       if (prev) {
         prev.next = this;
       }
+      this.IDColors = new IDColor();
+      this.Tip = new Tip();
       var lastPost = this.op = new Post(aib.getOp(el), this, num, 0, true, prev ? prev.last : null);
       this.opPosterId = this.op.posterId;
       pByEl.set(el, lastPost);
@@ -23293,7 +23618,7 @@ Spells.addSpell(9, '', false);
       }
       this.btns = $bEnd(el, "<div class=\"de-thr-buttons\">".concat(Post.getPostBtns(true, true), "\n\t\t\t<span class=\"de-thr-updater\">[<a class=\"de-thr-updater-link de-abtn\" href=\"#\"></a>") + (!aib.t ? ']</span>' : '<span id="de-updater-count" style="display: none;"></span>]</span>') + '</div>');
       ['click', 'mouseover'].forEach(function (e) {
-        return _this88.btns.addEventListener(e, _this88);
+        return _this90.btns.addEventListener(e, _this90);
       });
       var _ref50 = _toConsumableArray(this.btns.children);
       this.btnHide = _ref50[0];
@@ -23446,14 +23771,14 @@ Spells.addSpell(9, '', false);
     }, {
       key: "loadPosts",
       value: function loadPosts(task) {
-        var _this89 = this;
+        var _this91 = this;
         var isSmartScroll = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var isInformUser = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
         if (isInformUser) {
           $popup('load-thr', Lng.loading[lang], true);
         }
         return ajaxPostsLoad(aib.b, this.num, false).then(function (pBuilder) {
-          return _this89._loadFromBuilder(task, isSmartScroll, pBuilder);
+          return _this91._loadFromBuilder(task, isSmartScroll, pBuilder);
         }, function (err) {
           return $popup('load-thr', getErrorMessage(err));
         });
@@ -23461,9 +23786,9 @@ Spells.addSpell(9, '', false);
     }, {
       key: "loadNewPosts",
       value: function loadNewPosts() {
-        var _this90 = this;
+        var _this92 = this;
         return ajaxPostsLoad(aib.b, this.num, true).then(function (pBuilder) {
-          return pBuilder ? _this90._loadNewFromBuilder(pBuilder) : {
+          return pBuilder ? _this92._loadNewFromBuilder(pBuilder) : {
             newCount: 0,
             locked: false
           };
@@ -23779,16 +24104,16 @@ Spells.addSpell(9, '', false);
         var len = pBuilder.length;
         var maybeSpells = new Maybe(SpellsRunner);
         var maybeVParser = new Maybe(Cfg.embedYTube ? VideosParser : null);
-        var _post6 = post,
-          count = _post6.count;
+        var _post8 = post,
+          count = _post8.count;
         if (count !== 0 && (count > len || pBuilder.getPNum(count - 1) !== post.num)) {
           post = this.op.nextNotDeleted;
           var i = post.count - 1;
           var firstChangedPost = null;
           for (; i < len && post;) {
-            var _post7 = post,
-              num = _post7.num,
-              prev = _post7.prev;
+            var _post9 = post,
+              num = _post9.num,
+              prev = _post9.prev;
             var iNum = pBuilder.getPNum(i);
             if (num === iNum) {
               i++;
@@ -23857,7 +24182,7 @@ Spells.addSpell(9, '', false);
     }, {
       key: "_toggleReplies",
       value: function _toggleReplies() {
-        var _this91 = this,
+        var _this93 = this,
           _$q10;
         var isHide = !this.last.isOmitted;
         var post = this.op;
@@ -23868,7 +24193,7 @@ Spells.addSpell(9, '', false);
         }
         this.btnReplies.firstElementChild.className = "".concat(isHide ? 'de-replies-show' : 'de-replies-hide', " de-abtn");
         _toConsumableArray(this.btns.children).forEach(function (el) {
-          return el !== _this91.btnReplies && $toggle(el, !isHide);
+          return el !== _this93.btnReplies && $toggle(el, !isHide);
         });
         (_$q10 = $q(aib.qOmitted + ', .de-omitted', this.el)) === null || _$q10 === void 0 || _$q10.remove();
         i = this.postsCount - 1 - (isHide ? 0 : i);
@@ -23904,11 +24229,11 @@ Spells.addSpell(9, '', false);
       }
     },
     handleEvent: function handleEvent(e) {
-      var _this92 = this;
+      var _this94 = this;
       switch (e.type) {
         case 'scroll':
           deWindow.requestAnimationFrame(function () {
-            return _this92._checkThreads();
+            return _this94._checkThreads();
           });
           break;
         case 'mouseover':
@@ -23923,10 +24248,10 @@ Spells.addSpell(9, '', false);
       }
     },
     initThrNav: function initThrNav() {
-      var _this93 = this;
+      var _this95 = this;
       var el = $bEnd(doc.body, "\n\t\t<div id=\"de-thr-navpanel\" class=\"de-thr-navpanel-hidden\" style=\"display: none;\">\n\t\t\t<svg id=\"de-thr-navarrow\"><use xlink:href=\"#de-symbol-thr-nav-arrow\"/></svg>\n\t\t\t<div id=\"de-thr-navup\">\n\t\t\t\t<svg viewBox=\"0 0 24 24\"><use xlink:href=\"#de-symbol-thr-nav-up\"/></svg>\n\t\t\t</div>\n\t\t\t<div id=\"de-thr-navdown\">\n\t\t\t\t<svg viewBox=\"0 0 24 24\"><use xlink:href=\"#de-symbol-thr-nav-down\"/></svg>\n\t\t\t</div>\n\t\t</div>");
       ['mouseover', 'mouseout', 'click'].forEach(function (e) {
-        return el.addEventListener(e, _this93, true);
+        return el.addEventListener(e, _this95, true);
       });
       this._el = el;
       this._thrs = new Set();
@@ -23957,25 +24282,25 @@ Spells.addSpell(9, '', false);
       }
     },
     _expandCollapse: function _expandCollapse(isExpand, targetEl) {
-      var _this94 = this;
+      var _this96 = this;
       if (!$contains(this._el, targetEl)) {
         clearTimeout(this._toggleTO);
         this._toggleTO = setTimeout(function () {
-          return _this94._el.classList.toggle('de-thr-navpanel-hidden', !isExpand);
+          return _this96._el.classList.toggle('de-thr-navpanel-hidden', !isExpand);
         }, Cfg.linksOver);
       }
     },
     _findCurrentThread: function _findCurrentThread() {
-      var _this95 = this;
+      var _this97 = this;
       Object.defineProperty(this, '_findCurrentThread', {
         value: 'elementsFromPoint' in doc ? function () {
           return doc.elementsFromPoint(Post.sizing.wWidth / 2, Post.sizing.wHeight / 2).find(function (el) {
-            return _this95._thrs.has(el);
+            return _this97._thrs.has(el);
           });
         } : function () {
           var el = doc.elementFromPoint(Post.sizing.wWidth / 2, Post.sizing.wHeight / 2);
           while (el) {
-            if (_this95._thrs.has(el)) {
+            if (_this97._thrs.has(el)) {
               return el;
             }
             el = el.parentElement;
@@ -24025,14 +24350,14 @@ Spells.addSpell(9, '', false);
         }
       },
       playAudio: function playAudio() {
-        var _this96 = this;
+        var _this98 = this;
         this.stopAudio();
         if (this.repeatMS === 0) {
           this._el.play();
           return;
         }
         this._playInterval = setInterval(function () {
-          return _this96._el.play();
+          return _this98._el.play();
         }, this.repeatMS);
       },
       stopAudio: function stopAudio() {
@@ -24053,10 +24378,10 @@ Spells.addSpell(9, '', false);
     };
     var counter = {
       count: function count(delayMS, useCounter, callback) {
-        var _this97 = this;
+        var _this99 = this;
         if (!this._enabled || !useCounter) {
           this._countingTO = setTimeout(function () {
-            _this97._countingTO = null;
+            _this99._countingTO = null;
             callback();
           }, delayMS);
           return;
@@ -24066,10 +24391,10 @@ Spells.addSpell(9, '', false);
         this._countingIV = setInterval(function () {
           seconds--;
           if (seconds === 0) {
-            _this97._stopCounter();
+            _this99._stopCounter();
             callback();
           } else {
-            _this97._set(seconds);
+            _this99._set(seconds);
           }
         }, 1e3);
       },
@@ -24120,7 +24445,7 @@ Spells.addSpell(9, '', false);
         return this._iconEl ? this._iconEl.href : null;
       },
       initIcons: function initIcons() {
-        var _this98 = this;
+        var _this100 = this;
         if (this._isInited) {
           return;
         }
@@ -24128,7 +24453,7 @@ Spells.addSpell(9, '', false);
         var icon = new Image();
         icon.onload = function (e) {
           try {
-            _this98._initIconsHelper(e.target);
+            _this100._initIconsHelper(e.target);
           } catch (err) {
             console.warn('Icon error:', err);
           }
@@ -24144,7 +24469,7 @@ Spells.addSpell(9, '', false);
         icon.src = this._iconEl.href;
       },
       startBlink: function startBlink(isError) {
-        var _this99 = this;
+        var _this101 = this;
         var iconUrl = !this._hasIcons ? this._emptyIcon : isError ? this._iconError : repliesToYou.size ? this._getIconYou(newPosts) : this._getIconNew(newPosts);
         if (this._blinkInterv) {
           if (this._currentIcon === iconUrl) {
@@ -24154,8 +24479,8 @@ Spells.addSpell(9, '', false);
         }
         this._currentIcon = iconUrl;
         this._blinkInterv = setInterval(function () {
-          _this99._isOrigIcon = !_this99._isOrigIcon;
-          _this99._setIcon(_this99._isOrigIcon ? _this99.originalIcon : _this99._currentIcon);
+          _this101._isOrigIcon = !_this101._isOrigIcon;
+          _this101._setIcon(_this101._isOrigIcon ? _this101.originalIcon : _this101._currentIcon);
         }, this._blinkMS);
       },
       stopBlink: function stopBlink() {
@@ -24237,7 +24562,7 @@ Spells.addSpell(9, '', false);
         return canvas.toDataURL('image/png');
       },
       _initIconsHelper: function _initIconsHelper(icon) {
-        var _this100 = this;
+        var _this102 = this;
         var canvas = doc.createElement('canvas');
         var ctx = canvas.getContext('2d');
         var wh = Math.max(icon.naturalHeight, 16 * (deWindow.devicePixelRatio || 1));
@@ -24256,11 +24581,11 @@ Spells.addSpell(9, '', false);
         var iconYouCircle = ctx.getImageData(0, 0, wh, wh);
         this._getIconNew = function (newPosts) {
           var id = newPosts < 10 ? newPosts : 0;
-          return _this100._iconsNew[id] || (_this100._iconsNew[id] = _this100._drawIconsNewYou(ctx, canvas, id, iconNewCircle, scale));
+          return _this102._iconsNew[id] || (_this102._iconsNew[id] = _this102._drawIconsNewYou(ctx, canvas, id, iconNewCircle, scale));
         };
         this._getIconYou = function (newPosts) {
           var id = newPosts < 10 ? newPosts : 0;
-          return _this100._iconsYou[id] || (_this100._iconsYou[id] = _this100._drawIconsNewYou(ctx, canvas, id, iconYouCircle, scale));
+          return _this102._iconsYou[id] || (_this102._iconsYou[id] = _this102._drawIconsNewYou(ctx, canvas, id, iconYouCircle, scale));
         };
         this._hasIcons = true;
       },
@@ -24274,7 +24599,7 @@ Spells.addSpell(9, '', false);
         return Cfg.desktNotif && this._granted;
       },
       checkPermission: function checkPermission() {
-        var _this101 = this;
+        var _this103 = this;
         return _asyncToGenerator(_regeneratorRuntime().mark(function _callee42() {
           return _regeneratorRuntime().wrap(function _callee42$(_context50) {
             while (1) switch (_context50.prev = _context50.next) {
@@ -24287,7 +24612,7 @@ Spells.addSpell(9, '', false);
                 _context50.next = _context50.t0 === 'default' ? 4 : _context50.t0 === 'denied' ? 6 : 8;
                 break;
               case 4:
-                _this101._requestPermission();
+                _this103._requestPermission();
                 return _context50.abrupt("break", 8);
               case 6:
                 _context50.next = 8;
@@ -24306,7 +24631,7 @@ Spells.addSpell(9, '', false);
         }
       },
       showNotif: function showNotif() {
-        var _this102 = this;
+        var _this104 = this;
         var lngQuantity = function lngQuantity(num) {
           var new10 = num % 10;
           return lang === 1 ? +(num !== 1) : new10 > 4 || new10 === 0 || (num % 100 / 10 | 0) === 1 ? 2 : new10 === 1 ? 0 : 1;
@@ -24320,7 +24645,7 @@ Spells.addSpell(9, '', false);
         });
         notif.onshow = function () {
           return setTimeout(function () {
-            return notif === _this102._notifEl && _this102.closeNotif();
+            return notif === _this104._notifEl && _this104.closeNotif();
           }, 12e3);
         };
         notif.onclick = function () {
@@ -24328,14 +24653,14 @@ Spells.addSpell(9, '', false);
         };
         notif.onerror = function () {
           deWindow.focus();
-          _this102._requestPermission();
+          _this104._requestPermission();
         };
         this._notifEl = notif;
       },
       _granted: true,
       _notifEl: null,
       _requestPermission: function _requestPermission() {
-        var _this103 = this;
+        var _this105 = this;
         this._granted = false;
         Notification.requestPermission(function () {
           var _ref51 = _asyncToGenerator(_regeneratorRuntime().mark(function _callee43(state) {
@@ -24352,7 +24677,7 @@ Spells.addSpell(9, '', false);
                   _context51.next = 6;
                   break;
                 case 5:
-                  _this103._granted = true;
+                  _this105._granted = true;
                 case 6:
                 case "end":
                   return _context51.stop();
@@ -24460,7 +24785,7 @@ Spells.addSpell(9, '', false);
         this._makeStep();
       },
       _makeStep: function _makeStep() {
-        var _this104 = this;
+        var _this106 = this;
         var needSleep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
         while (true) {
           switch (this._state) {
@@ -24468,7 +24793,7 @@ Spells.addSpell(9, '', false);
               if (needSleep) {
                 this._state = 1;
                 counter.count(this._delay, !doc.hidden, function () {
-                  return _this104._makeStep();
+                  return _this106._makeStep();
                 });
                 return;
               }
@@ -24478,9 +24803,9 @@ Spells.addSpell(9, '', false);
               this._loadPromise = Thread.first.loadNewPosts().then(function (_ref52) {
                 var newCount = _ref52.newCount,
                   locked = _ref52.locked;
-                return _this104._handleNewPosts(newCount, locked ? AjaxError.Locked : AjaxError.Success);
+                return _this106._handleNewPosts(newCount, locked ? AjaxError.Locked : AjaxError.Success);
               }, function (err) {
-                return _this104._handleNewPosts(0, err);
+                return _this106._handleNewPosts(0, err);
               });
               return;
             case 2:
@@ -25044,6 +25369,7 @@ Spells.addSpell(9, '', false);
       this.qOmitted = '.omittedposts';
       this.qOPost = '.oppost';
       this.qOPostEnd = 'form > table, div > table, div[id^="repl"]';
+      this.qPosterId = '.postInfo .posteruid span, .poster_hash';
       this.qPages = 'table[border="1"] > tbody > tr > td:nth-child(2) > a:last-of-type';
       this.qPost = '.reply';
       this.qPostHeader = '.de-post-btns';
@@ -25112,7 +25438,7 @@ Spells.addSpell(9, '', false);
     }, {
       key: "qPostImgNameLink",
       get: function get() {
-        var value = $match(this.qPostImgInfo.split(', ').join(' a, ') + ' a', '[href$=".jfif"]', '[href$=".jpg"]', '[href$=".jpeg"]', '[href$=".png"]', '[href$=".gif"]', '[href$=".webm"]', '[href$=".webp"]', '[href$=".mov"]', '[href$=".mp4"]', '[href$=".m4v"]', '[href$=".ogv"]', '[href$=".apng"]', ', [href^="blob:"]');
+        var value = $match(this.qPostImgInfo.split(', ').join(' a, ') + ' a', '[href$=".jfif"]', '[href$=".jpg"]', '[href$=".jpeg"]', '[href$=".png"]', '[href$=".gif"]', '[href$=".webm"]', '[href$=".webp"]', '[href$=".mov"]', '[href$=".mp4"]', '[href$=".m4v"]', '[href$=".ogv"]', '[href$=".apng"]', ', [href^="blob:"]', '[href$=".web"]', '[href^="blob:"]');
         Object.defineProperty(this, 'qPostImgNameLink', {
           value: value
         });
@@ -25544,18 +25870,18 @@ Spells.addSpell(9, '', false);
     ibEngines.push(['form[action$="wakaba.pl"]', BaseBoard]);
     var Kusaba = function (_BaseBoard) {
       function Kusaba() {
-        var _this105;
+        var _this107;
         _classCallCheck(this, Kusaba);
         for (var _len7 = arguments.length, args = new Array(_len7), _key4 = 0; _key4 < _len7; _key4++) {
           args[_key4] = arguments[_key4];
         }
-        _this105 = _callSuper(this, Kusaba, [].concat(args));
-        _this105.qError = 'h1, h2, div[style*="1.25em"]';
-        _this105.qFormRedir = 'input[name="redirecttothread"][value="1"]';
-        _this105.formHeaders = true;
-        _this105.formParent = 'replythread';
-        _this105.markupBB = true;
-        return _this105;
+        _this107 = _callSuper(this, Kusaba, [].concat(args));
+        _this107.qError = 'h1, h2, div[style*="1.25em"]';
+        _this107.qFormRedir = 'input[name="redirecttothread"][value="1"]';
+        _this107.formHeaders = true;
+        _this107.formParent = 'replythread';
+        _this107.markupBB = true;
+        return _this107;
       }
       _inherits(Kusaba, _BaseBoard);
       return _createClass(Kusaba, [{
@@ -25597,37 +25923,37 @@ Spells.addSpell(9, '', false);
     ibEngines.push(['script[src*="kusaba"]', Kusaba], ['form#delform[action$="/board.php"]', Kusaba]);
     var Tinyboard = function (_BaseBoard2) {
       function Tinyboard() {
-        var _this106;
+        var _this108;
         _classCallCheck(this, Tinyboard);
         for (var _len8 = arguments.length, args = new Array(_len8), _key5 = 0; _key5 < _len8; _key5++) {
           args[_key5] = arguments[_key5];
         }
-        _this106 = _callSuper(this, Tinyboard, [].concat(args));
-        _this106.cReply = 'post reply';
-        _this106.qClosed = '.fa-lock';
-        _this106.qDelForm = 'form[name*="postcontrols"]';
-        _this106.qForm = 'form[name="post"]';
-        _this106.qFormPassw = 'input[name="password"]:not([type="hidden"])';
-        _this106.qFormRedir = null;
-        _this106.qOmitted = '.omitted';
-        _this106.qOPostEnd = '.post.reply';
-        _this106.qPages = '.pages';
-        _this106.qPostHeader = '.intro';
-        _this106.qPostImgInfo = '.fileinfo';
-        _this106.qPostMsg = '.body';
-        _this106.qPostName = '.name';
-        _this106.qPostRef = '.post_no + a';
-        _this106.qPostSubj = '.subject';
-        _this106.qPostTrip = '.trip';
-        _this106.qTrunc = '.toolong';
-        _this106.firstPage = 1;
-        _this106.formParent = 'thread';
-        _this106.hasCatalog = true;
-        _this106.hasRefererErr = true;
-        _this106.jsonSubmit = true;
-        _this106.timePattern = 'nn+dd+yy++w++hh+ii+ss';
-        _this106._origInputs = null;
-        return _this106;
+        _this108 = _callSuper(this, Tinyboard, [].concat(args));
+        _this108.cReply = 'post reply';
+        _this108.qClosed = '.fa-lock';
+        _this108.qDelForm = 'form[name*="postcontrols"]';
+        _this108.qForm = 'form[name="post"]';
+        _this108.qFormPassw = 'input[name="password"]:not([type="hidden"])';
+        _this108.qFormRedir = null;
+        _this108.qOmitted = '.omitted';
+        _this108.qOPostEnd = '.post.reply';
+        _this108.qPages = '.pages';
+        _this108.qPostHeader = '.intro';
+        _this108.qPostImgInfo = '.fileinfo';
+        _this108.qPostMsg = '.body';
+        _this108.qPostName = '.name';
+        _this108.qPostRef = '.post_no + a';
+        _this108.qPostSubj = '.subject';
+        _this108.qPostTrip = '.trip';
+        _this108.qTrunc = '.toolong';
+        _this108.firstPage = 1;
+        _this108.formParent = 'thread';
+        _this108.hasCatalog = true;
+        _this108.hasRefererErr = true;
+        _this108.jsonSubmit = true;
+        _this108.timePattern = 'nn+dd+yy++w++hh+ii+ss';
+        _this108._origInputs = null;
+        return _this108;
       }
       _inherits(Tinyboard, _BaseBoard2);
       return _createClass(Tinyboard, [{
@@ -25649,7 +25975,7 @@ Spells.addSpell(9, '', false);
         key: "changeReplyMode",
         value: function () {
           var _changeReplyMode = _asyncToGenerator(_regeneratorRuntime().mark(function _callee44(form, tNum) {
-            var _this107 = this;
+            var _this109 = this;
             var pageInp, query, errFn;
             return _regeneratorRuntime().wrap(function _callee44$(_context52) {
               while (1) switch (_context52.prev = _context52.next) {
@@ -25674,7 +26000,7 @@ Spells.addSpell(9, '', false);
                   }
                   this._origInputs = [doc.createElement('div'), postform.subm.value];
                   $Q(query, form).forEach(function (el) {
-                    return _this107._origInputs[0].append(el);
+                    return _this109._origInputs[0].append(el);
                   });
                   _context52.next = 17;
                   break;
@@ -25696,12 +26022,12 @@ Spells.addSpell(9, '', false);
                   $popup('load-form', Lng.loading[lang], true);
                   _context52.next = 21;
                   return ajaxLoad(this.getThrUrl(this.b, tNum), false).then(function (loadedDoc) {
-                    var loadedForm = $q(_this107.qForm, loadedDoc);
+                    var loadedForm = $q(_this109.qForm, loadedDoc);
                     if (!loadedForm) {
                       errFn();
                       return;
                     }
-                    postform.subm.value = $q(_this107.qFormSubm, loadedDoc).value;
+                    postform.subm.value = $q(_this109.qFormSubm, loadedDoc).value;
                     $delAll(query, form);
                     $Q(query, loadedForm).forEach(function (el) {
                       return form.append(doc.adoptNode(el));
@@ -25735,9 +26061,9 @@ Spells.addSpell(9, '', false);
       }, {
         key: "fixVideo",
         value: function fixVideo(isPost, data) {
-          var _this108 = this;
+          var _this110 = this;
           return Array.from($Q('.video-container, #ytplayer', isPost ? data.el : data), function (el) {
-            var value = [isPost ? data : _this108.getPostOfEl(el), el.id === 'ytplayer' ? el.src.match(Videos.ytReg) : ['', el.getAttribute('data-video')], true];
+            var value = [isPost ? data : _this110.getPostOfEl(el), el.id === 'ytplayer' ? el.src.match(Videos.ytReg) : ['', el.getAttribute('data-video')], true];
             el.remove();
             return value;
           });
@@ -25791,16 +26117,16 @@ Spells.addSpell(9, '', false);
     ibEngines.push(['form[name*="postcontrols"]', Tinyboard]);
     var Vichan = function (_Tinyboard) {
       function Vichan() {
-        var _this109;
+        var _this111;
         _classCallCheck(this, Vichan);
         for (var _len9 = arguments.length, args = new Array(_len9), _key6 = 0; _key6 < _len9; _key6++) {
           args[_key6] = arguments[_key6];
         }
-        _this109 = _callSuper(this, Vichan, [].concat(args));
-        _this109.qDelPassw = '#password';
-        _this109.qPostImg = '.post-image[alt]:not(.deleted)';
-        _this109.multiFile = true;
-        return _this109;
+        _this111 = _callSuper(this, Vichan, [].concat(args));
+        _this111.qDelPassw = '#password';
+        _this111.qPostImg = '.post-image[alt]:not(.deleted)';
+        _this111.multiFile = true;
+        return _this111;
       }
       _inherits(Vichan, _Tinyboard);
       return _createClass(Vichan, [{
@@ -25845,18 +26171,18 @@ Spells.addSpell(9, '', false);
     ibEngines.push(['tr#upload', Vichan]);
     var TinyIB = function (_BaseBoard3) {
       function TinyIB() {
-        var _this110;
+        var _this112;
         _classCallCheck(this, TinyIB);
         for (var _len10 = arguments.length, args = new Array(_len10), _key7 = 0; _key7 < _len10; _key7++) {
           args[_key7] = arguments[_key7];
         }
-        _this110 = _callSuper(this, TinyIB, [].concat(args));
-        _this110.qDelForm = $id('posts') ? '#posts' : '#delform';
-        _this110.qError = 'body[align=center] div, div[style="margin-top: 50px;"]';
-        _this110.qPostImg = 'img.thumb, video.thumb';
-        _this110.qPostMsg = '.message';
-        _this110.hasCatalog = true;
-        return _this110;
+        _this112 = _callSuper(this, TinyIB, [].concat(args));
+        _this112.qDelForm = $id('posts') ? '#posts' : '#delform';
+        _this112.qError = 'body[align=center] div, div[style="margin-top: 50px;"]';
+        _this112.qPostImg = 'img.thumb, video.thumb';
+        _this112.qPostMsg = '.message';
+        _this112.hasCatalog = true;
+        return _this112;
       }
       _inherits(TinyIB, _BaseBoard3);
       return _createClass(TinyIB, [{
@@ -25905,40 +26231,40 @@ Spells.addSpell(9, '', false);
     ibEngines.push(['form[action$="imgboard.php?delete"]', TinyIB]);
     var Lynxchan = function (_BaseBoard4) {
       function Lynxchan() {
-        var _this111;
+        var _this113;
         _classCallCheck(this, Lynxchan);
         for (var _len11 = arguments.length, args = new Array(_len11), _key8 = 0; _key8 < _len11; _key8++) {
           args[_key8] = arguments[_key8];
         }
-        _this111 = _callSuper(this, Lynxchan, [].concat(args));
-        _this111.cReply = 'innerPost';
-        _this111.qDelBtn = '#deleteFormButton';
-        _this111.qDelForm = 'form[action$="contentActions.js"]';
-        _this111.qError = '#errorLabel, #labelMessage';
-        _this111.qForm = '.form-post, form[action$="newThread.js"], form[action$="replyThread.js"]';
-        _this111.qFormPassw = 'input[name="password"]';
-        _this111.qFormRules = '.form-post > .small';
-        _this111.qFormSubm = '#formButton, #de-postform-submit';
-        _this111.qOmitted = '.labelOmission';
-        _this111.qOPost = '.innerOP';
-        _this111.qOPostEnd = '.divPosts';
-        _this111.qPages = '#divPages';
-        _this111.qPost = '.innerPost, .markedPost';
-        _this111.qPostHeader = '.postInfo, .de-post-btns';
-        _this111.qPostImg = '.imgLink > img, img[src*="/.media/"]';
-        _this111.qPostImgInfo = '.uploadDetails';
-        _this111.qPostMsg = '.divMessage';
-        _this111.qPostRef = '.linkQuote';
-        _this111.qPostSubj = '.labelSubject';
-        _this111.qPostsParent = '.divPosts';
-        _this111.qTrunc = '.contentOmissionIndicator';
-        _this111.firstPage = 1;
-        _this111.formParent = 'threadId';
-        _this111.hasCatalog = true;
-        _this111.jsonSubmit = true;
-        _this111.multiFile = true;
-        _this111._hasNewAPI = false;
-        return _this111;
+        _this113 = _callSuper(this, Lynxchan, [].concat(args));
+        _this113.cReply = 'innerPost';
+        _this113.qDelBtn = '#deleteFormButton';
+        _this113.qDelForm = 'form[action$="contentActions.js"]';
+        _this113.qError = '#errorLabel, #labelMessage';
+        _this113.qForm = '.form-post, form[action$="newThread.js"], form[action$="replyThread.js"]';
+        _this113.qFormPassw = 'input[name="password"]';
+        _this113.qFormRules = '.form-post > .small';
+        _this113.qFormSubm = '#formButton, #de-postform-submit';
+        _this113.qOmitted = '.labelOmission';
+        _this113.qOPost = '.innerOP';
+        _this113.qOPostEnd = '.divPosts';
+        _this113.qPages = '#divPages';
+        _this113.qPost = '.innerPost, .markedPost';
+        _this113.qPostHeader = '.postInfo, .de-post-btns';
+        _this113.qPostImg = '.imgLink > img, img[src*="/.media/"]';
+        _this113.qPostImgInfo = '.uploadDetails';
+        _this113.qPostMsg = '.divMessage';
+        _this113.qPostRef = '.linkQuote';
+        _this113.qPostSubj = '.labelSubject';
+        _this113.qPostsParent = '.divPosts';
+        _this113.qTrunc = '.contentOmissionIndicator';
+        _this113.firstPage = 1;
+        _this113.formParent = 'threadId';
+        _this113.hasCatalog = true;
+        _this113.jsonSubmit = true;
+        _this113.multiFile = true;
+        _this113._hasNewAPI = false;
+        return _this113;
       }
       _inherits(Lynxchan, _BaseBoard4);
       return _createClass(Lynxchan, [{
@@ -26214,29 +26540,29 @@ Spells.addSpell(9, '', false);
     ibEngines.push(['form[action$="contentActions.js"]', Lynxchan]);
     var FoolFuuka = function (_BaseBoard5) {
       function FoolFuuka() {
-        var _this112;
+        var _this114;
         _classCallCheck(this, FoolFuuka);
         for (var _len12 = arguments.length, args = new Array(_len12), _key9 = 0; _key9 < _len12; _key9++) {
           args[_key9] = arguments[_key9];
         }
-        _this112 = _callSuper(this, FoolFuuka, [].concat(args));
-        _this112.cReply = 'post_wrapper';
-        _this112.qDelForm = '#main';
-        _this112.qOmitted = '.omitted_text';
-        _this112.qOPostEnd = '.posts';
-        _this112.qPages = '.paginate > ul > li:nth-last-child(3)';
-        _this112.qPost = '.post[id]';
-        _this112.qPostHeader = 'header';
-        _this112.qPostImg = '.post_image, .thread_image';
-        _this112.qPostImgInfo = '.post_file_metadata, .thread_image_box > .post_file';
-        _this112.qPostMsg = '.text';
-        _this112.qPostRef = '.post_data > a[data-function="quote"]';
-        _this112.qPostSubj = '.post_title';
-        _this112.qPostsParent = '.posts';
-        _this112.docExt = '';
-        _this112.firstPage = 1;
-        _this112.res = 'thread/';
-        return _this112;
+        _this114 = _callSuper(this, FoolFuuka, [].concat(args));
+        _this114.cReply = 'post_wrapper';
+        _this114.qDelForm = '#main';
+        _this114.qOmitted = '.omitted_text';
+        _this114.qOPostEnd = '.posts';
+        _this114.qPages = '.paginate > ul > li:nth-last-child(3)';
+        _this114.qPost = '.post[id]';
+        _this114.qPostHeader = 'header';
+        _this114.qPostImg = '.post_image, .thread_image';
+        _this114.qPostImgInfo = '.post_file_metadata, .thread_image_box > .post_file';
+        _this114.qPostMsg = '.text';
+        _this114.qPostRef = '.post_data > a[data-function="quote"]';
+        _this114.qPostSubj = '.post_title';
+        _this114.qPostsParent = '.posts';
+        _this114.docExt = '';
+        _this114.firstPage = 1;
+        _this114.res = 'thread/';
+        return _this114;
       }
       _inherits(FoolFuuka, _BaseBoard5);
       return _createClass(FoolFuuka, [{
@@ -26302,19 +26628,19 @@ Spells.addSpell(9, '', false);
 
     var _0chan = function (_Kusaba) {
       function _0chan() {
-        var _this113;
+        var _this115;
         _classCallCheck(this, _0chan);
         for (var _len13 = arguments.length, args = new Array(_len13), _key10 = 0; _key10 < _len13; _key10++) {
           args[_key10] = arguments[_key10];
         }
-        _this113 = _callSuper(this, _0chan, [].concat(args));
-        _this113.qDelForm = '#delform_instant';
-        _this113.qPostHeader = '.posthead';
-        _this113.captchaRu = true;
-        _this113.formHeaders = false;
-        _this113.hasCatalog = true;
-        _this113.multiFile = true;
-        return _this113;
+        _this115 = _callSuper(this, _0chan, [].concat(args));
+        _this115.qDelForm = '#delform_instant';
+        _this115.qPostHeader = '.posthead';
+        _this115.captchaRu = true;
+        _this115.formHeaders = false;
+        _this115.hasCatalog = true;
+        _this115.multiFile = true;
+        return _this115;
       }
       _inherits(_0chan, _Kusaba);
       return _createClass(_0chan, [{
@@ -26343,9 +26669,9 @@ Spells.addSpell(9, '', false);
       }, {
         key: "fixVideo",
         value: function fixVideo(isPost, data) {
-          var _this114 = this;
+          var _this116 = this;
           $Q('.video-embed', isPost ? data.el : data).forEach(function (el) {
-            (isPost ? data : _this114.getPostOfEl(el)).msg.prepend($q('.de-video-link', el), doc.createElement('br'));
+            (isPost ? data : _this116.getPostOfEl(el)).msg.prepend($q('.de-video-link', el), doc.createElement('br'));
             var parent = el.parentNode;
             el.remove();
             if (!parent.firstElementChild) {
@@ -26364,47 +26690,47 @@ Spells.addSpell(9, '', false);
     ibDomains['2.0-chan.ru'] = _0chan;
     var Makaba = function (_BaseBoard6) {
       function Makaba() {
-        var _this115;
+        var _this117;
         _classCallCheck(this, Makaba);
         for (var _len14 = arguments.length, args = new Array(_len14), _key11 = 0; _key11 < _len14; _key11++) {
           args[_key11] = arguments[_key11];
         }
-        _this115 = _callSuper(this, Makaba, [].concat(args));
-        _this115.makaba = true;
-        _this115.cReply = 'de-reply-class';
-        _this115.qBan = '.post__pomyanem';
-        _this115.qClosed = 'use[*|href="#icon__closed"]';
-        _this115.qDelForm = '#posts-form, #js-posts';
-        _this115.qFormFile = '.postform__raw.filer input[type="file"]';
-        _this115.qFormRedir = null;
-        _this115.qFormRules = '.rules';
-        _this115.qFormSubm = '#submit';
-        _this115.qFormTd = '.postform__raw';
-        _this115.qFormTr = '.postform__raw';
-        _this115.qFormTxta = '#shampoo';
-        _this115.qOmitted = '.thread__missed';
-        _this115.qOPost = '.post_type_oppost';
-        _this115.qPost = '.post_type_reply[data-num]';
-        _this115.qPostHeader = '.post__details';
-        _this115.qPostImg = '.post__file-preview';
-        _this115.qPostImgInfo = '.post__file-attr';
-        _this115.qPostMsg = '.post__message';
-        _this115.qPostName = '.post__anon, .post__email';
-        _this115.qPostRef = '.post__reflink:nth-child(2)';
-        _this115.qPostSubj = '.post__title';
-        _this115.qTrunc = null;
-        _this115.formParent = 'thread';
-        _this115.hasArchive = true;
-        _this115.hasCatalog = true;
-        _this115.hasOPNum = true;
-        _this115.hasPicWrap = true;
-        _this115.JsonBuilder = MakabaPostsBuilder;
-        _this115.jsonSubmit = true;
-        _this115.markupBB = true;
-        _this115.multiFile = true;
-        _this115.timePattern = 'dd+nn+yy+w+hh+ii+ss';
-        _this115._isBeta = false;
-        return _this115;
+        _this117 = _callSuper(this, Makaba, [].concat(args));
+        _this117.makaba = true;
+        _this117.cReply = 'de-reply-class';
+        _this117.qBan = '.post__pomyanem';
+        _this117.qClosed = 'use[*|href="#icon__closed"]';
+        _this117.qDelForm = '#posts-form, #js-posts';
+        _this117.qFormFile = '.postform__raw.filer input[type="file"]';
+        _this117.qFormRedir = null;
+        _this117.qFormRules = '.rules';
+        _this117.qFormSubm = '#submit';
+        _this117.qFormTd = '.postform__raw';
+        _this117.qFormTr = '.postform__raw';
+        _this117.qFormTxta = '#shampoo';
+        _this117.qOmitted = '.thread__missed';
+        _this117.qOPost = '.post_type_oppost';
+        _this117.qPost = '.post_type_reply[data-num]';
+        _this117.qPostHeader = '.post__details';
+        _this117.qPostImg = '.post__file-preview';
+        _this117.qPostImgInfo = '.post__file-attr';
+        _this117.qPostMsg = '.post__message';
+        _this117.qPostName = '.post__anon, .post__email';
+        _this117.qPostRef = '.post__reflink:nth-child(2)';
+        _this117.qPostSubj = '.post__title';
+        _this117.qTrunc = null;
+        _this117.formParent = 'thread';
+        _this117.hasArchive = true;
+        _this117.hasCatalog = true;
+        _this117.hasOPNum = true;
+        _this117.hasPicWrap = true;
+        _this117.JsonBuilder = MakabaPostsBuilder;
+        _this117.jsonSubmit = true;
+        _this117.markupBB = true;
+        _this117.multiFile = true;
+        _this117.timePattern = 'dd+nn+yy+w+hh+ii+ss';
+        _this117._isBeta = false;
+        return _this117;
       }
       _inherits(Makaba, _BaseBoard6);
       return _createClass(Makaba, [{
@@ -26461,7 +26787,7 @@ Spells.addSpell(9, '', false);
       }, {
         key: "reportForm",
         get: function get() {
-          var _this116 = this;
+          var _this118 = this;
           var value = function value(pNum, tNum) {
             return $q('input[type="button"]', $popup('edit-report', "<input name=\"comment\" value=\"\" placeholder=\"".concat(pNum === tNum ? Lng.reportThr[lang] : Lng.reportPost[lang], "\" type=\"text\"> <input value=\"OK\" type=\"button\">"))).onclick = function (e) {
               var inpEl = e.target.previousElementSibling;
@@ -26471,7 +26797,7 @@ Spells.addSpell(9, '', false);
               }
               var formData = new FormData();
               var data = {
-                board: _this116.b,
+                board: _this118.b,
                 thread: tNum,
                 post: pNum,
                 comment: inpEl.value
@@ -26715,15 +27041,15 @@ Spells.addSpell(9, '', false);
     ibDomains['2ch.hk'] = ibDomains['2ch.life'] = Makaba;
     var _2channel = function (_Makaba) {
       function _2channel() {
-        var _this117;
+        var _this119;
         _classCallCheck(this, _2channel);
         for (var _len15 = arguments.length, args = new Array(_len15), _key12 = 0; _key12 < _len15; _key12++) {
           args[_key12] = arguments[_key12];
         }
-        _this117 = _callSuper(this, _2channel, [].concat(args));
-        _this117.qClosed = '.icon-lock';
-        _this117.JsonBuilder = null;
-        return _this117;
+        _this119 = _callSuper(this, _2channel, [].concat(args));
+        _this119.qClosed = '.icon-lock';
+        _this119.JsonBuilder = null;
+        return _this119;
       }
       _inherits(_2channel, _Makaba);
       return _createClass(_2channel, [{
@@ -26817,16 +27143,16 @@ Spells.addSpell(9, '', false);
     ibDomains['2channel.moe'] = ibDomains['2channel5xx5xchx.onion'] = _2channel;
     var _2chRip = function (_BaseBoard7) {
       function _2chRip() {
-        var _this118;
+        var _this120;
         _classCallCheck(this, _2chRip);
         for (var _len16 = arguments.length, args = new Array(_len16), _key13 = 0; _key13 < _len16; _key13++) {
           args[_key13] = arguments[_key13];
         }
-        _this118 = _callSuper(this, _2chRip, [].concat(args));
-        _this118.captchaRu = true;
-        _this118.jsonSubmit = true;
-        _this118.captchaUpdPromise = null;
-        return _this118;
+        _this120 = _callSuper(this, _2chRip, [].concat(args));
+        _this120.captchaRu = true;
+        _this120.jsonSubmit = true;
+        _this120.captchaUpdPromise = null;
+        return _this120;
       }
       _inherits(_2chRip, _BaseBoard7);
       return _createClass(_2chRip, [{
@@ -26863,21 +27189,21 @@ Spells.addSpell(9, '', false);
     ibDomains['2ch.rip'] = ibDomains['dva-ch.net'] = _2chRip;
     var _410chan = function (_Kusaba2) {
       function _410chan() {
-        var _this119;
+        var _this121;
         _classCallCheck(this, _410chan);
         for (var _len17 = arguments.length, args = new Array(_len17), _key14 = 0; _key14 < _len17; _key14++) {
           args[_key14] = arguments[_key14];
         }
-        _this119 = _callSuper(this, _410chan, [].concat(args));
-        _this119.qClosed = '.post-badge-locked';
-        _this119.qFormRedir = 'input#noko';
-        _this119.qPages = '.pgstbl > table > tbody > tr > td:nth-child(2)';
-        _this119.captchaRu = true;
-        _this119.captchaUpdPromise = null;
-        _this119.hasCatalog = true;
-        _this119.markupBB = false;
-        _this119.timePattern = 'dd+nn+yyyy++w++hh+ii+ss';
-        return _this119;
+        _this121 = _callSuper(this, _410chan, [].concat(args));
+        _this121.qClosed = '.post-badge-locked';
+        _this121.qFormRedir = 'input#noko';
+        _this121.qPages = '.pgstbl > table > tbody > tr > td:nth-child(2)';
+        _this121.captchaRu = true;
+        _this121.captchaUpdPromise = null;
+        _this121.hasCatalog = true;
+        _this121.markupBB = false;
+        _this121.timePattern = 'dd+nn+yyyy++w++hh+ii+ss';
+        return _this121;
       }
       _inherits(_410chan, _Kusaba2);
       return _createClass(_410chan, [{
@@ -26898,7 +27224,7 @@ Spells.addSpell(9, '', false);
       }, {
         key: "captchaUpdate",
         value: function captchaUpdate(cap) {
-          var _this120 = this;
+          var _this122 = this;
           return cap.updateHelper("/api_adaptive.php?board=".concat(this.b), function (xhr) {
             if (xhr.responseText === '1') {
               cap.textEl.disabled = true;
@@ -26912,7 +27238,7 @@ Spells.addSpell(9, '', false);
             var img = $q('img', cap.parentEl);
             var src = img.getAttribute('src');
             img.src = '';
-            img.src = _this120.getCaptchaSrc(src);
+            img.src = _this122.getCaptchaSrc(src);
           });
         }
       }, {
@@ -26931,40 +27257,40 @@ Spells.addSpell(9, '', false);
     ibDomains['410chan.org'] = _410chan;
     var _4chan = function (_BaseBoard8) {
       function _4chan() {
-        var _this121;
+        var _this123;
         _classCallCheck(this, _4chan);
         for (var _len18 = arguments.length, args = new Array(_len18), _key15 = 0; _key15 < _len18; _key15++) {
           args[_key15] = arguments[_key15];
         }
-        _this121 = _callSuper(this, _4chan, [].concat(args));
-        _this121._4chan = true;
-        _this121.cReply = 'post reply';
-        _this121.qBan = 'strong[style="color: red;"]';
-        _this121.qClosed = '.archivedIcon, .closedIcon';
-        _this121.qDelBtn = '.deleteform > input[type="submit"]';
-        _this121.qError = '#errmsg';
-        _this121.qForm = 'form[name="post"]';
-        _this121.qFormRedir = null;
-        _this121.qOmitted = '.summary.desktop';
-        _this121.qOPost = '.op';
-        _this121.qOPostEnd = '.replyContainer';
-        _this121.qPages = '.pagelist > .pages:not(.cataloglink) > a:last-of-type';
-        _this121.qPostHeader = '.postInfo';
-        _this121.qPostImg = '.fileThumb > img:not(.fileDeletedRes)';
-        _this121.qPostImgInfo = '.fileText';
-        _this121.qPostName = '.name';
-        _this121.qPostRef = '.postInfo > .postNum';
-        _this121.qPostSubj = '.subject';
-        _this121.anchor = '#p';
-        _this121.docExt = '';
-        _this121.firstPage = 1;
-        _this121.formParent = 'resto';
-        _this121.hasCatalog = true;
-        _this121.hasTextLinks = true;
-        _this121.JsonBuilder = _4chanPostsBuilder;
-        _this121.res = 'thread/';
-        _this121.timePattern = 'nn+dd+yy+w+hh+ii-?s?s?';
-        return _this121;
+        _this123 = _callSuper(this, _4chan, [].concat(args));
+        _this123._4chan = true;
+        _this123.cReply = 'post reply';
+        _this123.qBan = 'strong[style="color: red;"]';
+        _this123.qClosed = '.archivedIcon, .closedIcon';
+        _this123.qDelBtn = '.deleteform > input[type="submit"]';
+        _this123.qError = '#errmsg';
+        _this123.qForm = 'form[name="post"]';
+        _this123.qFormRedir = null;
+        _this123.qOmitted = '.summary.desktop';
+        _this123.qOPost = '.op';
+        _this123.qOPostEnd = '.replyContainer';
+        _this123.qPages = '.pagelist > .pages:not(.cataloglink) > a:last-of-type';
+        _this123.qPostHeader = '.postInfo';
+        _this123.qPostImg = '.fileThumb > img:not(.fileDeletedRes)';
+        _this123.qPostImgInfo = '.fileText';
+        _this123.qPostName = '.name';
+        _this123.qPostRef = '.postInfo > .postNum';
+        _this123.qPostSubj = '.subject';
+        _this123.anchor = '#p';
+        _this123.docExt = '';
+        _this123.firstPage = 1;
+        _this123.formParent = 'resto';
+        _this123.hasCatalog = true;
+        _this123.hasTextLinks = true;
+        _this123.JsonBuilder = _4chanPostsBuilder;
+        _this123.res = 'thread/';
+        _this123.timePattern = 'nn+dd+yy+w+hh+ii-?s?s?';
+        return _this123;
       }
       _inherits(_4chan, _BaseBoard8);
       return _createClass(_4chan, [{
@@ -27194,26 +27520,26 @@ Spells.addSpell(9, '', false);
     ibDomains['archived.moe'] = Archived;
     var Arhivach = function (_BaseBoard9) {
       function Arhivach() {
-        var _this122;
+        var _this124;
         _classCallCheck(this, Arhivach);
         for (var _len19 = arguments.length, args = new Array(_len19), _key16 = 0; _key16 < _len19; _key16++) {
           args[_key16] = arguments[_key16];
         }
-        _this122 = _callSuper(this, Arhivach, [].concat(args));
-        _this122.cReply = 'post';
-        _this122.qDelBtn = null;
-        _this122.qDelForm = 'body > .container-fluid';
-        _this122.qDelPassw = null;
-        _this122.qPost = '.post[postid]:not(:first-child)';
-        _this122.qPostHeader = '.post_head';
-        _this122.qPostImg = '.post_image > img';
-        _this122.qPostMsg = '.post_comment_body';
-        _this122.qPostRef = '.post_id, .post_head > b';
-        _this122.qPostSubj = '.post_subject';
-        _this122.docExt = '';
-        _this122.hasOPNum = true;
-        _this122.res = 'thread/';
-        return _this122;
+        _this124 = _callSuper(this, Arhivach, [].concat(args));
+        _this124.cReply = 'post';
+        _this124.qDelBtn = null;
+        _this124.qDelForm = 'body > .container-fluid';
+        _this124.qDelPassw = null;
+        _this124.qPost = '.post[postid]:not(:first-child)';
+        _this124.qPostHeader = '.post_head';
+        _this124.qPostImg = '.post_image > img';
+        _this124.qPostMsg = '.post_comment_body';
+        _this124.qPostRef = '.post_id, .post_head > b';
+        _this124.qPostSubj = '.post_subject';
+        _this124.docExt = '';
+        _this124.hasOPNum = true;
+        _this124.res = 'thread/';
+        return _this124;
       }
       _inherits(Arhivach, _BaseBoard9);
       return _createClass(Arhivach, [{
@@ -27290,12 +27616,12 @@ Spells.addSpell(9, '', false);
       }, {
         key: "init",
         value: function init() {
-          var _this123 = this;
+          var _this125 = this;
           defaultCfg.ajaxUpdThr = 0;
           setTimeout(function () {
             var delPosts = $Q('.post_deleted');
             for (var i = 0, len = delPosts.length; i < len; ++i) {
-              var post = pByNum.get(_this123.getPNum(delPosts[i]));
+              var post = pByNum.get(_this125.getPNum(delPosts[i]));
               if (post) {
                 post.thr.deletePosts(post, false, false);
               }
@@ -27334,17 +27660,17 @@ Spells.addSpell(9, '', false);
     ibDomains['dobrochan.net'] = Dobrochan;
     var Dollchan = function (_TinyIB) {
       function Dollchan() {
-        var _this124;
+        var _this126;
         _classCallCheck(this, Dollchan);
         for (var _len20 = arguments.length, args = new Array(_len20), _key17 = 0; _key17 < _len20; _key17++) {
           args[_key17] = arguments[_key17];
         }
-        _this124 = _callSuper(this, Dollchan, [].concat(args));
-        _this124.qPages = '.pagelist';
-        _this124.markupBB = true;
-        _this124.multiFile = true;
-        _this124.timePattern = 'yy+nn+dd+w+hh+ii+ss';
-        return _this124;
+        _this126 = _callSuper(this, Dollchan, [].concat(args));
+        _this126.qPages = '.pagelist';
+        _this126.markupBB = true;
+        _this126.multiFile = true;
+        _this126.timePattern = 'yy+nn+dd+w+hh+ii+ss';
+        return _this126;
       }
       _inherits(Dollchan, _TinyIB);
       return _createClass(Dollchan, [{
@@ -27399,15 +27725,15 @@ Spells.addSpell(9, '', false);
     ibDomains['dollchan.net'] = Dollchan;
     var Endchan = function (_Lynxchan2) {
       function Endchan() {
-        var _this125;
+        var _this127;
         _classCallCheck(this, Endchan);
         for (var _len21 = arguments.length, args = new Array(_len21), _key18 = 0; _key18 < _len21; _key18++) {
           args[_key18] = arguments[_key18];
         }
-        _this125 = _callSuper(this, Endchan, [].concat(args));
-        _this125.qTrunc = '.contentOmissionIndicator > p';
-        _this125.jsonSubmit = false;
-        return _this125;
+        _this127 = _callSuper(this, Endchan, [].concat(args));
+        _this127.qTrunc = '.contentOmissionIndicator > p';
+        _this127.jsonSubmit = false;
+        return _this127;
       }
       _inherits(Endchan, _Lynxchan2);
       return _createClass(Endchan, [{
@@ -27445,30 +27771,30 @@ Spells.addSpell(9, '', false);
     ibDomains['endchan.net'] = ibDomains['endchan.gg'] = ibDomains['endchan.org'] = ibDomains['endchancxfbnrfgauuxlztwlckytq7rgeo5v6pc2zd4nyqo3khfam4ad.onion'] = ibDomains['enxx3byspwsdo446jujc52ucy2pf5urdbhqw3kbsfhlfjwmbpj5smdad.onion'] = ibDomains['kqrtg5wz4qbyjprujkz33gza7r73iw3ainqp1mz5zmu16symcdwy.loki'] = Endchan;
     var Ernstchan = function (_BaseBoard10) {
       function Ernstchan() {
-        var _this126;
+        var _this128;
         _classCallCheck(this, Ernstchan);
         for (var _len22 = arguments.length, args = new Array(_len22), _key19 = 0; _key19 < _len22; _key19++) {
           args[_key19] = arguments[_key19];
         }
-        _this126 = _callSuper(this, Ernstchan, [].concat(args));
-        _this126.cReply = 'post';
-        _this126.qError = '.error > .info';
-        _this126.qFormRedir = 'input[name="gb2"][value="thread"]';
-        _this126.qFormSpoiler = 'input[type="checkbox"][name="spoilered"]';
-        _this126.qOPost = '.thread_OP';
-        _this126.qPages = '.pagelist > li:nth-last-child(2)';
-        _this126.qPost = '.thread_reply';
-        _this126.qPostHeader = '.post_head';
-        _this126.qPostMsg = '.text';
-        _this126.qPostSubj = '.subject';
-        _this126.qPostTrip = '.tripcode';
-        _this126.qTrunc = '.tldr';
-        _this126.docExt = '';
-        _this126.firstPage = 1;
-        _this126.markupBB = true;
-        _this126.multiFile = true;
-        _this126.res = 'thread/';
-        return _this126;
+        _this128 = _callSuper(this, Ernstchan, [].concat(args));
+        _this128.cReply = 'post';
+        _this128.qError = '.error > .info';
+        _this128.qFormRedir = 'input[name="gb2"][value="thread"]';
+        _this128.qFormSpoiler = 'input[type="checkbox"][name="spoilered"]';
+        _this128.qOPost = '.thread_OP';
+        _this128.qPages = '.pagelist > li:nth-last-child(2)';
+        _this128.qPost = '.thread_reply';
+        _this128.qPostHeader = '.post_head';
+        _this128.qPostMsg = '.text';
+        _this128.qPostSubj = '.subject';
+        _this128.qPostTrip = '.tripcode';
+        _this128.qTrunc = '.tldr';
+        _this128.docExt = '';
+        _this128.firstPage = 1;
+        _this128.markupBB = true;
+        _this128.multiFile = true;
+        _this128.res = 'thread/';
+        return _this128;
       }
       _inherits(Ernstchan, _BaseBoard10);
       return _createClass(Ernstchan, [{
@@ -27510,14 +27836,14 @@ Spells.addSpell(9, '', false);
     ibDomains['ernstchan.xyz'] = Ernstchan;
     var Gensokyo = function (_Kusaba4) {
       function Gensokyo() {
-        var _this127;
+        var _this129;
         _classCallCheck(this, Gensokyo);
         for (var _len23 = arguments.length, args = new Array(_len23), _key20 = 0; _key20 < _len23; _key20++) {
           args[_key20] = arguments[_key20];
         }
-        _this127 = _callSuper(this, Gensokyo, [].concat(args));
-        _this127.hasRefererErr = true;
-        return _this127;
+        _this129 = _callSuper(this, Gensokyo, [].concat(args));
+        _this129.hasRefererErr = true;
+        return _this129;
       }
       _inherits(Gensokyo, _Kusaba4);
       return _createClass(Gensokyo);
@@ -27525,15 +27851,15 @@ Spells.addSpell(9, '', false);
     ibDomains['gensokyo.4otaku.org'] = Gensokyo;
     var Iichan = function (_BaseBoard11) {
       function Iichan() {
-        var _this128;
+        var _this130;
         _classCallCheck(this, Iichan);
         for (var _len24 = arguments.length, args = new Array(_len24), _key21 = 0; _key21 < _len24; _key21++) {
           args[_key21] = arguments[_key21];
         }
-        _this128 = _callSuper(this, Iichan, [].concat(args));
-        _this128.hasArchive = true;
-        _this128.hasCatalog = true;
-        return _this128;
+        _this130 = _callSuper(this, Iichan, [].concat(args));
+        _this130.hasArchive = true;
+        _this130.hasCatalog = true;
+        return _this130;
       }
       _inherits(Iichan, _BaseBoard11);
       return _createClass(Iichan, [{
@@ -27578,10 +27904,10 @@ Spells.addSpell(9, '', false);
       }, {
         key: "stormWallFixCaptcha",
         value: function stormWallFixCaptcha(url, img) {
-          var _this129 = this;
+          var _this131 = this;
           img.onload = img.onerror = function () {
             if (!(img.naturalHeight + img.naturalWidth)) {
-              _this129.stormWallHelper(url, null, Function.prototype, function () {
+              _this131.stormWallHelper(url, null, Function.prototype, function () {
                 img.src = '';
                 img.src = url;
               });
@@ -27647,29 +27973,29 @@ Spells.addSpell(9, '', false);
     ibDomains['iichan.hk'] = ibDomains['iichan.lol'] = ibDomains['iichan.moe'] = ibDomains['ii.yakuji.moe'] = Iichan;
     var Ivchan = function (_BaseBoard12) {
       function Ivchan() {
-        var _this130;
+        var _this132;
         _classCallCheck(this, Ivchan);
         for (var _len25 = arguments.length, args = new Array(_len25), _key22 = 0; _key22 < _len25; _key22++) {
           args[_key22] = arguments[_key22];
         }
-        _this130 = _callSuper(this, Ivchan, [].concat(args));
-        _this130.qClosed = 'img[src="/images/locked.png"]';
-        _this130.qDelForm = 'form[action*="delete"]';
-        _this130.qError = '.post-error, h2';
-        _this130.qFormRedir = 'select[name="goto"]';
-        _this130.qOmitted = '.abbrev > span:last-of-type';
-        _this130.qPages = '.pages > tbody > tr > td';
-        _this130.qPostImgInfo = '.fileinfo';
-        _this130.qPostMsg = '.postbody';
-        _this130.qPostSubj = '.replytitle';
-        _this130.qTrunc = '.abbrev > span:first-of-type';
-        _this130.anchor = '#i';
-        _this130.captchaRu = true;
-        _this130.formParent = 'thread_id';
-        _this130.hasPicWrap = true;
-        _this130.multiFile = true;
-        _this130.timePattern = 'dd+m+?+?+?+?+?+yyyy++w++hh+ii-?s?s?';
-        return _this130;
+        _this132 = _callSuper(this, Ivchan, [].concat(args));
+        _this132.qClosed = 'img[src="/images/locked.png"]';
+        _this132.qDelForm = 'form[action*="delete"]';
+        _this132.qError = '.post-error, h2';
+        _this132.qFormRedir = 'select[name="goto"]';
+        _this132.qOmitted = '.abbrev > span:last-of-type';
+        _this132.qPages = '.pages > tbody > tr > td';
+        _this132.qPostImgInfo = '.fileinfo';
+        _this132.qPostMsg = '.postbody';
+        _this132.qPostSubj = '.replytitle';
+        _this132.qTrunc = '.abbrev > span:first-of-type';
+        _this132.anchor = '#i';
+        _this132.captchaRu = true;
+        _this132.formParent = 'thread_id';
+        _this132.hasPicWrap = true;
+        _this132.multiFile = true;
+        _this132.timePattern = 'dd+m+?+?+?+?+?+yyyy++w++hh+ii-?s?s?';
+        return _this132;
       }
       _inherits(Ivchan, _BaseBoard12);
       return _createClass(Ivchan, [{
@@ -27720,19 +28046,19 @@ Spells.addSpell(9, '', false);
     ibDomains['ivchan.net'] = Ivchan;
     var Kohlchan = function (_Lynxchan3) {
       function Kohlchan() {
-        var _this131;
+        var _this133;
         _classCallCheck(this, Kohlchan);
         for (var _len26 = arguments.length, args = new Array(_len26), _key23 = 0; _key23 < _len26; _key23++) {
           args[_key23] = arguments[_key23];
         }
-        _this131 = _callSuper(this, Kohlchan, [].concat(args));
-        _this131.kohlchan = true;
-        _this131.qFormRules = '#rules_row';
-        _this131.qPostImg = '.uploadCell > a > img';
-        _this131.hasTextLinks = true;
-        _this131.markupBB = true;
-        _this131.timePattern = 'yyyy+nn+dd+hh+ii+ss';
-        return _this131;
+        _this133 = _callSuper(this, Kohlchan, [].concat(args));
+        _this133.kohlchan = true;
+        _this133.qFormRules = '#rules_row';
+        _this133.qPostImg = '.uploadCell > a > img';
+        _this133.hasTextLinks = true;
+        _this133.markupBB = true;
+        _this133.timePattern = 'yyyy+nn+dd+hh+ii+ss';
+        return _this133;
       }
       _inherits(Kohlchan, _Lynxchan3);
       return _createClass(Kohlchan, [{
@@ -27867,14 +28193,14 @@ Spells.addSpell(9, '', false);
     ibDomains['kohlchan.net'] = ibDomains['kohlchan.top'] = ibDomains['kohlchanagb7ih5g.onion'] = ibDomains['kohlchanvwpfx6hthoti5fvqsjxgcwm3tmddvpduph5fqntv5affzfqd.onion'] = ibDomains['kohlkanal.net'] = Kohlchan;
     var Kropyvach = function (_Vichan3) {
       function Kropyvach() {
-        var _this132;
+        var _this134;
         _classCallCheck(this, Kropyvach);
         for (var _len27 = arguments.length, args = new Array(_len27), _key24 = 0; _key24 < _len27; _key24++) {
           args[_key24] = arguments[_key24];
         }
-        _this132 = _callSuper(this, Kropyvach, [].concat(args));
-        _this132.markupBB = true;
-        return _this132;
+        _this134 = _callSuper(this, Kropyvach, [].concat(args));
+        _this134.markupBB = true;
+        return _this134;
       }
       _inherits(Kropyvach, _Vichan3);
       return _createClass(Kropyvach, [{
@@ -27892,14 +28218,14 @@ Spells.addSpell(9, '', false);
     ibDomains['kropyva.ch'] = Kropyvach;
     var Lainchan = function (_Vichan4) {
       function Lainchan() {
-        var _this133;
+        var _this135;
         _classCallCheck(this, Lainchan);
         for (var _len28 = arguments.length, args = new Array(_len28), _key25 = 0; _key25 < _len28; _key25++) {
           args[_key25] = arguments[_key25];
         }
-        _this133 = _callSuper(this, Lainchan, [].concat(args));
-        _this133.qOPost = '.op';
-        return _this133;
+        _this135 = _callSuper(this, Lainchan, [].concat(args));
+        _this135.qOPost = '.op';
+        return _this135;
       }
       _inherits(Lainchan, _Vichan4);
       return _createClass(Lainchan, [{
@@ -27960,18 +28286,18 @@ Spells.addSpell(9, '', false);
     ibDomains['nowere.net'] = Nowere;
     var Ponyach = function (_BaseBoard14) {
       function Ponyach() {
-        var _this134;
+        var _this136;
         _classCallCheck(this, Ponyach);
         for (var _len29 = arguments.length, args = new Array(_len29), _key26 = 0; _key26 < _len29; _key26++) {
           args[_key26] = arguments[_key26];
         }
-        _this134 = _callSuper(this, Ponyach, [].concat(args));
-        _this134.qBan = 'font[color="#FF0000"]';
-        _this134.qPostImgInfo = '.filesize[style="display: inline;"]';
-        _this134.formParent = 'replythread';
-        _this134.jsonSubmit = true;
-        _this134.multiFile = true;
-        return _this134;
+        _this136 = _callSuper(this, Ponyach, [].concat(args));
+        _this136.qBan = 'font[color="#FF0000"]';
+        _this136.qPostImgInfo = '.filesize[style="display: inline;"]';
+        _this136.formParent = 'replythread';
+        _this136.jsonSubmit = true;
+        _this136.multiFile = true;
+        return _this136;
       }
       _inherits(Ponyach, _BaseBoard14);
       return _createClass(Ponyach, [{
@@ -28025,16 +28351,16 @@ Spells.addSpell(9, '', false);
     ibDomains['ponyach.ru'] = Ponyach;
     var Ponychan = function (_Tinyboard2) {
       function Ponychan() {
-        var _this135;
+        var _this137;
         _classCallCheck(this, Ponychan);
         for (var _len30 = arguments.length, args = new Array(_len30), _key27 = 0; _key27 < _len30; _key27++) {
           args[_key27] = arguments[_key27];
         }
-        _this135 = _callSuper(this, Ponychan, [].concat(args));
-        _this135.qClosed = 'img[title="Locked"]';
-        _this135.qOPost = '.opContainer';
-        _this135.jsonSubmit = false;
-        return _this135;
+        _this137 = _callSuper(this, Ponychan, [].concat(args));
+        _this137.qClosed = 'img[title="Locked"]';
+        _this137.qOPost = '.opContainer';
+        _this137.jsonSubmit = false;
+        return _this137;
       }
       _inherits(Ponychan, _Tinyboard2);
       return _createClass(Ponychan, [{
@@ -28075,17 +28401,17 @@ Spells.addSpell(9, '', false);
     ibDomains['rfch.rocks'] = Rfch;
     var Spirech = function (_Vichan6) {
       function Spirech() {
-        var _this136;
+        var _this138;
         _classCallCheck(this, Spirech);
         for (var _len31 = arguments.length, args = new Array(_len31), _key28 = 0; _key28 < _len31; _key28++) {
           args[_key28] = arguments[_key28];
         }
-        _this136 = _callSuper(this, Spirech, [].concat(args));
-        _this136.qForm = 'form[name="post"], form[name="de-post"]';
-        _this136.qFormRules = '#post-info';
-        _this136.jsonSubmit = true;
-        _this136.markupBB = true;
-        return _this136;
+        _this138 = _callSuper(this, Spirech, [].concat(args));
+        _this138.qForm = 'form[name="post"], form[name="de-post"]';
+        _this138.qFormRules = '#post-info';
+        _this138.jsonSubmit = true;
+        _this138.markupBB = true;
+        return _this138;
       }
       _inherits(Spirech, _Vichan6);
       return _createClass(Spirech, [{
@@ -28116,16 +28442,16 @@ Spells.addSpell(9, '', false);
     ibDomains['spirech.org'] = ibDomains['old52qbrspw6jivvrcjlybucxatpnzwea3oxrsw75be4ka53qfqhrnid.onion'] = Spirech;
     var Synch = function (_Tinyboard3) {
       function Synch() {
-        var _this137;
+        var _this139;
         _classCallCheck(this, Synch);
         for (var _len32 = arguments.length, args = new Array(_len32), _key29 = 0; _key29 < _len32; _key29++) {
           args[_key29] = arguments[_key29];
         }
-        _this137 = _callSuper(this, Synch, [].concat(args));
-        _this137.qPages = '.pagination';
-        _this137.qPostImgInfo = '.unimportant';
-        _this137.markupBB = true;
-        return _this137;
+        _this139 = _callSuper(this, Synch, [].concat(args));
+        _this139.qPages = '.pagination';
+        _this139.qPostImgInfo = '.unimportant';
+        _this139.markupBB = true;
+        return _this139;
       }
       _inherits(Synch, _Tinyboard3);
       return _createClass(Synch, [{
@@ -28173,20 +28499,20 @@ Spells.addSpell(9, '', false);
     ibDomains['syn-ch.ru'] = ibDomains['syn-ch.com'] = ibDomains['syn-ch.com.ua'] = ibDomains['syn-ch.org'] = Synch;
     var Warosu = function (_BaseBoard15) {
       function Warosu() {
-        var _this138;
+        var _this140;
         _classCallCheck(this, Warosu);
         for (var _len33 = arguments.length, args = new Array(_len33), _key30 = 0; _key30 < _len33; _key30++) {
           args[_key30] = arguments[_key30];
         }
-        _this138 = _callSuper(this, Warosu, [].concat(args));
-        _this138.qDelForm = '.content';
-        _this138.qForm = '.subreply';
-        _this138.qFormSubm = '.g-recaptcha';
-        _this138.qPostImgInfo = '.fileinfo';
-        _this138.qPostRef = '.js';
-        _this138.qOPost = '.comment';
-        _this138.res = 'thread/';
-        return _this138;
+        _this140 = _callSuper(this, Warosu, [].concat(args));
+        _this140.qDelForm = '.content';
+        _this140.qForm = '.subreply';
+        _this140.qFormSubm = '.g-recaptcha';
+        _this140.qPostImgInfo = '.fileinfo';
+        _this140.qPostRef = '.js';
+        _this140.qOPost = '.comment';
+        _this140.res = 'thread/';
+        return _this140;
       }
       _inherits(Warosu, _BaseBoard15);
       return _createClass(Warosu, [{
@@ -28241,7 +28567,7 @@ Spells.addSpell(9, '', false);
 
   var DollchanAPI = {
     initAPI: function initAPI() {
-      var _this139 = this;
+      var _this141 = this;
       this.hasListeners = false;
       if (!('MessageChannel' in deWindow)) {
         return;
@@ -28253,7 +28579,7 @@ Spells.addSpell(9, '', false);
       var port = channel.port2;
       doc.defaultView.addEventListener('message', function (e) {
         if (e.data === 'de-request-api-message') {
-          _this139.hasListeners = true;
+          _this141.hasListeners = true;
           doc.defaultView.postMessage('de-answer-api-message', '*', [port]);
         }
       });
@@ -28471,7 +28797,7 @@ Spells.addSpell(9, '', false);
       $css(x).id = 'de-css';
       return;
     }
-    x += "\n\t/* Windows */\n\t.de-win .de-win-btn-toggle { transform: rotate(180deg); }\n\t.de-resizer { position: absolute; }\n\t.de-resizer-bottom { height: 6px; bottom: -3px; left: 0; right: 0; cursor: ns-resize; }\n\t.de-resizer-left { width: 6px; top: 0px; bottom: 0px; left: -3px; cursor: ew-resize; }\n\t.de-resizer-right { width: 6px; top: 0px; bottom: 0px; right: -3px; cursor: ew-resize; }\n\t.de-resizer-top { height: 6px; top: -3px; left: 0; right: 0; cursor: ns-resize; }\n\t.de-win > .de-win-head { cursor: move; }\n\t.de-win-buttons { margin: 0 2px 0 0; font-size: 0; white-space: nowrap; cursor: pointer; }\n\t.de-win-buttons > svg { transition: background .3s ease, box-shadow .3s ease; }\n\t.de-win-buttons > svg:hover { background-color: rgba(255,255,255,.2); box-shadow: 0 0 2px rgba(255,255,255,.4); color: #d0e7ff; }\n\t.de-win-inpost > .de-win-head > .de-win-buttons > svg:hover { background-color: rgba(64,64,64,.15); box-shadow: 0 0 2px rgba(64,64,64,.3); color: inherit; }\n\t#de-win-cfg { width: 355px; }\n\t#de-win-cfg, #de-win-fav, #de-win-hid, #de-win-vid { position: fixed; max-width: calc(100vw - (100vw - 100%)); max-height: calc(100vh - 25px); overflow-x: hidden; overflow-y: auto; }\n\t#de-win-cfg > .de-win-body { float: none; display: block; width: auto; min-width: 0; max-width: 100% !important; padding: 0 !important; margin: 0 !important; border: none; }\n\t#de-win-fav > .de-win-body, #de-win-hid > .de-win-body, #de-win-vid > .de-win-body { padding: 6px; border: 1px solid gray; }\n\t#de-win-hid { max-width: 60%; }\n\t.de-win-title { width: 100%; }\n\t#de-win-vid > .de-win-body { display: flex; flex-direction: column; align-items: center; }\n\t#de-win-vid .de-entry { white-space: normal; }\n\t.de-win-head { display: flex; height: 16px; padding: 2px; border-radius: 10px 10px 0 0; color: #F5F5F5; font: bold 14px/16px arial; text-align: center; cursor: default; }\n\n\t/* Settings window */\n\t.de-block { display: block; }\n\t#de-btn-spell-add { margin-left: auto; }\n\t#de-cfg-bar { display: flex; margin: 0; padding: 0; }\n\t.de-cfg-body { min-height: 355px; padding: 9px 7px 7px; margin-top: -1px; font: 13px/15px arial !important; -moz-box-sizing: content-box; box-sizing: content-box; }\n\t.de-cfg-body, #de-cfg-buttons { border: 1px solid #183d77; border-top: none; }\n\t.de-cfg-button { padding: 0 ".concat(nav.isFirefox ? '2' : '4', "px !important; margin: 0 4px; height: 21px; font: 12px arial !important; }\n\t#de-cfg-button-debug { padding: 0 2px; font: 13px/15px arial; }\n\t#de-cfg-buttons { display: flex; align-items: center; padding: 3px; }\n\t#de-cfg-buttons > label { flex: 1 0 auto; }\n\t.de-cfg-chkbox { ").concat(nav.isPresto ? '' : 'vertical-align: -1px !important; ', "margin: 2px 1px !important; }\n\t#de-cfg-info { display: flex; flex-direction: column; }\n\tinput[type=\"text\"].de-cfg-inptxt { width: auto; height: auto; min-height: 0; padding: 0 2px !important; margin: 1px 4px 1px 0 !important; font: 13px arial !important; border-width: 1px; }\n\t.de-cfg-inptxt, .de-cfg-label, .de-cfg-select { display: inline-block; width: auto; height: 19px !important; font: 13px/15px arial !important; }\n\t.de-cfg-label { padding: 0; margin: 0; }\n\t.de-cfg-needreload::after  { content: \"* \"; color: red; }\n\t.de-cfg-select { padding: 0 2px; margin: 1px 0; font: 13px arial !important; float: none; appearance: auto; }\n\t.de-cfg-tab { flex: 1 0 auto; display: block !important; margin: 0 !important; float: none !important; width: auto !important; min-width: 0 !important; padding: 4px 0 !important; box-shadow: none !important; border: 1px solid #444 !important; border-radius: 4px 4px 0 0 !important; opacity: 1; font: bold 12px arial; text-align: center; cursor: default; background-image: linear-gradient(to bottom, rgba(132,132,132,.35) 0%, rgba(79,79,79,.35) 50%, rgba(40,40,40,.35) 50%, rgba(80,80,80,.35) 100%) !important; }\n\t.de-cfg-tab:hover { background-image: linear-gradient(to top, rgba(132,132,132,.35) 0%, rgba(79,79,79,.35) 50%, rgba(40,40,40,.35) 50%, rgba(80,80,80,.35) 100%) !important; }\n\t.de-cfg-tab[selected], .de-cfg-tab[selected]:hover { background-image: none !important; border-bottom: none !important; }\n\t.de-cfg-tab::").concat(nav.isFirefox ? '-moz-' : '', "selection { background: transparent; }\n\t.de-cfg-unvis { display: none !important; }\n\t.de-depend { padding-left: 17px; }\n\t#de-info-log, #de-info-stats { width: 100%; padding: 0px 7px; }\n\t#de-info-log { overflow-y: auto; border-left: 1px solid grey; }\n\t.de-info-name { flex: 1 0 auto; }\n\t.de-info-row { display: flex; }\n\t#de-info-table { display: flex; flex: 1 0 auto; }\n\t.de-spell-btn { padding: 0 4px; }\n\t#de-spell-editor { display: flex; align-items: stretch; height: 256px; padding: 2px 0; }\n\t#de-spell-panel { display: flex; }\n\t#de-spell-txt { padding: 2px !important; margin: 0; width: 100%; min-width: 0; border: none !important; outline: none !important; font: 12px courier new; ").concat(nav.isPresto ? '' : 'resize: none !important; ', "}\n\t#de-spell-rowmeter { padding: 2px 3px 0 0; overflow: hidden; min-width: 2em; background-color: #616b86; text-align: right; color: #fff; font: 12px courier new; }\n\t#de-win-cfg.de-win-fixed { z-index: 10001 !important; }\n\n\t/* Settings window theme */\n\t").concat(["#de-cfg-bar { background-color: #1f2740; }\n\t\t.de-cfg-tab { border-color: #121421 !important; }", "#de-cfg-bar { background-color: #325f9e; }\n\t\t.de-cfg-tab { border-color: #183d77 !important; }", "#de-cfg-bar, #de-spell-rowmeter { background-color: #777; }\n\t\t.de-cfg-body, #de-cfg-buttons { border-color: #444; }", "#de-cfg-bar { background-color: rgba(0,20,80,.72); }\n\t\t.de-cfg-tab { border-color: #001450 !important; }", "#de-cfg-bar { background-color: #222; }\n\t\t.de-cfg-body, #de-cfg-buttons, { border-color: #666; }\n\t\t#de-spell-rowmeter { background-color: #555; }", "#de-cfg-bar { background-color: #832da2; }\n\t\t.de-cfg-body, #de-cfg-buttons { border-color: #c125a1 !important; }\n\t\t.de-cfg-tab { border-color: #832da2 !important; }\n\t\t#de-spell-rowmeter { background-color: #844b83; }"][Cfg.scriptStyle], "\n\n\t/* Favorites window */\n\t.de-entry { display: flex !important; align-items: center; float: none !important; padding: 0 !important; margin: 1px 0 !important; min-width: 0 !important; border: none !important; font-size: 13px; overflow: hidden !important; white-space: nowrap; }\n\t.de-entry-title { flex: auto; padding-left: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n\t#de-fav-buttons, #de-hid-buttons, #de-fav-del-confirm { padding-top: 6px; }\n\t.de-fav-entries { border-top: 1px solid rgba(80,80,80,.3); }\n\t.de-fav-entries-hide, .de-fav-inf-icon:not(.de-fav-closed):not(.de-fav-unavail):not(.de-fav-wait), .de-fav-closed > .de-fav-unavail-use, .de-fav-closed > .de-fav-wait-use, .de-fav-unavail > .de-fav-closed-use, .de-fav-unavail > .de-fav-wait-use, .de-fav-wait > .de-fav-closed-use, .de-fav-wait > .de-fav-unavail-use { display: none; }\n\t.de-fav-del-btn { margin-left: 2px; cursor: pointer; }\n\t.de-fav-del-btn > svg { width: 12px; height: 12px; opacity: 0.65; vertical-align: -2px; }\n\t.de-fav-del-btn[de-checked] > svg { color: red; background-color: rgba(255,0,0,.2); border-radius: 7px; opacity: 1; }\n\t.de-fav-header { display: flex; cursor: pointer; font-size: 13px; }\n\t.de-fav-header-btn { flex: 1 0 auto; margin-right: 2px; font-size: 11px; color: inherit; text-align: right; opacity: 0.65; }\n\t.de-fav-header-link { margin-left: 2px; color: inherit; font-weight: bold; text-decoration: none; outline: none; }\n\t.de-fav-inf { flex: none; padding: 0 4px 0 10px; font: bold 14px serif; cursor: default; }\n\t.de-fav-inf-icon, .de-fav-inf-iwrap  { width: 16px; height: 16px; }\n\t.de-fav-inf-icon { margin-bottom: -3px; }\n\t.de-fav-inf-new { color: #424f79; }\n\t.de-fav-inf-new::after { content: \" +\"; }\n\t.de-fav-inf-total { color: #4f7942; }\n\t.de-fav-inf-you { padding: 0 4px; margin-right: 4px; border-radius: 3px; color: #fff; background-color: #424f79; opacity: 0.65; }\n\t.de-fav-link { flex: none; margin-left: 2px; text-decoration: none; border: none; }\n\t.de-fav-table { overflow-x: hidden; overflow-y: auto; max-height: calc(100vh - 91px); }\n\t.de-fav-table-unfold > .de-fold-block > .de-fav-entries { display: initial !important; }\n\t.de-fav-unavail { color: #cf4436; }\n\t.de-fold-block { border: 1px solid rgba(120,120,120,.8); border-radius: 2px; }\n\t.de-fold-block:not(:first-child) { border-top: none; }\n\n\t/* Post panel */\n\t.de-btn-hide > .de-btn-unhide-use, .de-btn-hide-user > .de-btn-unhide-use, .de-btn-unhide > .de-btn-hide-use, .de-btn-unhide-user > .de-btn-hide-use { display: none; }\n\t.de-btn-expthr, .de-btn-fav, .de-btn-fav-sel, .de-btn-hide, .de-btn-hide-user, .de-btn-img, .de-btn-reply, .de-btn-sage, .de-btn-stick, .de-btn-stick-on, .de-btn-unhide, .de-btn-unhide-user, .de-win-btn-clear, .de-win-btn-close, .de-win-btn-toggle { margin: 0 2px 0 0 !important; cursor: pointer; width: 16px; height: 16px; vertical-align: -3px; }").concat(!postform.form && !postform.oeForm ? '.de-btn-reply { display: none; }' : '', "\n\t.de-btn-img { vertical-align: top; }\n\t.de-post-btns { margin-left: 4px; }\n\t.de-post-btns-back { fill: inherit; stroke: none; }\n\t.de-post-note:not(:empty) { color: inherit; margin: 0 4px; vertical-align: 1px; font: italic bold 12px serif; }\n\t.de-thread-note { font-style: italic; }\n\n\t/* Sauce buttons */\n\t").concat(contentIcon('.de-src-google', 'data:image/gif;base64,R0lGODlhEAAQAMQAAIy0+tHh/gJc8Qlh8UyM9H2r9/3///7//x+OfACSJy+mTZHQos3Te////f///v3HAP+uAPzWjvWTWeUTAPSdl/79/f////39/f///wAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABgALAAAAAAQABAAAAVuICaKh2Eax6hih+W+bqoaLjXdE+UaY2vhwInrInLhdBYbDEOL3GBQS4X2gEiiUBoEAhMIBl6CpaHlvrxocaO1XUQBgsLYxUgkot7AGONS2N0WCwgCYhZFfXaJCQguDiMvC34JCoCOKlgvK49QKyEAOw=='), "\n\t").concat(contentIcon('.de-src-yandex', 'data:image/gif;base64,R0lGODlhEAAQAMQAAP////v7+/r5+fb29vHx8eLi4tnZ2dTU1NDQ0MvLy8fHx8TExPzJv/immvlXRvq0re4UEdeGhtbFxcnJyby8vKampm5ubv///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABcALAAAAAAQABAAAAVx4CWOZCkOQKqq5uoCQhnMQuPcc2CQuc3YuQBJQHQ8BA8HkUgYDZ6Qx+ABeVoVIoL2RmhAtODmpUD23iDkdEFkaBsiEAfE3a6IDngJJALH4ycjCIJyCXCCgiQJhXuLigl2IwqSk5QUJRQLmZqaFiaeniEAOw=='), "\n\t").concat(contentIcon('.de-src-tineye', 'data:image/gif;base64,R0lGODlhEAAQAMQAAP///wAAAAwOEhg4UDZ7skGNxkuf3Vycxx4nLerw9DlSX2FnanO21Epxg4LO62KOnpXj+ZGcmb7CvbZ6RfxmAIxBCzsGAP///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABcALAAAAAAQABAAAAWlYGIUZGGc6HgkxzSRozIgdHMUx0NR5hH8v8VjeFsoDAyFpcKcQByMnIGgYDAikmxkOLQWqNAGQhAQLBC/BgSXC0QivwgAgFbjHLQ5XDKXBBRrBA80WAABRgkJPwxfDw2HCYYBfHABDSQMDgoIEgs/ZgoPDmuYEFEHmQ6jT5ckBKirEE8HCgEWJQe5ZwJjQBYRBwQMsk8RFgJkP04sVrHGNAEVEAAhADs='), "\n\t").concat(contentIcon('.de-src-saucenao', 'data:image/gif;base64,R0lGODlhEAAQAIAAAP///wAAACwAAAAAEAAQAAACJ4yPacDtvpQCkU1KT0P75i49mbSAZACd6HN2pmbBI7pe9K1+4q5KBQA7'), "\n\t").concat(contentIcon('.de-src-iqdb', 'data:image/gif;base64,R0lGODlhEAAQAMQAAP//////AP8A//8AAAD//wD/AAAA/wAAANx/hV1ISW9YWvLOd/u0T+WlTNaqcKdtMv/r1mxML7OCVoxtUbmmlfPRuKKGeHpcTvK3nEEvKGpRTCcbGU48OYVua3tkYv///yH5BAEAAB8ALAAAAAAQABAAAAW4INV5ZDcmibM0iVJRnukpmnJJDdNwnDWSk4vCNMnpGJXfwqHReDQJTuTxmEhmqoTFEtRsNhltRTFZTBKUl2IzAmeE2csFA8kcKADLl5NgSDgaGRYAFVYQABkRgAxnGhcdEJEVhxYSDhwNEQkaEhSRGBgIGBUOGBwXERkcExyeFaGjr4E8qgcHDpKgkQpRGhwZYA4Vw6CvPBOpwD0ODlMSoxcJOQ8ZyhccBxkSkRRFDw4SD1/jF5MQIQA7'), "\n\t").concat(contentIcon('.de-src-tracemoe', 'data:image/gif;base64,R0lGODlhEAAPALMAAAAAAP///9fY18HBwTg4ODw1No6PjoFnZhoBAXNGRf/V1KmRkf///wAAAAAAAAAAACH5BAEAAAwALAAAAAAQAA8AAAQ5EMhJq7046w0I9hMhBAIoiSQ4BiS1tgQrg7EceIM8UDm7S4aBwRIcYgoFjmSxQHASCkWCc6gelJkIADs='), "\n\n\t/* Posts counter */\n\t.de-post-counter { margin: 0 4px 0 2px; vertical-align: 1px; font: bold 11px tahoma; color: #4f7942; cursor: default; }\n\t.de-post-counter-deleted { color: #727579; }\n\t.de-post-counter-you { vertical-align: 1px; font: bold 11px tahoma; color: #505a7a; cursor: default; }\n\n\t/* Text markup buttons */\n\t.de-markup-back { fill: #f0f0f0; stroke: #808080; }\n\t#de-txt-panel { display: block; font-weight: bold; white-space: nowrap; cursor: pointer; }\n\t#de-txt-panel > div { display: inline-block; }\n\t#de-txt-panel > div > button { margin-right: 2px; min-width: 23px; }\n\t#de-txt-panel > div > svg { width: 23px; height: 22px; margin: 0 1px; }\r\n");
+    x += "\n\t/* Windows */\n\t.de-win .de-win-btn-toggle { transform: rotate(180deg); }\n\t.de-resizer { position: absolute; }\n\t.de-resizer-bottom { height: 6px; bottom: -3px; left: 0; right: 0; cursor: ns-resize; }\n\t.de-resizer-left { width: 6px; top: 0px; bottom: 0px; left: -3px; cursor: ew-resize; }\n\t.de-resizer-right { width: 6px; top: 0px; bottom: 0px; right: -3px; cursor: ew-resize; }\n\t.de-resizer-top { height: 6px; top: -3px; left: 0; right: 0; cursor: ns-resize; }\n\t.de-win > .de-win-head { cursor: move; }\n\t.de-win-buttons { margin: 0 2px 0 0; font-size: 0; white-space: nowrap; cursor: pointer; }\n\t.de-win-buttons > svg { transition: background .3s ease, box-shadow .3s ease; }\n\t.de-win-buttons > svg:hover { background-color: rgba(255,255,255,.2); box-shadow: 0 0 2px rgba(255,255,255,.4); color: #d0e7ff; }\n\t.de-win-inpost > .de-win-head > .de-win-buttons > svg:hover { background-color: rgba(64,64,64,.15); box-shadow: 0 0 2px rgba(64,64,64,.3); color: inherit; }\n\t#de-win-cfg { width: 355px; }\n\t#de-win-cfg, #de-win-fav, #de-win-hid, #de-win-vid { position: fixed; max-width: calc(100vw - (100vw - 100%)); max-height: calc(100vh - 25px); overflow-x: hidden; overflow-y: auto; }\n\t#de-win-cfg > .de-win-body { float: none; display: block; width: auto; min-width: 0; max-width: 100% !important; padding: 0 !important; margin: 0 !important; border: none; }\n\t#de-win-fav > .de-win-body, #de-win-hid > .de-win-body, #de-win-vid > .de-win-body { padding: 6px; border: 1px solid gray; }\n\t#de-win-hid { max-width: 60%; }\n\t.de-win-title { width: 100%; }\n\t#de-win-vid > .de-win-body { display: flex; flex-direction: column; align-items: center; }\n\t#de-win-vid .de-entry { white-space: normal; }\n\t.de-win-head { display: flex; height: 16px; padding: 2px; border-radius: 10px 10px 0 0; color: #F5F5F5; font: bold 14px/16px arial; text-align: center; cursor: default; }\n\n\t/* Settings window */\n\t.de-block { display: block; }\n\t#de-btn-spell-add { margin-left: auto; }\n\t#de-cfg-bar { display: flex; margin: 0; padding: 0; }\n\t.de-cfg-body { min-height: 355px; padding: 9px 7px 7px; margin-top: -1px; font: 13px/15px arial !important; -moz-box-sizing: content-box; box-sizing: content-box; }\n\t.de-cfg-body, #de-cfg-buttons { border: 1px solid #183d77; border-top: none; }\n\t.de-cfg-button { padding: 0 ".concat(nav.isFirefox ? '2' : '4', "px !important; margin: 0 4px; height: 21px; font: 12px arial !important; }\n\t#de-cfg-button-debug { padding: 0 2px; font: 13px/15px arial; }\n\t#de-cfg-buttons { display: flex; align-items: center; padding: 3px; }\n\t#de-cfg-buttons > label { flex: 1 0 auto; }\n\t.de-cfg-chkbox { ").concat(nav.isPresto ? '' : 'vertical-align: -1px !important; ', "margin: 2px 1px !important; }\n\t#de-cfg-info { display: flex; flex-direction: column; }\n\tinput[type=\"text\"].de-cfg-inptxt { width: auto; height: auto; min-height: 0; padding: 0 2px !important; margin: 1px 4px 1px 0 !important; font: 13px arial !important; border-width: 1px; }\n\t.de-cfg-inptxt, .de-cfg-label, .de-cfg-select { display: inline-block; width: auto; height: 19px !important; font: 13px/15px arial !important; }\n\t.de-cfg-label { padding: 0; margin: 0; }\n\t.de-cfg-needreload::after  { content: \"* \"; color: red; }\n\t.de-cfg-select { padding: 0 2px; margin: 1px 0; font: 13px arial !important; float: none; appearance: auto; }\n\t.de-cfg-tab { flex: 1 0 auto; display: block !important; margin: 0 !important; float: none !important; width: auto !important; min-width: 0 !important; padding: 4px 0 !important; box-shadow: none !important; border: 1px solid #444 !important; border-radius: 4px 4px 0 0 !important; opacity: 1; font: bold 12px arial; text-align: center; cursor: default; background-image: linear-gradient(to bottom, rgba(132,132,132,.35) 0%, rgba(79,79,79,.35) 50%, rgba(40,40,40,.35) 50%, rgba(80,80,80,.35) 100%) !important; }\n\t.de-cfg-tab:hover { background-image: linear-gradient(to top, rgba(132,132,132,.35) 0%, rgba(79,79,79,.35) 50%, rgba(40,40,40,.35) 50%, rgba(80,80,80,.35) 100%) !important; }\n\t.de-cfg-tab[selected], .de-cfg-tab[selected]:hover { background-image: none !important; border-bottom: none !important; }\n\t.de-cfg-tab::").concat(nav.isFirefox ? '-moz-' : '', "selection { background: transparent; }\n\t.de-cfg-unvis { display: none !important; }\n\t.de-depend { padding-left: 17px; }\n\t#de-info-log, #de-info-stats { width: 100%; padding: 0px 7px; }\n\t#de-info-log { overflow-y: auto; border-left: 1px solid grey; }\n\t.de-info-name { flex: 1 0 auto; }\n\t.de-info-row { display: flex; }\n\t#de-info-table { display: flex; flex: 1 0 auto; }\n\t.de-spell-btn { padding: 0 4px; }\n\t#de-spell-editor { display: flex; align-items: stretch; height: 256px; padding: 2px 0; }\n\t#de-spell-panel { display: flex; }\n\t#de-spell-txt { padding: 2px !important; margin: 0; width: 100%; min-width: 0; border: none !important; outline: none !important; font: 12px courier new; ").concat(nav.isPresto ? '' : 'resize: none !important; ', "}\n\t#de-spell-rowmeter { padding: 2px 3px 0 0; overflow: hidden; min-width: 2em; background-color: #616b86; text-align: right; color: #fff; font: 12px courier new; }\n\t#de-win-cfg.de-win-fixed { z-index: 10001 !important; }\n\n\t/* Settings window theme */\n\t").concat(["#de-cfg-bar { background-color: #1f2740; }\n\t\t.de-cfg-tab { border-color: #121421 !important; }", "#de-cfg-bar { background-color: #325f9e; }\n\t\t.de-cfg-tab { border-color: #183d77 !important; }", "#de-cfg-bar, #de-spell-rowmeter { background-color: #777; }\n\t\t.de-cfg-body, #de-cfg-buttons { border-color: #444; }", "#de-cfg-bar { background-color: rgba(0,20,80,.72); }\n\t\t.de-cfg-tab { border-color: #001450 !important; }", "#de-cfg-bar { background-color: #222; }\n\t\t.de-cfg-body, #de-cfg-buttons, { border-color: #666; }\n\t\t#de-spell-rowmeter { background-color: #555; }", "#de-cfg-bar { background-color: #832da2; }\n\t\t.de-cfg-body, #de-cfg-buttons { border-color: #c125a1 !important; }\n\t\t.de-cfg-tab { border-color: #832da2 !important; }\n\t\t#de-spell-rowmeter { background-color: #844b83; }"][Cfg.scriptStyle], "\n\n\t/* Favorites window */\n\t.de-entry { display: flex !important; align-items: center; float: none !important; padding: 0 !important; margin: 1px 0 !important; min-width: 0 !important; border: none !important; font-size: 13px; overflow: hidden !important; white-space: nowrap; }\n\t.de-entry-title { flex: auto; padding-left: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n\t#de-fav-buttons, #de-hid-buttons, #de-fav-del-confirm { padding-top: 6px; }\n\t.de-fav-entries { border-top: 1px solid rgba(80,80,80,.3); }\n\t.de-fav-entries-hide, .de-fav-inf-icon:not(.de-fav-closed):not(.de-fav-unavail):not(.de-fav-wait), .de-fav-closed > .de-fav-unavail-use, .de-fav-closed > .de-fav-wait-use, .de-fav-unavail > .de-fav-closed-use, .de-fav-unavail > .de-fav-wait-use, .de-fav-wait > .de-fav-closed-use, .de-fav-wait > .de-fav-unavail-use { display: none; }\n\t.de-fav-del-btn { margin-left: 2px; cursor: pointer; }\n\t.de-fav-del-btn > svg { width: 12px; height: 12px; opacity: 0.65; vertical-align: -2px; }\n\t.de-fav-del-btn[de-checked] > svg { color: red; background-color: rgba(255,0,0,.2); border-radius: 7px; opacity: 1; }\n\t.de-fav-header { display: flex; cursor: pointer; font-size: 13px; }\n\t.de-fav-header-btn { flex: 1 0 auto; margin-right: 2px; font-size: 11px; color: inherit; text-align: right; opacity: 0.65; }\n\t.de-fav-header-link { margin-left: 2px; color: inherit; font-weight: bold; text-decoration: none; outline: none; }\n\t.de-fav-inf { flex: none; padding: 0 4px 0 10px; font: bold 14px serif; cursor: default; }\n\t.de-fav-inf-icon, .de-fav-inf-iwrap  { width: 16px; height: 16px; }\n\t.de-fav-inf-icon { margin-bottom: -3px; }\n\t.de-fav-inf-new { color: #424f79; }\n\t.de-fav-inf-new::after { content: \" +\"; }\n\t.de-fav-inf-total { color: #4f7942; }\n\t.de-fav-inf-you { padding: 0 4px; margin-right: 4px; border-radius: 3px; color: #fff; background-color: #424f79; opacity: 0.65; }\n\t.de-fav-link { flex: none; margin-left: 2px; text-decoration: none; border: none; }\n\t.de-fav-table { overflow-x: hidden; overflow-y: auto; max-height: calc(100vh - 91px); }\n\t.de-fav-table-unfold > .de-fold-block > .de-fav-entries { display: initial !important; }\n\t.de-fav-unavail { color: #cf4436; }\n\t.de-fold-block { border: 1px solid rgba(120,120,120,.8); border-radius: 2px; }\n\t.de-fold-block:not(:first-child) { border-top: none; }\n\n\t/* Post panel */\n\t.de-btn-hide > .de-btn-unhide-use, .de-btn-hide-user > .de-btn-unhide-use, .de-btn-unhide > .de-btn-hide-use, .de-btn-unhide-user > .de-btn-hide-use { display: none; }\n\t.de-btn-expthr, .de-btn-fav, .de-btn-fav-sel, .de-btn-hide, .de-btn-hide-user, .de-btn-img, .de-btn-reply, .de-btn-sage, .de-btn-stick, .de-btn-stick-on, .de-btn-unhide, .de-btn-unhide-user, .de-win-btn-clear, .de-win-btn-close, .de-win-btn-toggle { margin: 0 2px 0 0 !important; cursor: pointer; width: 16px; height: 16px; vertical-align: -3px; }").concat(!postform.form && !postform.oeForm ? '.de-btn-reply { display: none; }' : '', "\n\t.de-btn-img { vertical-align: top; }\n\t.de-post-btns { margin-left: 4px; }\n\t.de-post-btns-back { fill: inherit; stroke: none; }\n\t.de-post-note:not(:empty) { color: inherit; margin: 0 4px; vertical-align: 1px; font: italic bold 12px serif; }\n\t.de-thread-note { font-style: italic; }\n\n\t/* Sauce buttons */\n\t").concat(contentIcon('.de-src-google', 'data:image/gif;base64,R0lGODlhEAAQAMQAAIy0+tHh/gJc8Qlh8UyM9H2r9/3///7//x+OfACSJy+mTZHQos3Te////f///v3HAP+uAPzWjvWTWeUTAPSdl/79/f////39/f///wAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABgALAAAAAAQABAAAAVuICaKh2Eax6hih+W+bqoaLjXdE+UaY2vhwInrInLhdBYbDEOL3GBQS4X2gEiiUBoEAhMIBl6CpaHlvrxocaO1XUQBgsLYxUgkot7AGONS2N0WCwgCYhZFfXaJCQguDiMvC34JCoCOKlgvK49QKyEAOw=='), "\n\t").concat(contentIcon('.de-src-yandex', 'data:image/gif;base64,R0lGODlhEAAQAMQAAP////v7+/r5+fb29vHx8eLi4tnZ2dTU1NDQ0MvLy8fHx8TExPzJv/immvlXRvq0re4UEdeGhtbFxcnJyby8vKampm5ubv///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABcALAAAAAAQABAAAAVx4CWOZCkOQKqq5uoCQhnMQuPcc2CQuc3YuQBJQHQ8BA8HkUgYDZ6Qx+ABeVoVIoL2RmhAtODmpUD23iDkdEFkaBsiEAfE3a6IDngJJALH4ycjCIJyCXCCgiQJhXuLigl2IwqSk5QUJRQLmZqaFiaeniEAOw=='), "\n\t").concat(contentIcon('.de-src-tineye', 'data:image/gif;base64,R0lGODlhEAAQAMQAAP///wAAAAwOEhg4UDZ7skGNxkuf3Vycxx4nLerw9DlSX2FnanO21Epxg4LO62KOnpXj+ZGcmb7CvbZ6RfxmAIxBCzsGAP///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABcALAAAAAAQABAAAAWlYGIUZGGc6HgkxzSRozIgdHMUx0NR5hH8v8VjeFsoDAyFpcKcQByMnIGgYDAikmxkOLQWqNAGQhAQLBC/BgSXC0QivwgAgFbjHLQ5XDKXBBRrBA80WAABRgkJPwxfDw2HCYYBfHABDSQMDgoIEgs/ZgoPDmuYEFEHmQ6jT5ckBKirEE8HCgEWJQe5ZwJjQBYRBwQMsk8RFgJkP04sVrHGNAEVEAAhADs='), "\n\t").concat(contentIcon('.de-src-saucenao', 'data:image/gif;base64,R0lGODlhEAAQAIAAAP///wAAACwAAAAAEAAQAAACJ4yPacDtvpQCkU1KT0P75i49mbSAZACd6HN2pmbBI7pe9K1+4q5KBQA7'), "\n\t").concat(contentIcon('.de-src-iqdb', 'data:image/gif;base64,R0lGODlhEAAQAMQAAP//////AP8A//8AAAD//wD/AAAA/wAAANx/hV1ISW9YWvLOd/u0T+WlTNaqcKdtMv/r1mxML7OCVoxtUbmmlfPRuKKGeHpcTvK3nEEvKGpRTCcbGU48OYVua3tkYv///yH5BAEAAB8ALAAAAAAQABAAAAW4INV5ZDcmibM0iVJRnukpmnJJDdNwnDWSk4vCNMnpGJXfwqHReDQJTuTxmEhmqoTFEtRsNhltRTFZTBKUl2IzAmeE2csFA8kcKADLl5NgSDgaGRYAFVYQABkRgAxnGhcdEJEVhxYSDhwNEQkaEhSRGBgIGBUOGBwXERkcExyeFaGjr4E8qgcHDpKgkQpRGhwZYA4Vw6CvPBOpwD0ODlMSoxcJOQ8ZyhccBxkSkRRFDw4SD1/jF5MQIQA7'), "\n\t").concat(contentIcon('.de-src-tracemoe', 'data:image/gif;base64,R0lGODlhEAAPALMAAAAAAP///9fY18HBwTg4ODw1No6PjoFnZhoBAXNGRf/V1KmRkf///wAAAAAAAAAAACH5BAEAAAwALAAAAAAQAA8AAAQ5EMhJq7046w0I9hMhBAIoiSQ4BiS1tgQrg7EceIM8UDm7S4aBwRIcYgoFjmSxQHASCkWCc6gelJkIADs='), "\n\n\t/* Posts counter */\n\t.de-post-counter { margin: 0 4px 0 2px; vertical-align: 1px; font: bold 11px tahoma; color: #4f7942; cursor: default; }\n\t.de-post-counter-deleted { color: #727579; }\n\t.de-post-counter-you { vertical-align: 1px; font: bold 11px tahoma; color: #505a7a; cursor: default; }\n\t.de-post-counter-op { vertical-align: 1px; font: bold 10px tahoma; color: #259e00; cursor: default; }\n\n\t/* Text markup buttons */\n\t.de-markup-back { fill: #f0f0f0; stroke: #808080; }\n\t#de-txt-panel { display: block; font-weight: bold; white-space: nowrap; cursor: pointer; }\n\t#de-txt-panel > div { display: inline-block; }\n\t#de-txt-panel > div > button { margin-right: 2px; min-width: 23px; }\n\t#de-txt-panel > div > svg { width: 23px; height: 22px; margin: 0 1px; }\r\n");
     if ('animation' in doc.body.style) {
       x += "\n\t\t/* Show/hide animation */\n\t\t@keyframes de-open { 0% { transform: translateY(-100%); } 100% { transform: translateY(0); } }\n\t\t@keyframes de-close { 0% { transform: translateY(0); } 100% { transform: translateY(-100%); } }\n\t\t@keyframes de-blink {\n\t\t\t0%, 100% { transform: translateX(0); }\n\t\t\t10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }\n\t\t\t20%, 40%, 60%, 80% { transform: translateX(10px); }\n\t\t}\n\t\t@keyframes de-post-open-tl { from { transform: translate(-50%,-50%) scale(0); opacity: 0; } }\n\t\t@keyframes de-post-open-bl { from { transform: translate(-50%,50%) scale(0); opacity: 0; } }\n\t\t@keyframes de-post-open-tr { from { transform: translate(50%,-50%) scale(0); opacity: 0; } }\n\t\t@keyframes de-post-open-br { from { transform: translate(50%,50%) scale(0); opacity: 0; } }\n\t\t@keyframes de-post-close-tl { to { transform: translate(-50%,-50%) scale(0); opacity: 0; } }\n\t\t@keyframes de-post-close-bl { to { transform: translate(-50%,50%) scale(0); opacity: 0; } }\n\t\t@keyframes de-post-close-tr { to { transform: translate(50%,-50%) scale(0); opacity: 0; } }\n\t\t@keyframes de-post-close-br { to { transform: translate(50%,50%) scale(0); opacity: 0; } }\n\t\t@keyframes de-post-new { from { transform: translate(0,-50%) scaleY(0); opacity: 0; } }\n\t\t@keyframes de-win-open { from { transform: translate(0,50%) scaleY(0); opacity: 0; } }\n\t\t@keyframes de-win-close { to { transform: translate(0,50%) scaleY(0); opacity: 0; } }\n\t\t.de-pview-anim { animation-duration: .2s; animation-timing-function: ease-in-out; animation-fill-mode: both; }\n\t\t.de-open { animation: de-open .15s ease-out both; }\n\t\t.de-close { animation: de-close .15s ease-in both; }\n\t\t.de-blink { animation: de-blink .7s ease-in-out both; }\n\t\t.de-post-new { animation: de-post-new .2s ease-out both; }\n\t\t.de-win-open { animation: de-win-open .2s ease-out backwards; }\n\t\t.de-win-close { animation: de-win-close .2s ease-in both; }\r\n";
     } else {
@@ -28485,7 +28811,7 @@ Spells.addSpell(9, '', false);
     updateCSS();
   }
   function updateCSS() {
-    var x = "\n\t.de-video-obj { width: ".concat(Cfg.YTubeWidth, "px; height: ").concat(Cfg.YTubeHeigh, "px; }\n\t.de-new-post { ").concat(nav.isPresto ? 'border-left: 4px solid rgba(107,134,97,.7); border-right: 4px solid rgba(107,134,97,.7)' : 'box-shadow: 6px 0 2px -2px rgba(107,134,97,.8), -6px 0 2px -2px rgba(107,134,97,.8)', " !important; }\n\t.de-selected, .de-input-error { ").concat(nav.isPresto ? 'border-left: 4px solid rgba(220,0,0,.7); border-right: 4px solid rgba(220,0,0,.7)' : 'box-shadow: 6px 0 2px -2px rgba(220,0,0,.8), -6px 0 2px -2px rgba(220,0,0,.8)', " !important; }\n\t").concat(Cfg.markMyPosts ? ".de-mypost { ".concat(nav.isPresto ? 'border-left: 4px solid rgba(97,107,134,.7); border-right: 4px solid rgba(97,107,134,.7)' : 'box-shadow: 6px 0 2px -2px rgba(97,107,134,.8), -6px 0 2px -2px rgba(97,107,134,.8)', " !important; }\n\t\t.de-mypost-reply:not(.de-pview) { position: relative; }\n\t\t.de-mypost-reply::before { content: \"\"; position: absolute; top: -0; bottom: 0; left: -1px; border-left: 5px dotted rgba(97,107,134,.8) !important; }") : '', "\n\t").concat(Cfg.markMyLinks ? ".de-ref-del.de-ref-you::after { content: \" (Del)(You)\"; }\n\t\t\t.de-ref-op.de-ref-you::after { content: \" (OP)(You)\"; }\n\t\t\t.de-ref-you::after { content: \" (You)\"; }" : '.de-post-counter-you { display: none; }', "\n\t").concat(Cfg.postBtnsCSS === 0 ? ".de-btn-expthr, .de-btn-fav, .de-btn-hide, .de-btn-img, .de-btn-reply, .de-btn-stick, .de-btn-unhide { fill: rgba(0,0,0,0); color: currentColor; }\n\t\t\t.de-btn-fav-sel, .de-btn-hide-user, .de-btn-sage, .de-btn-stick-on, .de-btn-unhide-user { fill: rgba(0,0,0,0); color: #F00; }" : ".de-btn-expthr, .de-btn-fav, .de-btn-hide, .de-btn-img, .de-btn-reply, .de-btn-sage, .de-btn-stick, .de-btn-unhide { color: #F5F5F5; }\n\t\t\t.de-btn-expthr, .de-btn-fav, .de-btn-fav-sel, .de-btn-hide, .de-btn-hide-user, .de-btn-img, .de-btn-reply, .de-btn-stick, .de-btn-stick-on, .de-btn-unhide, .de-btn-unhide-user { fill: ".concat(Cfg.postBtnsCSS === 1 && !nav.isPresto ? 'url(#de-btn-back-gradient)' : Cfg.postBtnsBack, "; }\n\t\t\t.de-btn-fav-sel { color: #FFE100; }\n\t\t\t.de-btn-hide-user { color: #BFFFBF; }\n\t\t\t.de-btn-sage { fill: #4B4B4B; }\n\t\t\t.de-btn-stick-on { color: #BFFFBF; }\n\t\t\t.de-btn-unhide-user { color: #FFBFBF; }"), "\n\t.de-fullimg-wrap-inpost > .de-fullimg { ").concat(Cfg.resizeImgs ? "max-width: 100%;".concat(Cfg.resizeImgs === 2 ? ' max-height: 96vh;' : '') : 'width: auto;', "; }\n\t").concat(Cfg.maskImgs ? "".concat(aib.qPostImg, ", .de-img-embed, .de-video-obj { opacity: ").concat(Cfg.maskVisib / 100, " !important; }\n\t\t\t").concat(aib.qPostImg.split(', ').join(':hover, '), ":hover, .de-img-embed:hover, .de-video-obj:hover { opacity: 1 !important; }\n\t\t\t.de-video-obj:not(.de-video-obj-inline) { clear: both; }") : '', "\n\t").concat(Cfg.imgNames === 1 ? '.de-img-name { display: inline-block; max-width: 230px; vertical-align: top; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }' : '', "\n\t").concat(Cfg.imgNames === 2 ? '.de-img-name { text-decoration: none !important; text-transform: capitalize; }' : '', "\n\t").concat(Cfg.imgNames === 3 ? '.de-img-name { display: inline-block; max-width: 230px; vertical-align: top; word-wrap: break-word; white-space: break-spaces; }' : '', "\n\t").concat(Cfg.widePosts ? '.de-reply { float: none; width: 99vw; margin-left: 0; }' : '', "\n\t").concat(aib.qPostMsg, " { max-width: ").concat(Cfg.limitPostMsg, "px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; }\n\t").concat(Cfg.strikeHidd ? '.de-link-hid { text-decoration: line-through !important; }' : '', "\n\t").concat(Cfg.noSpoilers === 1 ? ".spoiler, s { color: #F5F5F5 !important; background-color: #888 !important; }\n\t\t\t.spoiler > a, s > a:not(:hover) { color: #F5F5F5 !important; background-color: #888 !important; }" : '', "\n\t").concat(Cfg.noSpoilers === 2 ? ".spoiler, s { color: inherit !important; }\n\t\t\t.spoiler > a, s > a:not(:hover) { color: inherit !important; }" : '', "\n\t").concat(Cfg.favFolders ? '' : ".de-fav-entries-hide { display: block; }\n\t\t.de-fav-header { display: none; }\n\t\t.de-fav-link::before { content: attr(de-host) \"/\" attr(de-board) \"/\" }", "\n\t").concat(Cfg.addSageBtn ? '' : '#de-sagebtn, ', "\n\t").concat(Cfg.delHiddPost === 1 || Cfg.delHiddPost === 3 ? '.de-thr-hid, .de-thr-hid + div + br, .de-thr-hid + div + hr, .de-thr-hid + div + br + hr, .de-thr-hid + div + div + hr, ' : '.de-thr-hid:not([style="display: none;"]) + div + br, ', "\n\t").concat(Cfg.imgNavBtns ? '' : '.de-img-btn, ', "\n\t").concat(Cfg.imgInfoLink ? '' : '.de-fullimg-info, ', "\n\t").concat(Cfg.noPostNames ? "".concat(aib.qPostName, ", ").concat(aib.qPostTrip, ", ") : '', "\n\t").concat(Cfg.noBoardRule ? "".concat(aib.qFormRules, ", ") : '', "\n\t").concat(Cfg.panelCounter ? '' : '#de-panel-info, ', "\n\t").concat(Cfg.removeHidd ? '.de-link-backref.de-link-hid, .de-link-backref.de-link-hid + .de-refcomma, ' : '', "\n\t").concat(Cfg.showHideBtn ? '' : '.de-btn-hide, ', "\n\t").concat(Cfg.showRepBtn ? '' : '.de-btn-reply, ', "\n\t").concat(Cfg.thrBtns || aib.t ? '' : '.de-thr-updater, ', "\n\t").concat(Cfg.thrBtns === 1 || Cfg.thrBtns === 2 && !aib.t ? '' : '.de-thr-buttons > svg, ', "\n\t").concat(Cfg.ajaxPosting ? '' : '.de-file-btn-rar, .de-file-btn-txt, ', "\n\t").concat(Cfg.fileInputs ? '' : '.de-file-txt-wrap, .de-file-btn-txt, ', "\n\t").concat(!aib.formHeaders && (aib.multiFile || Cfg.fileInputs !== 2) ? '#de-pform form > table > tbody > tr > td:not([colspan]):first-child, #de-pform form table > tbody > tr > th:first-child, ' : '', "\n\tbody > hr, .postarea, .theader { display: none !important; }\r\n");
+    var x = "\n\t.de-video-obj { width: ".concat(Cfg.YTubeWidth, "px; height: ").concat(Cfg.YTubeHeigh, "px; }\n\t.de-new-post { ").concat(nav.isPresto ? 'border-left: 4px solid rgba(107,134,97,.7); border-right: 4px solid rgba(107,134,97,.7)' : 'box-shadow: 6px 0 2px -2px rgba(107,134,97,.8), -6px 0 2px -2px rgba(107,134,97,.8)', " !important; }\n\t.de-selected, .de-input-error { ").concat(nav.isPresto ? 'border-left: 4px solid rgba(220,0,0,.7); border-right: 4px solid rgba(220,0,0,.7)' : 'box-shadow: 6px 0 2px -2px rgba(220,0,0,.8), -6px 0 2px -2px rgba(220,0,0,.8)', " !important; }\n\t.de-highlighted { ").concat(nav.isPresto ? 'border-left: 4px solid rgba(97,107,30,.7); border-right: 4px solid rgba(97,107,30,.7)' : 'box-shadow: 6px 0 2px -2px rgba(97,107,30,.8), -6px 0 2px -2px rgba(97,107,30,.8)', " !important; }\n\t.de-highlighted-reply:not(.de-pview) { position: relative; }\n\t.de-highlighted-reply::before { content: \"\"; position: absolute; top: -0; bottom: 0; left: -1px; border-left: 5px dotted rgba(97,107,134,.8) !important; }\n\t").concat(Cfg.markMyPosts ? ".de-mypost { ".concat(nav.isPresto ? 'border-left: 4px solid rgba(97,107,134,.7); border-right: 4px solid rgba(97,107,134,.7)' : 'box-shadow: 6px 0 2px -2px rgba(97,107,134,.8), -6px 0 2px -2px rgba(97,107,134,.8)', " !important; }\n\t\t.de-mypost-reply:not(.de-pview) { position: relative; }\n\t\t.de-mypost-reply::before { content: \"\"; position: absolute; top: -0; bottom: 0; left: -1px; border-left: 5px dotted rgba(97,107,134,.8) !important; }") : '', "\n\t").concat(Cfg.markMyLinks ? ".de-ref-del.de-ref-you::after { content: \" (Del)(You)\"; }\n\t\t\t.de-ref-op.de-ref-you::after { content: \" (OP)(You)\"; }\n\t\t\t.de-ref-you::after { content: \" (You)\"; }" : '.de-post-counter-you { display: none; }', "\n\t").concat(Cfg.postBtnsCSS === 0 ? ".de-btn-expthr, .de-btn-fav, .de-btn-hide, .de-btn-img, .de-btn-reply, .de-btn-stick, .de-btn-unhide { fill: rgba(0,0,0,0); color: currentColor; }\n\t\t\t.de-btn-fav-sel, .de-btn-hide-user, .de-btn-sage, .de-btn-stick-on, .de-btn-unhide-user { fill: rgba(0,0,0,0); color: #F00; }" : ".de-btn-expthr, .de-btn-fav, .de-btn-hide, .de-btn-img, .de-btn-reply, .de-btn-sage, .de-btn-stick, .de-btn-unhide { color: #F5F5F5; }\n\t\t\t.de-btn-expthr, .de-btn-fav, .de-btn-fav-sel, .de-btn-hide, .de-btn-hide-user, .de-btn-img, .de-btn-reply, .de-btn-stick, .de-btn-stick-on, .de-btn-unhide, .de-btn-unhide-user { fill: ".concat(Cfg.postBtnsCSS === 1 && !nav.isPresto ? 'url(#de-btn-back-gradient)' : Cfg.postBtnsBack, "; }\n\t\t\t.de-btn-fav-sel { color: #FFE100; }\n\t\t\t.de-btn-hide-user { color: #BFFFBF; }\n\t\t\t.de-btn-sage { fill: #4B4B4B; }\n\t\t\t.de-btn-stick-on { color: #BFFFBF; }\n\t\t\t.de-btn-unhide-user { color: #FFBFBF; }"), "\n\t.de-fullimg-wrap-inpost > .de-fullimg { ").concat(Cfg.resizeImgs ? "max-width: 100%;".concat(Cfg.resizeImgs === 2 ? ' max-height: 96vh;' : '') : 'width: auto;', "; }\n\t").concat(Cfg.maskImgs ? "".concat(aib.qPostImg, ", .de-img-embed, .de-video-obj { opacity: ").concat(Cfg.maskVisib / 100, " !important; }\n\t\t\t").concat(aib.qPostImg.split(', ').join(':hover, '), ":hover, .de-img-embed:hover, .de-video-obj:hover { opacity: 1 !important; }\n\t\t\t.de-video-obj:not(.de-video-obj-inline) { clear: both; }") : '', "\n\t").concat(Cfg.imgNames === 1 ? '.de-img-name { display: inline-block; max-width: 230px; vertical-align: top; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }' : '', "\n\t").concat(Cfg.imgNames === 2 ? '.de-img-name { text-decoration: none !important; text-transform: capitalize; }' : '', "\n\t").concat(Cfg.imgNames === 3 ? '.de-img-name { display: inline-block; max-width: 230px; vertical-align: top; word-wrap: break-word; white-space: break-spaces; }' : '', "\n\t").concat(Cfg.widePosts ? '.de-reply { float: none; width: 99vw; margin-left: 0; }' : '', "\n\t").concat(aib.qPostMsg, " { max-width: ").concat(Cfg.limitPostMsg, "px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; }\n\t").concat(Cfg.strikeHidd ? '.de-link-hid { text-decoration: line-through !important; opacity: .5 !important; }' : '', "\n\t").concat(Cfg.noSpoilers === 1 ? ".spoiler, s { color: #F5F5F5 !important; background-color: #888 !important; }\n\t\t\t.spoiler > a, s > a:not(:hover) { color: #F5F5F5 !important; background-color: #888 !important; }" : '', "\n\t").concat(Cfg.noSpoilers === 2 ? ".spoiler, s { color: inherit !important; }\n\t\t\t.spoiler > a, s > a:not(:hover) { color: inherit !important; }" : '', "\n\t").concat(Cfg.favFolders ? '' : ".de-fav-entries-hide { display: block; }\n\t\t.de-fav-header { display: none; }\n\t\t.de-fav-link::before { content: attr(de-host) \"/\" attr(de-board) \"/\" }", "\n\t").concat(Cfg.addSageBtn ? '' : '#de-sagebtn, ', "\n\t").concat(Cfg.delHiddPost === 1 || Cfg.delHiddPost === 3 ? '.de-thr-hid, .de-thr-hid + div + br, .de-thr-hid + div + hr, .de-thr-hid + div + br + hr, .de-thr-hid + div + div + hr, ' : '.de-thr-hid:not([style="display: none;"]) + div + br, ', "\n\t").concat(Cfg.imgNavBtns ? '' : '.de-img-btn, ', "\n\t").concat(Cfg.imgInfoLink ? '' : '.de-fullimg-info, ', "\n\t").concat(Cfg.noPostNames ? "".concat(aib.qPostName, ", ").concat(aib.qPostTrip, ", ") : '', "\n\t").concat(Cfg.noBoardRule ? "".concat(aib.qFormRules, ", ") : '', "\n\t").concat(Cfg.panelCounter ? '' : '#de-panel-info, ', "\n\t").concat(Cfg.removeHidd ? '.de-link-backref.de-link-hid, .de-link-backref.de-link-hid + .de-refcomma, ' : '', "\n\t").concat(Cfg.showHideBtn ? '' : '.de-btn-hide, ', "\n\t").concat(Cfg.showRepBtn ? '' : '.de-btn-reply, ', "\n\t").concat(Cfg.thrBtns || aib.t ? '' : '.de-thr-updater, ', "\n\t").concat(Cfg.thrBtns === 1 || Cfg.thrBtns === 2 && !aib.t ? '' : '.de-thr-buttons > svg, ', "\n\t").concat(Cfg.ajaxPosting ? '' : '.de-file-btn-rar, .de-file-btn-txt, ', "\n\t").concat(Cfg.fileInputs ? '' : '.de-file-txt-wrap, .de-file-btn-txt, ', "\n\t").concat(!aib.formHeaders && (aib.multiFile || Cfg.fileInputs !== 2) ? '#de-pform form > table > tbody > tr > td:not([colspan]):first-child, #de-pform form table > tbody > tr > th:first-child, ' : '', "\n\tbody > hr, .postarea, .theader { display: none !important; }\r\n");
     $id('de-css-dynamic').textContent = (x + aib.css).replace(/[\r\n\t]+/g, '\r\n\t');
     $id('de-css-user').textContent = Cfg.userCSS ? Cfg.userCSSTxt : '';
   }

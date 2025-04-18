@@ -1,6 +1,6 @@
 {
 	"name": "Dollchan-Extension-Tools",
-	"version": "24.9.16",
+	"version": "24.9.16.01",
 	"author": "SthephanShi",
 	"description": "Doing some profit for imageboards",
 	"homepage": "https://dollchan.net/",
@@ -16,8 +16,8 @@
 		"url": "https://github.com/kr1ck/Dollchan-Extension-Tools/issues"
 	},
 	"scripts": {
-		"build": "./node_modules/.bin/gulp make:es6",
-		"buildall": "./node_modules/.bin/gulp make"
+		"build": "gulp make:es6",
+		"buildall": "gulp make"
 	},
 	"babel": {
 		"compact": false,
