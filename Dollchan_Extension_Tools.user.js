@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            Dollchan Extension Tools
-// @version         24.9.16.05
+// @version         24.9.16.06
 // @namespace       http://www.freedollchan.org/scripts/*
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
@@ -8217,8 +8217,8 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
 
   var _this27 = this;
   var _marked = _regeneratorRuntime().mark(getFormElements);
-  var version = '24.9.16.05';
-  var commit = 'ffb6c82';
+  var version = '24.9.16.06';
+  var commit = 'f9526bd';
 
 
   var doc = deWindow.document;
@@ -24394,10 +24394,6 @@ Spells.addSpell(9, '', false);
     var counter = {
       count: function count(delayMS, useCounter, callback) {
         var _this99 = this;
-        if (this._socketState === 1) {
-          this._set(10);
-          _stopCounter();
-        }
         if (!this._enabled || !useCounter) {
           this._countingTO = setTimeout(function () {
             _this99._countingTO = null;
@@ -24408,8 +24404,13 @@ Spells.addSpell(9, '', false);
         var seconds = delayMS / 1e3;
         this._set(seconds);
         this._countingIV = setInterval(function () {
+          if (deWindow._socketState === 1) {
+            _this99._set(10);
+            _this99._stopCounter();
+            return;
+          }
           seconds--;
-          if (seconds === 0) {
+          if (seconds <= 0) {
             _this99._stopCounter();
             callback();
           } else {
@@ -24429,7 +24430,7 @@ Spells.addSpell(9, '', false);
       setWait: function setWait() {
         this._stopCounter();
         if (this._enabled) {
-          if (this._socketState === 1) {
+          if (deWindow._socketState === 1) {
             this._el.innerHTML = '⬤ Live';
             this._el.style.color = 'green';
             return;
@@ -24448,7 +24449,7 @@ Spells.addSpell(9, '', false);
         return value;
       },
       _set: function _set(seconds) {
-        if (this._socketState === 1) {
+        if (deWindow._socketState === 1) {
           this._el.innerHTML = '⬤ Live';
           this._el.style.color = 'green';
           return;
@@ -24729,22 +24730,23 @@ Spells.addSpell(9, '', false);
       initSocket: function initSocket(needSleep, loadOnce) {
         var _this106 = this;
         thread.stopWs();
-        this._socketState = 0;
+        deWindow._socketState = 0;
         console.log('queueing socket reconnect');
         clearTimeout(this._socketReconnect);
         this._socketReconnect = setTimeout(function () {
           var _thread$socket;
           console.log('initializing socket');
           var thread = unsafeWindow.thread;
-          if (((_thread$socket = thread.socket) === null || _thread$socket === void 0 ? void 0 : _thread$socket.readyState) !== 1 || _this106._socketState !== 1) {
+          if (((_thread$socket = thread.socket) === null || _thread$socket === void 0 ? void 0 : _thread$socket.readyState) !== 1 || deWindow._socketState !== 1) {
             thread.socket = new WebSocket(_this106._socketUrl);
           }
           thread.socket.onopen = function () {
             console.log('socket opened');
             thread.socket.send(_this106._refreshParameters.boardUri + '-' + _this106._refreshParameters.threadId);
-            _this106._socketState = 1;
+            deWindow._socketState = 1;
 
-
+            counter._stopCounter();
+            counter._set(18);
             _this106._state = 0;
             _this106._makeStep(true);
           };
@@ -24767,7 +24769,7 @@ Spells.addSpell(9, '', false);
         var _thread$socket2, _this$_refreshParamet;
         var needSleep = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
         var loadOnce = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-        this._socketState = this._socketState || -1;
+        deWindow._socketState = deWindow._socketState || -1;
         if (this._state !== -1) {
           this.stopUpdater(false);
         }
@@ -24787,16 +24789,16 @@ Spells.addSpell(9, '', false);
           var protocol = unsafeWindow.location.protocol == 'https:' && !isOnion ? 'wss' : 'ws';
           var portToUse = thread.wsPort;
           this._socketUrl = protocol + '://' + unsafeWindow.location.hostname + ':' + portToUse;
-          if (((_thread$socket3 = thread.socket) === null || _thread$socket3 === void 0 ? void 0 : _thread$socket3.readyState) !== 1 || this._socketState === -1) {
+          if (((_thread$socket3 = thread.socket) === null || _thread$socket3 === void 0 ? void 0 : _thread$socket3.readyState) !== 1 || deWindow._socketState === -1) {
             var _thread$socket4;
-            console.log('should reinitialize, initial state on start 11:', (_thread$socket4 = thread.socket) === null || _thread$socket4 === void 0 ? void 0 : _thread$socket4.readyState);
+            console.log('should reinitialize, initial state on start:', (_thread$socket4 = thread.socket) === null || _thread$socket4 === void 0 ? void 0 : _thread$socket4.readyState);
             this.initSocket();
             this._makeStep(needSleep);
           } else {
-            console.log('socket connected, disabling timer 11');
-            this._socketState = 1;
-            this._state = 0;
-            this._makeStep(true);
+            console.log('socket connected, disabling timer');
+            deWindow._socketState = 1;
+            counter._stopCounter();
+            counter._set(18);
           }
           return;
         }

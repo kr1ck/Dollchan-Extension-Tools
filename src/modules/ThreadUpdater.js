@@ -50,10 +50,6 @@ function initThreadUpdater(title, enableUpdate) {
 
 	const counter = {
 		count(delayMS, useCounter, callback) {
-			if (this._socketState === 1) {
-				this._set(10);
-				_stopCounter();
-			}
 			if(!this._enabled || !useCounter) {
 				this._countingTO = setTimeout(() => {
 					this._countingTO = null;
@@ -64,8 +60,14 @@ function initThreadUpdater(title, enableUpdate) {
 			let seconds = delayMS / 1e3;
 			this._set(seconds);
 			this._countingIV = setInterval(() => {
+				if (deWindow._socketState === 1) {
+					this._set(10);
+					this._stopCounter();
+					return;
+				}
+
 				seconds--;
-				if(seconds === 0) {
+				if(seconds <= 0) {
 					this._stopCounter();
 					callback();
 				} else {
@@ -85,7 +87,7 @@ function initThreadUpdater(title, enableUpdate) {
 		setWait() {
 			this._stopCounter();
 			if(this._enabled) {
-				if (this._socketState === 1) {
+				if (deWindow._socketState === 1) {
 					this._el.innerHTML = '⬤ Live';
 					this._el.style.color = 'green';
 					return;
@@ -103,7 +105,7 @@ function initThreadUpdater(title, enableUpdate) {
 			return value;
 		},
 		_set(seconds) {
-			if (this._socketState === 1) {
+			if (deWindow._socketState === 1) {
 				this._el.innerHTML = '⬤ Live';
 				this._el.style.color = 'green';
 				 return;
@@ -346,14 +348,14 @@ function initThreadUpdater(title, enableUpdate) {
 			// counter.setWait();
 			thread.stopWs()
 
-			this._socketState = 0;
+			deWindow._socketState = 0;
 			console.log('queueing socket reconnect')
 			clearTimeout(this._socketReconnect);
 			this._socketReconnect = setTimeout(() => {
 				console.log('initializing socket')
 
 				const thread = unsafeWindow.thread;
-				if (thread.socket?.readyState !== 1 || this._socketState !== 1) {
+				if (thread.socket?.readyState !== 1 || deWindow._socketState !== 1) {
 					thread.socket = new WebSocket(this._socketUrl);
 				}
 
@@ -361,10 +363,12 @@ function initThreadUpdater(title, enableUpdate) {
 					console.log('socket opened');
 					thread.socket.send(this._refreshParameters.boardUri + '-' + this._refreshParameters.threadId);
 
-					this._socketState = 1;
+					deWindow._socketState = 1;
 
 					//this.stopUpdater();
 					//this._delay = 9999999999 * 1e3;
+					counter._stopCounter()
+					counter._set(18);
 
 					this._state = 0;
 					this._makeStep(true);
@@ -389,7 +393,7 @@ function initThreadUpdater(title, enableUpdate) {
 		},
 
 		start(needSleep = false, loadOnce = false) {
-			this._socketState = this._socketState || -1;
+			deWindow._socketState = deWindow._socketState || -1;
 			if(this._state !== -1) {
 				this.stopUpdater(false);
 			}
@@ -412,16 +416,16 @@ function initThreadUpdater(title, enableUpdate) {
 
 				this._socketUrl = protocol + '://' + unsafeWindow.location.hostname + ':' + portToUse;
 
-				if (thread.socket?.readyState !== 1 || this._socketState === -1) {
-					console.log('should reinitialize, initial state on start 11:', thread.socket?.readyState);
+				if (thread.socket?.readyState !== 1 || deWindow._socketState === -1) {
+					console.log('should reinitialize, initial state on start:', thread.socket?.readyState);
 					this.initSocket();
 					this._makeStep(needSleep);
 					// return;
 				} else {
-					console.log('socket connected, disabling timer 11')
-					this._socketState = 1;
-					this._state = 0;
-					this._makeStep(true);
+					console.log('socket connected, disabling timer')
+					deWindow._socketState = 1;
+					counter._stopCounter()
+					counter._set(18);
 				}
 				return;
 			}
