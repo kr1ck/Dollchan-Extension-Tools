@@ -263,6 +263,8 @@ class Pview extends AbstractPost {
 
 		const { thr, posterId } = post;
 		const posterIdEl = $q(aib.qPosterId, pv);
+		const allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', thr.el);
+
 		if(posterIdEl) {
 			posterIdEl.addEventListener('click', e => {
 				const isAdd = !HighlightedPosts.has(post.posterId);
@@ -271,9 +273,7 @@ class Pview extends AbstractPost {
 				} else {
 					HighlightedPosts.removeStorage(post.posterId);
 				}
-				const allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', document.body);
-				for(let i = 0; i < allPosts.length; i++) {
-					const post = allPosts[i];
+				for (const post of allPosts) {
 					const posterIdEl = $q(aib.qPosterId, post);
 					if(posterIdEl && posterIdEl.textContent === posterId) {
 						post.classList.toggle('de-highlighted', isAdd);
@@ -284,16 +284,14 @@ class Pview extends AbstractPost {
 			if(typeof thr.Tip !== 'undefined') {
 				posterIdEl.addEventListener('mouseover', e => {
 					const t = e.target.textContent;
-					let o = 0;
-					const allPosts = $Q(aib.qRPost, thr.el);
-					for(let i = 0; i < allPosts.length; i++) {
-						const post = allPosts[i];
+					let count = 0;
+					for (const post of allPosts) {
 						const posterIdEl = $q(aib.qPosterId, post);
 						if(posterIdEl && posterIdEl.textContent === t) {
-							o++;
+							count++;
 						}
 					}
-					thr.Tip.show(e.target, o + ' post' + (o !== 1 ? 's' : '') + ' by this ID');
+					thr.Tip.show(e.target, `${count} post${count === 1 ? '' : 's'} by this ID`);
 				}, true);
 				posterIdEl.addEventListener('mouseout', e => {
 					thr.Tip.hide();

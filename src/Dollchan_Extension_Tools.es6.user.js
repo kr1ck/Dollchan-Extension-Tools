@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            Dollchan Extension Tools
-// @version         24.9.16.02
+// @version         24.9.16.03
 // @namespace       http://www.freedollchan.org/scripts/*
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
@@ -27,8 +27,8 @@
 (function deMainFuncInner(deWindow, prestoStorage, FormData, scrollTo, localData) {
 'use strict';
 
-const version = '24.9.16.02';
-const commit = '0f70665';
+const version = '24.9.16.03';
+const commit = 'f4c2505';
 
 /* ==[ GlobalVars.js ]== */
 
@@ -10641,6 +10641,7 @@ class IDColor {
 	}
 	apply(e) {
 		let t;
+		if (e?.style?.backgroundColor) { return; }
 		t = this.ids[e.textContent] || this.compute(e.textContent.replace(/id:*/i, '')),
 		e.style.cssText = '    background-color: rgb(' + t[0] + ',' + t[1] + ',' + t[2] + ');    color: ' + (t[3] ? 'black;' : 'white;');
 	}
@@ -11103,6 +11104,14 @@ class AbstractPost {
 			}
 			return;
 		}
+		case 'hide-uid': {
+			let fixedId = this.posterId;
+			if(fixedId && fixedId.length) {
+				fixedId = [...fixedId].map(c => /[A-Za-z0-9]/.test(c) ? c : '\\' + c).join('');
+			}
+			const exph = `/(?:<span.*>)\s?${ fixedId }/`;
+			Spells.addSpell(2 /* #id */, exph, false); return;
+		}
 		case 'hide-name': await Spells.addSpell(6 /* #name */, this.posterName, false); return;
 		case 'hide-trip': await Spells.addSpell(7 /* #trip */, this.posterTrip, false); return;
 		case 'hide-img': {
@@ -11232,6 +11241,8 @@ class Post extends AbstractPost {
 		if(posterIdEl && thr.IDColors) {
 			thr.IDColors.apply(posterIdEl);
 		}
+		const allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', thr.el);
+
 		if(posterIdEl) {
 			posterIdEl.addEventListener('click', e => {
 				const isAdd = !HighlightedPosts.has(this.posterId);
@@ -11240,9 +11251,7 @@ class Post extends AbstractPost {
 				} else {
 					HighlightedPosts.removeStorage(this.posterId);
 				}
-				const allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', document.body);
-				for(let i = 0; i < allPosts.length; i++) {
-					const post = allPosts[i];
+				for (const post of allPosts) {
 					const posterIdEl = $q(aib.qPosterId, post);
 					if(posterIdEl && posterIdEl.textContent === this.posterId) {
 						post.classList.toggle('de-highlighted', isAdd);
@@ -11253,16 +11262,14 @@ class Post extends AbstractPost {
 			if(typeof thr.Tip !== 'undefined') {
 				posterIdEl.addEventListener('mouseover', e => {
 					const t = e.target.textContent;
-					let o = 0;
-					const allPosts = $Q(aib.qRPost, thr.el);
-					for(let i = 0; i < allPosts.length; i++) {
-						const post = allPosts[i];
+					let count = 0;
+					for (const post of allPosts) {
 						const posterIdEl = $q(aib.qPosterId, post);
 						if(posterIdEl && posterIdEl.textContent === t) {
-							o++;
+							count++;
 						}
 					}
-					thr.Tip.show(e.target, o + ' post' + (o !== 1 ? 's' : '') + ' by this ID');
+					thr.Tip.show(e.target, `${count} post${count === 1 ? '' : 's'} by this ID`);
 				}, true);
 				posterIdEl.addEventListener('mouseout', e => {
 					thr.Tip.hide();
@@ -12164,6 +12171,8 @@ class Pview extends AbstractPost {
 
 		const { thr, posterId } = post;
 		const posterIdEl = $q(aib.qPosterId, pv);
+		const allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', thr.el);
+
 		if(posterIdEl) {
 			posterIdEl.addEventListener('click', e => {
 				const isAdd = !HighlightedPosts.has(post.posterId);
@@ -12172,9 +12181,7 @@ class Pview extends AbstractPost {
 				} else {
 					HighlightedPosts.removeStorage(post.posterId);
 				}
-				const allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', document.body);
-				for(let i = 0; i < allPosts.length; i++) {
-					const post = allPosts[i];
+				for (const post of allPosts) {
 					const posterIdEl = $q(aib.qPosterId, post);
 					if(posterIdEl && posterIdEl.textContent === posterId) {
 						post.classList.toggle('de-highlighted', isAdd);
@@ -12185,16 +12192,14 @@ class Pview extends AbstractPost {
 			if(typeof thr.Tip !== 'undefined') {
 				posterIdEl.addEventListener('mouseover', e => {
 					const t = e.target.textContent;
-					let o = 0;
-					const allPosts = $Q(aib.qRPost, thr.el);
-					for(let i = 0; i < allPosts.length; i++) {
-						const post = allPosts[i];
+					let count = 0;
+					for (const post of allPosts) {
 						const posterIdEl = $q(aib.qPosterId, post);
 						if(posterIdEl && posterIdEl.textContent === t) {
-							o++;
+							count++;
 						}
 					}
-					thr.Tip.show(e.target, o + ' post' + (o !== 1 ? 's' : '') + ' by this ID');
+					thr.Tip.show(e.target, `${count} post${count === 1 ? '' : 's'} by this ID`);
 				}, true);
 				posterIdEl.addEventListener('mouseout', e => {
 					thr.Tip.hide();
@@ -17429,6 +17434,10 @@ function getImageBoard(checkDomains, checkEngines) {
 	ibDomains['7chan.org'] = _7chan;
 
 	class _8chan extends Lynxchan {
+		constructor(...args) {
+			super(...args);
+			this.qPosterId = '.spanId > .labelId';
+		}
 		get css() {
 			return `${ super.css }
 				.reloadCaptchaButton { display: none !important; }

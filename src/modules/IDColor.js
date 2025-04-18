@@ -37,6 +37,7 @@ class IDColor {
 	}
 	apply(e) {
 		let t;
+		if (e?.style?.backgroundColor) { return; }
 		t = this.ids[e.textContent] || this.compute(e.textContent.replace(/id:*/i, '')),
 		e.style.cssText = '    background-color: rgb(' + t[0] + ',' + t[1] + ',' + t[2] + ');    color: ' + (t[3] ? 'black;' : 'white;');
 	}

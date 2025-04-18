@@ -1246,6 +1246,10 @@ function getImageBoard(checkDomains, checkEngines) {
 	ibDomains['7chan.org'] = _7chan;
 
 	class _8chan extends Lynxchan {
+		constructor(...args) {
+			super(...args);
+			this.qPosterId = '.spanId > .labelId';
+		}
 		get css() {
 			return `${ super.css }
 				.reloadCaptchaButton { display: none !important; }
