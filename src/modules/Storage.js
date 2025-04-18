@@ -565,7 +565,6 @@ const HighlightedPosts = new class HighlightedPostsClass extends PostsStorage {
 		}
 	}
 	_readStorage() {
-		PostsStorage._migrateOld(this.storageName, 'de-threads-new'); // Old storage has wrong name
 		return super._readStorage();
 	}
 }();
