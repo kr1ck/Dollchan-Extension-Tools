@@ -1,4 +1,4 @@
-/* eslint no-var: "error", prefer-const: "error", prefer-template: "error" */
+/* global require */
 
 const browserify   = require('browserify');
 const { spawn }    = require('child_process');
@@ -62,7 +62,8 @@ gulp.task('make:es6', gulp.series('updatecommit', () =>
 
 // Copy es6 script from src/ to extension/ folder
 gulp.task('copyext', () => gulp.src('src/Dollchan_Extension_Tools.es6.user.js')
-	.pipe(gulp.dest('extension/')));
+	.pipe(replace(/\s+\/\/ <EXCLUDED_FROM_EXTENSION>[\s\S]*?<\/EXCLUDED_FROM_EXTENSION>/g, ''))
+	.pipe(gulp.dest('extension/v2')).pipe(gulp.dest('extension/v3')));
 
 // Makes es5-script from es6-script
 gulp.task('make:es5', gulp.series(
@@ -83,25 +84,23 @@ gulp.task('make:es5', gulp.series(
 gulp.task('make', gulp.series('make:es5'));
 
 // Split es6-script into separate module files
-gulp.task('make:modules', () => {
-	return gulp.src('src/Dollchan_Extension_Tools.es6.user.js').pipe(tap(file => {
-		const arr = file.contents.toString().split('// ==/UserScript==\r\n\r\n')[1].split('/* ==[ ');
-		let wrapStr = `${ arr[0].slice(0, -2) }\r\n`;
-		for(let i = 1, len = arr.length; i < len; ++i) {
-			let str = arr[i];
-			if(i !== len - 1) {
-				str = str.slice(0, -2); // Remove last \r\n
-				wrapStr += `/* ==[ ${ str.split(' ]==')[0] } ]== */\r\n`;
-			} else {
-				wrapStr += `/* ==[ ${ str }`;
-				break;
-			}
-			const fileName = str.slice(0, str.indexOf(' ]'));
-			newfile(`src/modules/${ fileName }`, `/* ==[ ${ str }`).pipe(gulp.dest('.'));
+gulp.task('make:modules', () => gulp.src('src/Dollchan_Extension_Tools.es6.user.js').pipe(tap(file => {
+	const arr = file.contents.toString().split('// ==/UserScript==\r\n\r\n')[1].split('/* ==[ ');
+	let wrapStr = `${ arr[0].slice(0, -2) }\r\n`;
+	for(let i = 1, len = arr.length; i < len; ++i) {
+		let str = arr[i];
+		if(i !== len - 1) {
+			str = str.slice(0, -2); // Remove last \r\n
+			wrapStr += `/* ==[ ${ str.split(' ]==')[0] } ]== */\r\n`;
+		} else {
+			wrapStr += `/* ==[ ${ str }`;
+			break;
 		}
-		newfile('src/modules/Wrap.js', wrapStr).pipe(gulp.dest('.'));
-	}));
-});
+		const fileName = str.slice(0, str.indexOf(' ]'));
+		newfile(`src/modules/${ fileName }`, `/* ==[ ${ str }`).pipe(gulp.dest('.'));
+	}
+	newfile('src/modules/Wrap.js', wrapStr).pipe(gulp.dest('.'));
+})));
 
 // Waits for changes in watchedPaths files, then makes es5 and es6-scripts
 gulp.task('watch', () => gulp.watch(watchedPaths, gulp.series('make')));

@@ -30,7 +30,7 @@ class Videos {
 				(list ? '&' + list[0] : '') + '" frameborder="0" allowfullscreen></iframe>';
 		} else {
 			const id = m[1] + (m[2] ? m[2] : '');
-			txt = `<iframe class="de-video-player" src="${ aib.prot }//player.vimeo.com/video/${ id }${
+			txt = `<iframe class="de-video-player" src="${ aib.protocol }//player.vimeo.com/video/${ id }${
 				Cfg.embedYTube === 1 ? '?autoplay=1' : ''
 			}" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>`;
 		}
@@ -58,7 +58,7 @@ class Videos {
 	}
 	get player() {
 		const { post } = this;
-		const value = aib.insertYtPlayer(post.msg, `<div class="de-video-obj${
+		const value = $bBegin(post.msg, `<div class="de-video-obj${
 			post.images.hasAttachments && !post.isOp ? ' de-video-obj-inline' : '' }"></div>`);
 		Object.defineProperty(this, 'player', { value });
 		return value;
@@ -87,8 +87,8 @@ class Videos {
 			link.className = `de-video-link ${ isYtube ? 'de-ytube' : 'de-vimeo' }`;
 		} else {
 			const src = isYtube ?
-				`${ aib.prot }//www.youtube.com/watch?v=${ m[1] }${ time ? '#t=' + time : '' }` :
-				`${ aib.prot }//vimeo.com/${ m[1] }`;
+				`${ aib.protocol }//www.youtube.com/watch?v=${ m[1] }${ time ? '#t=' + time : '' }` :
+				`${ aib.protocol }//vimeo.com/${ m[1] }`;
 			link = $bEnd(this.post.msg, `<p class="de-video-ext"><a class="de-video-link ${
 				isYtube ? 'de-ytube' : 'de-vimeo' }${ time ? '" de-time="' + time : ''
 			}" href="${ src }">${ dataObj ? '' : src }</a></p>`).firstChild;
@@ -142,11 +142,11 @@ class Videos {
 	toggleFloatedThumb(linkEl, isOutEvent) {
 		let el = $id('de-video-thumb-floated');
 		if(isOutEvent) {
-			$del(el);
+			el.remove();
 			return;
 		}
 		if(!el) {
-			el = $bEnd(docBody, `<img id="de-video-thumb-floated" src="https://i.ytimg.com/vi/${
+			el = $bEnd(doc.body, `<img id="de-video-thumb-floated" src="https://i.ytimg.com/vi/${
 				linkEl.videoInfo[1] }/0.jpg">`);
 		}
 		const cr = linkEl.getBoundingClientRect();
@@ -162,7 +162,7 @@ class Videos {
 		for(let i = 0, len = newLinks.length; i < len; ++i) {
 			const el = newLinks[i];
 			const link = oldLinks[j];
-			if(link && link.classList.contains('de-current')) {
+			if(link?.classList.contains('de-current')) {
 				this.currentLink = el;
 			}
 			if(cloned) {
@@ -205,7 +205,7 @@ class Videos {
 				return Cfg.ytApiKey ? Videos._getYTInfoAPI(info, num, id) :
 					Videos._getYTInfoOembed(info, num, id);
 			}
-			return $ajax(`${ aib.prot }//vimeo.com/api/v2/video/${ id }.json`, null, true).then(xhr => {
+			return $ajax(`${ aib.protocol }//vimeo.com/api/v2/video/${ id }.json`, null, true).then(xhr => {
 				const entry = JSON.parse(xhr.responseText)[0];
 				return Videos._titlesLoaderHelper(
 					info, num,
@@ -247,7 +247,7 @@ class Videos {
 		}).catch(() => Videos._titlesLoaderHelper(info, num));
 	}
 	static _titlesLoaderHelper([link, isYtube, videoObj, id], num, ...data) {
-		if(data.length !== 0) {
+		if(data.length) {
 			Videos.setLinkData(link, data);
 			Videos._global.vData[+!isYtube][id] = data;
 			videoObj.vData[+!isYtube].push(data);
@@ -267,7 +267,7 @@ class Videos {
 		this.playerInfo = m;
 		el.classList.remove('de-video-expanded');
 		$show(el);
-		const str = `<a class="de-video-player" href="${ aib.prot }`;
+		const str = `<a class="de-video-player" href="${ aib.protocol }`;
 		if(isYtube) {
 			el.innerHTML = `${ str }//www.youtube.com/watch?v=${ m[1] }" target="_blank">` +
 				`<img class="de-video-thumb de-ytube" src="https://i.ytimg.com/vi/${ m[1] }/0.jpg"></a>`;
@@ -275,9 +275,9 @@ class Videos {
 		}
 		el.innerHTML = `${ str }//vimeo.com/${ m[1] }" target="_blank">` +
 			'<img class="de-video-thumb de-vimeo" src=""></a>';
-		$ajax(`${ aib.prot }//vimeo.com/api/v2/video/${ m[1] }.json`, null, true).then(xhr => {
+		$ajax(`${ aib.protocol }//vimeo.com/api/v2/video/${ m[1] }.json`, null, true).then(xhr => {
 			el.firstChild.firstChild.setAttribute('src', JSON.parse(xhr.responseText)[0].thumbnail_large);
-		}).catch(emptyFn);
+		}).catch(Function.prototype);
 	}
 }
 Videos.ytReg =
@@ -302,9 +302,7 @@ class VideosParser {
 		this._loader = Videos._getTitlesLoader();
 	}
 	endParser() {
-		if(this._loader) {
-			this._loader.completeTasks();
-		}
+		this._loader?.completeTasks();
 	}
 	parse(data) {
 		const isPost = data instanceof AbstractPost;
@@ -370,16 +368,12 @@ function embedAudioLinks(data) {
 		}
 	}
 	if(Cfg.addVocaroo) {
-		const els = $Q('a[href*="vocaroo.com"]', isPost ? data.el : data);
-		for(let i = 0, len = els.length; i < len; ++i) {
-			const link = els[i];
-			const el = link.previousSibling;
-			if(!el || el.className !== 'de-vocaroo') { // Don't embed already embedded links
-				link.insertAdjacentHTML('beforebegin', `<div class="de-vocaroo">
-					<embed src="http://vocaroo.com/player.swf?playMediaID=${ getFileName(link.href) }` +
-						`" width="148" height="44" wmode="transparent" type="application/x-shockwave-flash">
-				</div>`);
+		$Q('a[href*="voca.ro"], a[href*="vocaroo.com"]', isPost ? data.el : data).forEach(link => {
+			if(!(link.previousSibling?.className === 'de-vocaroo')) {
+				link.insertAdjacentHTML('beforebegin',
+					`<iframe class="de-vocaroo" width="300" height="48" src="https://vocaroo.com/embed/${
+						getFileName(link.href) }" frameborder="0"></iframe>`);
 			}
-		}
+		});
 	}
 }

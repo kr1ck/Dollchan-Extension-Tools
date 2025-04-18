@@ -27,7 +27,7 @@ const Pages = {
 						DelForm.tNums.delete(thr.num);
 					} else {
 						const oldLastThr = firstForm.lastThr;
-						$after(oldLastThr.el, thr.el);
+						oldLastThr.el.after(thr.el);
 						newForm.firstThr = thr.next;
 						thr.prev = oldLastThr;
 						thr.form = firstForm;
@@ -55,6 +55,22 @@ const Pages = {
 			}
 		});
 	},
+	handleEvent(e) {
+		let needLoad = false;
+		switch(e.type) {
+		case 'mousewheel': needLoad = -('wheelDeltaY' in e ? e.wheelDeltaY : e.wheelDelta) > 0; break;
+		case 'touchmove': needLoad = this._scrollY > e.touches[0].clientY; break; // Swipe down
+		case 'touchstart': this._scrollY = e.touches[0].clientY; break;
+		case 'wheel': needLoad = e.deltaY; break;
+		}
+		if(needLoad) {
+			deWindow.requestAnimationFrame(() => {
+				if(Thread.last.bottom - 150 < Post.sizing.wHeight) {
+					Pages.addPage();
+				}
+			});
+		}
+	},
 	async loadPages(count) {
 		$popup('load-pages', Lng.loading[lang], true);
 		if(this._addingPromise) {
@@ -67,12 +83,12 @@ const Pages = {
 		pByNum = new Map();
 		Post.hiddenNums = new Set();
 		AttachedImage.closeImg();
-		if(pr.isQuick) {
-			pr.clearForm();
+		if(postform.isQuick) {
+			postform.clearForm();
 		}
 		DelForm.tNums = new Set();
 		for(const form of DelForm) {
-			$each($Q('a[href^="blob:"]', form.el), el => URL.revokeObjectURL(el.href));
+			$Q('a[href^="blob:"]', form.el).forEach(el => URL.revokeObjectURL(el.href));
 			$hide(form.el);
 			if(form === DelForm.last) {
 				break;
@@ -95,13 +111,26 @@ const Pages = {
 			closePopup('load-pages');
 		}
 	},
+	toggleInfinityScroll() {
+		if(aib.t) {
+			return;
+		}
+		if(nav.isMobile) {
+			['touchmove', 'touchstart'].forEach(e =>
+				doc.defaultView[Cfg.inftyScroll ? 'addEventListener' : 'removeEventListener'](e, this));
+		} else {
+			doc.defaultView[Cfg.inftyScroll ? 'addEventListener' : 'removeEventListener'](
+				'onwheel' in doc.defaultView ? 'wheel' : 'mousewheel', this);
+		}
+	},
 
-	_isAdding      : false,
 	_addingPromise : null,
+	_isAdding      : false,
+	_scrollY       : 0,
 	_addForm(formEl, pageNum) {
 		formEl = doc.adoptNode(formEl);
 		$hide(formEl = aib.fixHTML(formEl));
-		$after(DelForm.last.el, formEl);
+		DelForm.last.el.after(formEl);
 		const form = new DelForm(formEl, +pageNum, DelForm.last);
 		DelForm.last = form;
 		form.addStuff();
@@ -119,32 +148,12 @@ const Pages = {
 	},
 	async _updateForms(newForm) {
 		readPostsData(newForm.firstThr.op, await readFavorites());
-		if(pr.passw) {
-			PostForm.setUserPassw();
+		if(postform.passw) {
+			await PostForm.setUserPassw();
 		}
 		embedPostMsgImages(newForm.el);
 		if(HotKeys.enabled) {
 			HotKeys.clearCPost();
 		}
-	}
-};
-
-function toggleInfinityScroll() {
-	if(!aib.t) {
-		const evtName = 'onwheel' in doc.defaultView ? 'wheel' : 'mousewheel';
-		if(Cfg.inftyScroll) {
-			doc.defaultView.addEventListener(evtName, toggleInfinityScroll.onwheel);
-		} else {
-			doc.defaultView.removeEventListener(evtName, toggleInfinityScroll.onwheel);
-		}
-	}
-}
-toggleInfinityScroll.onwheel = e => {
-	if((e.type === 'wheel' ? e.deltaY : -('wheelDeltaY' in e ? e.wheelDeltaY : e.wheelDelta)) > 0) {
-		deWindow.requestAnimationFrame(() => {
-			if(Thread.last.bottom - 150 < Post.sizing.wHeight) {
-				Pages.addPage();
-			}
-		});
 	}
 };

@@ -4,28 +4,41 @@
 =========================================================================================================== */
 
 function getSubmitError(dc) {
-	if(!dc.body.hasChildNodes() || $q(aib.qDForm, dc)) {
+	if(!dc.body?.hasChildNodes() || $q(aib.qDelForm, dc)) {
 		return null;
 	}
 	const err = [...$Q(aib.qError, dc)].map(str => str.innerHTML + '\n').join('')
-		.replace(/<a [^>]+>Назад.+|<br.+/, '') || dc.body.innerHTML;
+		.replace(/<a [^>]+>Назад.+/, '') || dc.body.innerHTML;
 	return aib.isIgnoreError(err) ? null : err;
 }
 
-function checkUpload(data) {
+function showSubmitError(error) {
+	if(postform.isQuick) {
+		postform.setReply(true, false);
+	}
+	if(/[cf]aptch|капч|подтвер|verifi/i.test(error)) {
+		postform.refreshCap(true);
+	}
+	$popup('upload', error.toString());
+	updater.sendErrNotif();
+	updater.continueUpdater();
+	DollchanAPI.notify('submitform', { success: false, error });
+}
+
+async function checkSubmit(data) {
 	let error = null;
 	let postNum = null;
-	const isDocument = data instanceof HTMLDocument;
+	const isDocument = data instanceof Document;
 	if(aib.getSubmitData) {
 		if(aib.jsonSubmit) {
-			if(aib.captchaAfterSubmit && aib.captchaAfterSubmit(data)) {
+			if(aib.captchaAfterSubmit?.(data)) {
 				return;
 			}
 			const _data = (isDocument ? data.body.textContent : data).trim();
 			try {
 				data = JSON.parse(_data);
 			} catch(err) {
-				error = getSubmitError(_data);
+				error = getSubmitError(isDocument ? data : $createDoc(data));
 			}
 		}
 		if(!error) {
@@ -35,19 +48,10 @@ function checkUpload(data) {
 		error = getSubmitError(data);
 	}
 	if(error) {
-		if(pr.isQuick) {
-			pr.setReply(true, false);
-		}
-		if(/[cf]aptch|капч|подтвер|verifi/i.test(error)) {
-			pr.refreshCap(true);
-		}
-		$popup('upload', error.toString());
-		updater.sendErrNotif();
-		updater.continueUpdater();
-		DollchanAPI.notify('submitform', { success: false, error });
+		showSubmitError(error);
 		return;
 	}
-	const { tNum } = pr;
+	const { tNum } = postform;
 	if((Cfg.markMyPosts || Cfg.markMyLinks) && postNum) {
 		MyPosts.set(postNum, tNum || postNum);
 	}
@@ -61,15 +65,19 @@ function checkUpload(data) {
 			sesStorage['de-fav-newthr'] = JSON.stringify({ num: postNum, date: Date.now() });
 		}
 	}
-	pr.clearForm();
+	postform.clearForm();
 	DollchanAPI.notify('submitform', { success: true, num: postNum });
-	Cfg.stats[tNum ? 'reply' : 'op']++;
-	saveCfgObj(aib.dm, Cfg);
+	const statsParam = tNum ? 'reply' : 'op';
+	Cfg.stats[statsParam]++;
+	await CfgSaver.saveObj(aib.domain, loadedCfg => {
+		loadedCfg.stats[statsParam]++;
+		return loadedCfg;
+	});
 	if(!tNum) {
 		if(postNum) {
 			deWindow.location.assign(aib.getThrUrl(aib.b, postNum));
 		} else if(isDocument) {
-			const dForm = $q(aib.qDForm, data);
+			const dForm = $q(aib.qDelForm, data);
 			if(dForm) {
 				deWindow.location.assign(aib.getThrUrl(aib.b, aib.getTNum(dForm)));
 			}
@@ -89,18 +97,18 @@ function checkUpload(data) {
 	} else {
 		pByNum.get(tNum).thr.loadPosts('new', false, false).then(() => closePopup('upload'));
 	}
-	pr.closeReply();
-	pr.refreshCap();
+	postform.closeReply();
+	postform.refreshCap();
 }
 
 async function checkDelete(data) {
-	const err = getSubmitError(data instanceof HTMLDocument ? data : $DOM(data));
+	const err = getSubmitError(data instanceof Document ? data : $createDoc(data));
 	if(err) {
 		$popup('delete', Lng.errDelete[lang] + ':\n' + err);
 		updater.sendErrNotif();
 		return;
 	}
-	const els = $Q(`[de-form] ${ aib.qRPost.split(', ').join(' input:checked, [de-form] ') } input:checked`);
+	const els = $Q(`[de-form] ${ aib.qPost.split(', ').join(' input:checked, [de-form] ') } input:checked`);
 	const threads = new Set();
 	const isThr = aib.t;
 	for(let i = 0, len = els.length; i < len; ++i) {
@@ -137,32 +145,33 @@ function isFormElDisabled(el) {
 	}
 	return false;
 }
+
 // https://html.spec.whatwg.org/multipage/forms.html#constructing-form-data-set
-function * getFormElements(form, submitter) {
+function* getFormElements(form, submitter) {
 	const controls = $Q('button, input, keygen, object, select, textarea', form);
 	const fixName = name => name ? name.replace(/([^\r])\n|\r([^\n])/g, '$1\r\n$2') : '';
 
 	constructSet:
 	for(let i = 0, len = controls.length; i < len; ++i) {
 		const field = controls[i];
-		const tagName = field.tagName.toLowerCase();
+		const tag = field.tagName.toLowerCase();
 		const type = field.getAttribute('type');
 		const name = field.getAttribute('name');
-		if($parent(field, 'DATALIST', form) || isFormElDisabled(field) ||
+		if(field.closest('datalist') || isFormElDisabled(field) ||
 			field !== submitter && (
-				tagName === 'button' ||
-				tagName === 'input' && (type === 'submit' || type === 'reset' || type === 'button')
+				tag === 'button' ||
+				tag === 'input' && (type === 'submit' || type === 'reset' || type === 'button')
 			) ||
-			tagName === 'input' && (
+			tag === 'input' && (
 				type === 'checkbox' && !field.checked ||
 				type === 'radio' && !field.checked ||
 				type === 'image' && !name
 			) ||
-			tagName === 'object'
+			tag === 'object'
 		) {
 			continue;
 		}
-		if(tagName === 'select') {
+		if(tag === 'select') {
 			const options = $Q('select > option, select > optgrout > option', field);
 			for(let j = 0, jlen = options.length; j < jlen; ++j) {
 				const option = options[j];
@@ -170,7 +179,7 @@ function * getFormElements(form, submitter) {
 					yield { type, el: field, name: fixName(name), value: option.value };
 				}
 			}
-		} else if(tagName === 'input') {
+		} else if(tag === 'input') {
 			switch(type) {
 			case 'image': throw new Error('input[type="image"] is not supported');
 			case 'checkbox':
@@ -179,7 +188,7 @@ function * getFormElements(form, submitter) {
 				continue constructSet;
 			case 'file': {
 				let img;
-				if(field.files.length > 0) {
+				if(field.files.length) {
 					const { files } = field;
 					for(let j = 0, jlen = files.length; j < jlen; ++j) {
 						yield { name, type, el: field, value: files[j] };
@@ -192,12 +201,7 @@ function * getFormElements(form, submitter) {
 						value : new File([img.data], img.name, { type: img.type })
 					};
 				} else {
-					yield {
-						el    : field,
-						name  : fixName(name),
-						type  : 'application/octet-stream',
-						value : new File([''], '')
-					};
+					yield aib.getEmptyFile(field, fixName(name));
 				}
 				continue constructSet;
 			}
@@ -255,19 +259,18 @@ async function html5Submit(form, submitter, needProgress = false) {
 		if(type === 'file') {
 			hasFiles = true;
 			const fileName = value.name;
-			const newFileName =
-				!Cfg.removeFName || el.obj && el.obj.imgFile && el.obj.imgFile.isConstName ? fileName : (
-					Cfg.removeFName === 1 ? '' :
-					// 5 years = 5*365*24*60*60*1e3 = 15768e7
-					Date.now() - (Cfg.removeFName === 2 ? 0 : Math.round(Math.random() * 15768e7))
-				) + '.' + getFileExt(fileName);
+			const newFileName = !Cfg.removeFName || el.obj?.imgFile?.isCustomName ? fileName : (
+				Cfg.removeFName === 1 ? '' :
+				// 5 years = 5*365*24*60*60*1e3 = 15768e7
+				Date.now() - (Cfg.removeFName === 2 ? 0 : Math.round(Math.random() * 15768e7))
+			) + '.' + getFileExt(fileName);
 			const mime = value.type;
 			if((Cfg.postSameImg || Cfg.removeEXIF) && (
 				mime === 'image/jpeg' ||
 				mime === 'image/png' ||
 				mime === 'image/gif' ||
-				mime === 'video/webm' && !aib.makaba)
-			) {
+				mime === 'video/webm'
+			)) {
 				const cleanData = cleanFile((await readFile(value)).data, el.obj ? el.obj.extraFile : null);
 				if(!cleanData) {
 					return Promise.reject(new Error(Lng.fileCorrupt[lang] + ': ' + fileName));
@@ -288,7 +291,7 @@ async function html5Submit(form, submitter, needProgress = false) {
 	}
 	const url = form.action;
 	return $ajax(url, ajaxParams).then(({ responseText: text }) => aib.jsonSubmit ? text :
-		aib.stormWallFixSubmit ? aib.stormWallFixSubmit(url, text, ajaxParams) : $DOM(text)
+		aib.stormWallFixSubmit ? aib.stormWallFixSubmit(url, text, ajaxParams) : $createDoc(text)
 	).catch(err => Promise.reject(err));
 }
 

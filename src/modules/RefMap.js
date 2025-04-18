@@ -37,7 +37,7 @@ class RefMap {
 		}
 	}
 	static initRefMap(form) {
-		let post = form.firstThr && form.firstThr.op;
+		let post = form.firstThr?.op;
 		if(post && Cfg.linksNavig) {
 			this.gen(pByNum);
 			const strNums = Cfg.strikeHidd && Post.hiddenNums.size ? Post.hiddenNums : null;
@@ -64,7 +64,9 @@ class RefMap {
 					const postClass = post.el.classList;
 					if(!postClass.contains('de-mypost-reply')) {
 						postClass.add('de-mypost-reply');
-						updater.refToYou(pNum);
+						if(doc.hidden) {
+							updater.addReplyToYou(pNum);
+						}
 					}
 				}
 			}
@@ -79,14 +81,14 @@ class RefMap {
 				lPost.ref.removeLink(pNum);
 				return;
 			}
-			if(strNums && strNums.has(lNum)) {
+			if(strNums?.has(lNum)) {
 				link.classList.add('de-link-hid');
 			}
 			if(!aib.hasOPNum && DelForm.tNums.has(lNum)) {
 				link.classList.add('de-ref-op');
 			}
 			lPost.ref.hasMap = true;
-			lPost.ref.addRefNum(post, pNum, strNums && strNums.has(pNum));
+			lPost.ref.addRefNum(post, pNum, strNums?.has(pNum));
 		}
 	}
 	addRefNum(post, num, isHidden = null) {
@@ -101,6 +103,9 @@ class RefMap {
 				post.setVisib(true, 'reference to >>' + num);
 				post.ref.hideRef();
 			}
+		}
+		if(!isHidden && Cfg.removeHidd) {
+			$toggle(this._el, true);
 		}
 	}
 	getElByNum(num) {
@@ -130,7 +135,7 @@ class RefMap {
 	initPostRef(tUrl, strNums) {
 		let html = '';
 		for(const num of this._set) {
-			html += this._getHTML(num, tUrl, strNums && strNums.has(num));
+			html += this._getHTML(num, tUrl, strNums?.has(num));
 		}
 		this._createEl(html, false);
 		this._isInited = true;
@@ -142,12 +147,12 @@ class RefMap {
 		this._set.delete(num);
 		if(!this._set.size) {
 			this.removeMap();
-		} else {
-			const el = this.getElByNum(num);
-			if(el) {
-				$del(el.nextSibling);
-				el.remove();
-			}
+			return;
+		}
+		const el = this.getElByNum(num);
+		if(el) {
+			el.nextSibling.remove();
+			el.remove();
 		}
 	}
 	removeMap() {
@@ -192,15 +197,8 @@ class RefMap {
 		return value;
 	}
 	_createEl(innerHTML, isHidden) {
-		let el;
-		const { msg } = this._post;
-		const html = `<div class="de-refmap${
-			isHidden ? ' de-post-hiddencontent' : '' }">${ innerHTML }</div>`;
-		if(aib.dobrochan && (el = msg.nextElementSibling)) {
-			el.insertAdjacentHTML('beforeend', html);
-		} else {
-			msg.insertAdjacentHTML('afterend', html);
-		}
+		this._post.msg.insertAdjacentHTML('afterend', `<div class="de-refmap${
+			isHidden ? ' de-post-hiddencontent' : '' }">${ innerHTML }</div>`);
 	}
 	_getHTML(num, tUrl, isHidden) {
 		return `<a href="${ tUrl }${ aib.anchor }${ num }" class="de-link-backref${

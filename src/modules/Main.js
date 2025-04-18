@@ -12,7 +12,11 @@ function runFrames() {
 		}
 		inf = GM_info;
 	}
-	if(!inf || inf.scriptHandler !== 'Greasemonkey' || !deWindow.frames[0]) {
+	if(!inf) {
+		return;
+	}
+	const handlerName = inf.scriptHandler;
+	if(handlerName !== 'Greasemonkey' && handlerName !== 'FireMonkey' || !deWindow.frames[0]) {
 		return;
 	}
 	const deMainFuncFrame = frameEl => {
@@ -21,7 +25,7 @@ function runFrames() {
 			const deWindow = fDoc.defaultView;
 			deMainFuncInner(
 				deWindow,
-				deWindow.opera && deWindow.opera.scriptStorage,
+				deWindow.opera?.scriptStorage,
 				deWindow.FormData,
 				(x, y) => deWindow.scrollTo(x, y),
 				typeof localData === 'object' ? localData : null
@@ -45,15 +49,15 @@ function runFrames() {
 
 async function runMain(checkDomains, dataPromise) {
 	Logger.initLogger();
-	if(!(docBody = doc.body) || !aib && !(aib = getImageBoard(checkDomains, true))) {
+	if(!doc.body || !aib && !(aib = getImageBoard(checkDomains, true))) {
 		return;
 	}
-	let formEl = $q(aib.qDForm + ', form[de-form]');
+	let formEl = $q(aib.qDelForm + ', [de-form]');
 	if(!formEl) {
 		runFrames();
 		return;
 	}
-	if(docBody.classList.contains('de-runned') ||
+	if(doc.body.classList.contains('de-runned') ||
 		aib.observeContent && !aib.observeContent(checkDomains, dataPromise)
 	) {
 		return;
@@ -65,11 +69,11 @@ async function runMain(checkDomains, dataPromise) {
 		}
 		initNavFuncs();
 	}
-	const [favObj] = await (dataPromise || readData());
-	if(!Cfg.disabled && aib.init && aib.init() || !localData && docBody.classList.contains('de-mode-local')) {
+	const [favObj] = await (dataPromise || Promise.all([readFavorites(), readCfg()]));
+	if(!Cfg.disabled && aib.init?.() || !localData && doc.body.classList.contains('de-mode-local')) {
 		return;
 	}
-	docBody.classList.add('de-runned');
+	doc.body.classList.add('de-runned');
 	Logger.log('Storage loading');
 	addSVGIcons();
 	if(Cfg.disabled) {
@@ -77,14 +81,14 @@ async function runMain(checkDomains, dataPromise) {
 		scriptCSS();
 		return;
 	}
-	if('toJSON' in aProto) {
-		delete aProto.toJSON;
+	if('toJSON' in Array.prototype) {
+		delete Array.prototype.toJSON;
 	}
 	initStorageEvent();
 	DollchanAPI.initAPI();
 	if(localData) {
-		aib.prot = 'http:';
-		aib.host = aib.dm;
+		aib.protocol = 'http:';
+		aib.host = aib.domain;
 		aib.b = localData.b;
 		aib.t = localData.t;
 		aib.docExt = '.html';
@@ -99,12 +103,12 @@ async function runMain(checkDomains, dataPromise) {
 	Logger.log('Init');
 	if(Cfg.correctTime) {
 		dTime = new DateTime(Cfg.timePattern, Cfg.timeRPattern, Cfg.timeOffset, lang,
-			rp => saveCfg('timeRPattern', rp));
+			rp => CfgSaver.save('timeRPattern', rp));
 		Logger.log('Time correction');
 	}
 	MyPosts.readStorage();
 	Logger.log('Read my posts');
-	$hide(docBody);
+	$hide(doc.body);
 	dummy = doc.createElement('div');
 	formEl = aib.fixHTML(formEl, true);
 	Logger.log('Replace delform');
@@ -117,16 +121,18 @@ async function runMain(checkDomains, dataPromise) {
 		}
 	} catch(err) {
 		console.error('Delform parsing error:', getErrorMessage(err));
-		$show(docBody);
+		$show(doc.body);
 		return;
 	}
 	Logger.log('Parse delform');
-	const storageName = `de-lastpcount-${ aib.b }-${ aib.t }`;
-	if(aib.t && !!sesStorage[storageName] && (sesStorage[storageName] > Thread.first.pcount)) {
-		sesStorage.removeItem(storageName);
-		deWindow.location.reload();
+	if(aib.t) {
+		const storageName = `de-last-postscount-${ aib.b }-${ aib.t }`;
+		if(sesStorage[storageName] > Thread.first.postsCount) {
+			sesStorage.removeItem(storageName);
+			deWindow.location.reload();
+		}
 	}
-	pr = new PostForm($q(aib.qForm));
+	postform = new PostForm($q(aib.qForm));
 	Logger.log('Parse postform');
 	if(Cfg.hotKeys) {
 		HotKeys.enableHotKeys();
@@ -142,9 +148,9 @@ async function runMain(checkDomains, dataPromise) {
 	readViewedPosts();
 	scriptCSS();
 	Logger.log('Apply CSS');
-	$show(docBody);
+	$show(doc.body);
 	Logger.log('Display page');
-	toggleInfinityScroll();
+	Pages.toggleInfinityScroll();
 	Logger.log('Infinity scroll');
 	const { firstThr } = DelForm.first;
 	if(firstThr) {
@@ -154,7 +160,7 @@ async function runMain(checkDomains, dataPromise) {
 	scrollPage();
 	Logger.log('Scroll page');
 	if(localData) {
-		$each($Q('.de-post-removed'), el => {
+		$Q('.de-post-removed').forEach(el => {
 			const post = pByEl.get(el);
 			if(post) {
 				post.deletePost(false);
@@ -180,7 +186,7 @@ function initMain() {
 			return;
 		}
 		initNavFuncs();
-		dataPromise = readData();
+		dataPromise = Promise.all([readFavorites(), readCfg()]);
 	}
 	needScroll = true;
 	doc.addEventListener('onwheel' in doc.defaultView ? 'wheel' : 'mousewheel', function wFunc(e) {

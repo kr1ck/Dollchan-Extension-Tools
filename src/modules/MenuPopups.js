@@ -16,20 +16,19 @@ function closePopup(data) {
 
 function $popup(id, txt, isWait = false) {
 	let el = $id('de-popup-' + id);
-	const buttonHTML = isWait ? '<svg class="de-wait"><use xlink:href="#de-symbol-wait"/></svg>' : '\u2716 ';
+	const html = `<span class="de-popup-btn">${
+		isWait ? '<svg class="de-wait"><use xlink:href="#de-symbol-wait"/></svg>' : '\u2716 '
+	}</span>${ txt.trim() }`;
 	if(el) {
-		$q('div', el).innerHTML = txt.trim();
-		$q('span', el).innerHTML = buttonHTML;
+		el.innerHTML = html;
 		if(!isWait && Cfg.animation) {
 			$animate(el, 'de-blink');
 		}
 	} else {
-		el = $bEnd($id('de-wrapper-popup'), `<div class="${ aib.cReply } de-popup" id="de-popup-${ id }">
-			<span class="de-popup-btn">${ buttonHTML }</span>
-			<div class="de-popup-msg">${ txt.trim() }</div>
-		</div>`);
+		el = $bEnd($id('de-wrapper-popup'),
+			`<div class="${ aib.cReply } de-popup" id="de-popup-${ id }">${ html }</div>`);
 		el.onclick = e => {
-			let el = fixEventEl(e.target);
+			let el = nav.fixEventEl(e.target);
 			el = el.tagName.toLowerCase() === 'svg' ? el.parentNode : el;
 			if(el.className === 'de-popup-btn') {
 				closePopup(el.parentNode);
@@ -42,22 +41,22 @@ function $popup(id, txt, isWait = false) {
 	if(Cfg.closePopups && !isWait && !id.includes('edit') && !id.includes('cfg')) {
 		el.closeTimeout = setTimeout(closePopup, 6e3, el);
 	}
-	return el.lastElementChild;
+	return el;
 }
 
 // Adds button that calls a popup with the text editor. Useful to edit settings.
 function getEditButton(name, getDataFn, className = 'de-button') {
-	return $btn(Lng.edit[lang], Lng.editInTxt[lang], () => getDataFn((val, isJSON, saveFn) => {
+	return $button(Lng.edit[lang], Lng.editInTxt[lang], () => getDataFn((val, isJSON, saveFn) => {
 		// Create popup window with textarea.
 		const el = $popup('edit-' + name,
 			`<b>${ Lng.editor[name][lang] }</b><textarea class="de-editor"></textarea>`);
-		const ta = el.lastChild;
-		ta.value = isJSON ? JSON.stringify(val, null, '\t') : val;
+		const inputEl = el.lastChild;
+		inputEl.value = isJSON ? JSON.stringify(val, null, '\t') : val;
 		// "Save" button. If there a JSON data, parses and saves on success.
-		el.appendChild($btn(Lng.save[lang], Lng.saveChanges[lang], !isJSON ? saveFn.bind(ta) : () => {
+		el.append($button(Lng.save[lang], Lng.saveChanges[lang], !isJSON ? () => saveFn(inputEl) : () => {
 			let data;
 			try {
-				data = JSON.parse(ta.value.trim().replace(/[\n\r\t]/g, '') || '{}');
+				data = JSON.parse(inputEl.value.trim().replace(/[\n\r\t]/g, '') || '{}');
 			} catch(err) {}
 			if(!data) {
 				$popup('err-invaliddata', Lng.invalidData[lang]);
@@ -76,25 +75,64 @@ class Menu {
 		this.onover = null;
 		this.onremove = null;
 		this._closeTO = 0;
-		const el = $bEnd(docBody, `<div class="${ aib.cReply } de-menu" style="position: ${
+		const el = $bEnd(doc.body, `<div class="${ aib.cReply } de-menu" style="position: ${
 			isFixed ? 'fixed' : 'absolute' }; left: 0px; top: 0px; visibility: hidden;">${ html }</div>`);
 		const cr = parentEl.getBoundingClientRect();
 		const { style, offsetWidth: w, offsetHeight: h } = el;
+		this.el = el;
 		style.left = (isFixed ? 0 : deWindow.pageXOffset) +
-			(cr.left + w < Post.sizing.wWidth ? cr.left : cr.right - w) + 'px';
+			(cr.left + w < Post.sizing.wWidth || w > .8 * Post.sizing.wWidth ? cr.left : cr.right - w) + 'px';
 		style.top = (isFixed ? 0 : deWindow.pageYOffset) +
 			(cr.bottom + h < Post.sizing.wHeight ? cr.bottom - 0.5 : cr.top - h + 0.5) + 'px';
 		style.removeProperty('visibility');
 		this._clickFn = clickFn;
-		this._el = el;
 		this.parentEl = parentEl;
-		el.addEventListener('mouseover', this, true);
-		el.addEventListener('mouseout', this, true);
+		['mouseover', 'mouseout'].forEach(e => el.addEventListener(e, this, true));
 		el.addEventListener('click', this);
 		parentEl.addEventListener('mouseout', this);
 	}
+	static addMenu(el) {
+		const tags = a => arrTags(a, '<span class="de-menu-item">', '</span>');
+		switch(el.id) {
+		case 'de-btn-spell-add':
+			return new Menu(el, `<div style="display: inline-block; border-right: 1px solid grey;">${
+				tags('#words,#exp,#exph,#imgn,#ihash,#subj,#name,#trip,#img,#sage'.split(','))
+			}</div><div style="display: inline-block;">${
+				tags('#op,#tlen,#all,#video,#vauthor,#num,#wipe,#rep,#outrep,<br>'.split(',')) }</div>`,
+			({ textContent: s }) => insertText($id('de-spell-txt'), s +
+				(!aib.t || s === '#op' || s === '#rep' || s === '#outrep' ? '' : `[${ aib.b },${ aib.t }]`) +
+				(Spells.needArg[Spells.names.indexOf(s.substr(1))] ? '(' : '')));
+		case 'de-panel-refresh':
+			return new Menu(el, tags(Lng.selAjaxPages[lang]),
+				el => Pages.loadPages(Array.prototype.indexOf.call(el.parentNode.children, el) + 1));
+		case 'de-panel-savethr':
+			return new Menu(el, tags($q(aib.qPostImg, DelForm.first.el) ?
+				Lng.selSaveThr[lang] : [Lng.selSaveThr[lang][0]]),
+			el => {
+				if($id('de-popup-savethr')) {
+					return;
+				}
+				const imgOnly = !!Array.prototype.indexOf.call(el.parentNode.children, el);
+				if(ContentLoader.isLoading) {
+					$popup('savethr', Lng.loading[lang], true);
+					ContentLoader.afterFn = () => ContentLoader.downloadThread(imgOnly);
+					ContentLoader.popupId = 'savethr';
+				} else {
+					ContentLoader.downloadThread(imgOnly);
+				}
+			});
+		case 'de-panel-audio-off':
+			return new Menu(el, tags(Lng.selAudioNotif[lang]), el => {
+				updater.enableUpdater();
+				updater.toggleAudio(
+					[3e4, 6e4, 12e4, 3e5][Array.prototype.indexOf.call(el.parentNode.children, el)]);
+				$id('de-panel-audio-off').id = 'de-panel-audio-on';
+			});
+		}
+	}
 	static getMenuImg(data, isDlOnly = false) {
-		let p, dlLinks = '';
+		let p;
+		let dlLinks = '';
 		if(typeof data === 'string') {
 			p = encodeURIComponent(data) + '" target="_blank">' + Lng.frameSearch[lang];
 		} else {
@@ -114,8 +152,10 @@ class Menu {
 				if(name.length > 20) {
 					nameShort = name.substr(0, 20 - ext.length) + '\u2026' + ext;
 				}
+				const info = aib.domain !== href.match(/^(?:(?:blob:)?https?:\/\/)([^/]+)/)[1] ?
+					' info="img-load"' : '';
 				return `<a class="de-menu-item" href="${ href }" download="${ name }" title="${
-					title }" target="_blank">${ Lng.saveAs[lang] } &quot;${ nameShort }&quot;</a>`;
+					title }"${ info } target="_blank">${ Lng.saveAs[lang] } &quot;${ nameShort }&quot;</a>`;
 			};
 			const name = decodeURIComponent(getFileName(origSrc));
 			const isFullImg = link.classList.contains('de-fullimg-link');
@@ -125,7 +165,7 @@ class Menu {
 				dlLinks += getDlLnk(href, realName, Lng.origName[lang], false);
 			}
 			let webmTitle;
-			if(isFullImg && (webmTitle = link.nextElementSibling) && (webmTitle = webmTitle.textContent)) {
+			if(isFullImg && (webmTitle = $q('.de-webm-title', link.parentNode)?.textContent)) {
 				dlLinks += getDlLnk(href, webmTitle, Lng.metaName[lang], true);
 			}
 			dlLinks += getDlLnk(href, name, Lng.boardName[lang], false);
@@ -135,7 +175,7 @@ class Menu {
 				.replace('kohlchanvwpfx6hthoti5fvqsjxgcwm3tmddvpduph5fqntv5affzfqd.onion', 'kohlchan.net');
 		}
 		return dlLinks + (isDlOnly ? '' : arrTags([
-			`de-src-google" href="https://www.google.com/searchbyimage?image_url=${ p }Google`,
+			`de-src-google" href="https://lens.google.com/uploadbyurl?url=${ p }Google`,
 			`de-src-yandex" href="https://yandex.com/images/search?rpt=imageview&url=${ p }Yandex`,
 			`de-src-tineye" href="https://tineye.com/search/?url=${ p }TinEye`,
 			`de-src-saucenao" href="https://saucenao.com/search.php?url=${ p }SauceNAO`,
@@ -149,7 +189,7 @@ class Menu {
 		case 'click':
 			if(e.target.classList.contains('de-menu-item')) {
 				this.removeMenu();
-				this._clickFn(e.target);
+				this._clickFn(e.target, e);
 				if(!Cfg.expandPanel && !$q('.de-win-active')) {
 					$hide($id('de-panel-buttons'));
 				}
@@ -159,74 +199,27 @@ class Menu {
 			/* falls through */
 		case 'mouseout': {
 			clearTimeout(this._closeTO);
-			let rt = fixEventEl(e.relatedTarget);
-			rt = rt && rt.farthestViewportElement || rt;
-			if(!rt || (rt !== this._el && !this._el.contains(rt))) {
+			const targetEl = nav.fixEventEl(e.relatedTarget);
+			if(!$contains(this.el, targetEl)) {
 				if(isOverEvent) {
-					if(this.onover) {
-						this.onover();
-					}
-				} else if(!rt || (rt !== this.parentEl && !this.parentEl.contains(rt))) {
+					this.onover?.();
+				} else if(!$contains(this.parentEl, targetEl)) {
 					this._closeTO = setTimeout(() => this.removeMenu(), 75);
-					if(this.onout) {
-						this.onout();
-					}
+					this.onout?.();
 				}
 			}
 		}
 		}
 	}
 	removeMenu() {
-		if(!this._el) {
+		if(!this.el) {
 			return;
 		}
-		if(this.onremove) {
-			this.onremove();
-		}
-		this._el.removeEventListener('mouseover', this, true);
-		this._el.removeEventListener('mouseout', this, true);
+		this.onremove?.();
+		['mouseover', 'mouseout'].forEach(e => this.el.removeEventListener(e, this, true));
 		this.parentEl.removeEventListener('mouseout', this);
-		this._el.removeEventListener('click', this);
-		this._el.remove();
-		this._el = null;
-	}
-}
-
-function addMenu(el) {
-	const fn = a => arrTags(a, '<span class="de-menu-item">', '</span>');
-	switch(el.id) {
-	case 'de-btn-spell-add':
-		return new Menu(el, `<div style="display: inline-block; border-right: 1px solid grey;">${
-			fn('#words,#exp,#exph,#imgn,#ihash,#subj,#name,#trip,#img,#sage'.split(','))
-		}</div><div style="display: inline-block;">${
-			fn('#op,#tlen,#all,#video,#vauthor,#num,#wipe,#rep,#outrep,<br>'.split(',')) }</div>`,
-		({ textContent: s }) => insertText($id('de-spell-txt'), s +
-			(!aib.t || s === '#op' || s === '#rep' || s === '#outrep' ? '' : `[${ aib.b },${ aib.t }]`) +
-			(Spells.needArg[Spells.names.indexOf(s.substr(1))] ? '(' : '')));
-	case 'de-panel-refresh':
-		return new Menu(el, fn(Lng.selAjaxPages[lang]),
-			el => Pages.loadPages(aProto.indexOf.call(el.parentNode.children, el) + 1));
-	case 'de-panel-savethr':
-		return new Menu(el, fn($q(aib.qPostImg, DelForm.first.el) ?
-			Lng.selSaveThr[lang] : [Lng.selSaveThr[lang][0]]),
-		el => {
-			if($id('de-popup-savethr')) {
-				return;
-			}
-			const imgOnly = !!aProto.indexOf.call(el.parentNode.children, el);
-			if(ContentLoader.isLoading) {
-				$popup('savethr', Lng.loading[lang], true);
-				ContentLoader.afterFn = () => ContentLoader.downloadThread(imgOnly);
-				ContentLoader.popupId = 'savethr';
-			} else {
-				ContentLoader.downloadThread(imgOnly);
-			}
-		});
-	case 'de-panel-audio-off':
-		return new Menu(el, fn(Lng.selAudioNotif[lang]), el => {
-			updater.enableUpdater();
-			updater.toggleAudio([3e4, 6e4, 12e4, 3e5][aProto.indexOf.call(el.parentNode.children, el)]);
-			$id('de-panel-audio-off').id = 'de-panel-audio-on';
-		});
+		this.el.removeEventListener('click', this);
+		this.el.remove();
+		this.el = null;
 	}
 }

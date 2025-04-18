@@ -5,16 +5,16 @@
 class Thread {
 	constructor(el, num, prev, form) {
 		this.hasNew = false;
-		this.hidCounter = 0;
+		this.hiddenCount = 0;
 		this.isFav = false;
 		this.isHidden = false;
 		this.loadCount = 0;
 		this.next = null;
 		this.num = num;
-		const els = $Q(aib.qRPost, el);
+		const els = $Q(aib.qPost, el);
 		const len = els.length;
-		const omt = aib.t ? 1 : aib.getOmitted($q(aib.qOmitted, el), len);
-		this.pcount = omt + len;
+		const omitted = (!aib.t && +$q(aib.qOmitted, el)?.textContent?.match(/\d+/) || 0) + 1;
+		this.postsCount = omitted + len;
 		this.el = el;
 		this.prev = prev;
 		this.form = form;
@@ -29,11 +29,11 @@ class Thread {
 		pByEl.set(el, lastPost);
 		for(let i = 0; i < len; ++i) {
 			const pEl = els[i];
-			lastPost = new Post(pEl, this, aib.getPNum(pEl), omt + i, false, lastPost);
+			lastPost = new Post(pEl, this, aib.getPNum(pEl), omitted + i, false, lastPost);
 		}
 		this.last = lastPost;
 		el.setAttribute('de-thread', null);
-		visPosts = Math.max(visPosts, len);
+		Thread.visPosts = Math.max(Thread.visPosts, len);
 		if(localData) {
 			return;
 		}
@@ -41,8 +41,7 @@ class Thread {
 			<span class="de-thr-updater">[<a class="de-thr-updater-link de-abtn" href="#"></a>` +
 			(!aib.t ? ']</span>' : '<span id="de-updater-count" style="display: none;"></span>]</span>') +
 			'</div>');
-		this.btns.addEventListener('click', this);
-		this.btns.addEventListener('mouseover', this);
+		['click', 'mouseover'].forEach(e => this.btns.addEventListener(e, this));
 		[this.btnHide,, this.btnFav, this.btnUpd] = [...this.btns.children];
 		if(!aib.t && Cfg.hideReplies) {
 			this.btnReplies = $bEnd(this.btns,
@@ -71,12 +70,12 @@ class Thread {
 	}
 	get nextNotHidden() {
 		let thr;
-		for(thr = this.next; thr && thr.isHidden; thr = thr.next) /* empty */;
+		for(thr = this.next; thr?.isHidden; thr = thr.next) /* empty */;
 		return thr;
 	}
 	get prevNotHidden() {
 		let thr;
-		for(thr = this.prev; thr && thr.isHidden; thr = thr.prev) /* empty */;
+		for(thr = this.prev; thr?.isHidden; thr = thr.prev) /* empty */;
 		return thr;
 	}
 	get top() {
@@ -104,12 +103,12 @@ class Thread {
 				tPost.counterEl.textContent = tPost.count + 1;
 			}
 		}
-		this.pcount -= count;
+		this.postsCount -= count;
 		return post;
 	}
 	handleEvent(e) {
-		$pd(e);
-		const el = fixEventEl(e.target);
+		e.preventDefault();
+		const el = nav.fixEventEl(e.target);
 		const elClass = el.classList[0];
 		const nextThr = this.next;
 		let oldCoord = false;
@@ -120,10 +119,10 @@ class Thread {
 			case 'de-btn-hide':
 			case 'de-btn-hide-user':
 			case 'de-btn-unhide-user':
-				oldCoord = nextThr && nextThr.top;
+				oldCoord = nextThr?.top;
 				this.op.setUserVisib(!this.isHidden);
 				break;
-			case 'de-btn-reply': pr.showQuickReply(this.last, this.num, false, false, true); break;
+			case 'de-btn-reply': postform.showQuickReply(this.last, this.num, false, false, true); break;
 			case 'de-btn-replies':
 			case 'de-replies-show':
 			case 'de-replies-hide':
@@ -131,7 +130,7 @@ class Thread {
 				this._toggleReplies();
 				break;
 			case 'de-thr-collapse':
-			case 'de-thr-collapse-link': this.loadPosts(visPosts, true); break;
+			case 'de-thr-collapse-link': this.loadPosts(Thread.visPosts, true); break;
 			case 'de-thr-updater':
 			case 'de-thr-updater-link':
 				if(aib.t) {
@@ -147,7 +146,7 @@ class Thread {
 			switch(el.classList[0]) {
 			case 'de-btn-reply':
 				this.btns.title = Lng.replyToThr[lang];
-				quotedText = deWindow.getSelection().toString();
+				postform.getSelectedText();
 				return;
 			case 'de-btn-hide':
 			case 'de-btn-hide-user':
@@ -191,35 +190,37 @@ class Thread {
 			.then(pBuilder => pBuilder ? this._loadNewFromBuilder(pBuilder) : { newCount: 0, locked: false });
 	}
 	toggleFavState(isEnable, preview = null) {
-		let h, b, num, cnt, txt, last;
+		let host, board, num, cnt, txt, last;
 		if(preview) {
 			preview.toggleFavBtn(isEnable);
 		}
 		if(!preview || preview.num === this.num) { // Oppost or usual preview
 			this.op.toggleFavBtn(isEnable);
 			this.isFav = isEnable;
-			({ host: h, b } = aib);
+			({ host, b: board } = aib);
 			({ num } = this);
-			cnt = this.pcount;
+			cnt = this.postsCount;
 			txt = this.op.title;
 			last = aib.anchor + this.last.num;
 		} else { // Loaded preview for oppost in remote thread
-			h = aib.host;
-			({ brd: b, num } = preview);
-			cnt = preview.remoteThr.pcount;
+			({ host } = aib);
+			({ board, num } = preview);
+			cnt = preview.remoteThr.postsCount;
 			txt = preview.remoteThr.title;
 			last = aib.anchor + preview.remoteThr.lastNum;
 		}
 		readFavorites().then(favObj => {
 			if(isEnable) {
-				let f = favObj[h] || (favObj[h] = {});
-				f = f[b] || (f[b] = {});
-				f.url = aib.prot + '//' + aib.host + aib.getPageUrl(b, 0);
-				f[num] = { cnt, new: 0, you: 0, txt, url: aib.getThrUrl(b, num), last, time: Date.now() };
+				let entry = favObj[host] || (favObj[host] = {});
+				entry = entry[board] || (entry[board] = {});
+				entry.url = aib.protocol + '//' + aib.host + aib.getPageUrl(board, 0);
+				const url = aib.getThrUrl(board, num);
+				entry[num] = { cnt, new: 0, you: 0, txt, url, last, time: Date.now() };
 			} else {
-				removeFavEntry(favObj, h, b, num);
+				removeFavEntry(favObj, host, board, num);
 			}
-			sendStorageEvent('__de-favorites', [h, b, num, favObj, isEnable ? 'add' : 'delete']);
+			// Updating Favorites: add or remove a thread
+			sendStorageEvent('__de-favorites', [host, board, num, favObj, isEnable ? 'add' : 'delete']);
 			saveRenewFavorites(favObj);
 		});
 	}
@@ -242,7 +243,7 @@ class Thread {
 		const num = aib.getPNum(el);
 		const wrap = doc.adoptNode(aib.getPostWrap(el, false));
 		const post = new Post(el, this, num, i, false, prev);
-		parent.appendChild(wrap);
+		parent.append(wrap);
 		if(aib.t && !doc.hidden && Cfg.animation) {
 			$animate(el, 'de-post-new');
 		}
@@ -273,8 +274,8 @@ class Thread {
 		for(const [banId, bNum, bEl] of pBuilder.bannedPostsData()) {
 			const post = bNum ? pByNum.get(bNum) : this.op;
 			if(post && post.banned !== banId) {
-				$del($q(aib.qBan, post.el));
-				post.msg.appendChild(bEl);
+				$q(aib.qBan, post.el).remove();
+				post.msg.append(bEl);
 				post.banned = banId;
 			}
 		}
@@ -293,7 +294,7 @@ class Thread {
 			const temp = doc.createElement('template');
 			temp.innerHTML = aib.fixHTML(html.join(''));
 			fragm = temp.content;
-			const posts = $Q(aib.qRPost, fragm);
+			const posts = $Q(aib.qPost, fragm);
 			for(let i = 0, len = posts.length; i < len; ++i) {
 				last = this._addPost(fragm, posts[i], begin + i + 1, last, maybeVParser);
 				newVisCount -= maybeSpells.value.runSpells(last);
@@ -321,7 +322,7 @@ class Thread {
 			}
 		}
 		const { op, el: thrEl } = this;
-		$del($q(aib.qOmitted + ', .de-omitted', thrEl));
+		$q(aib.qOmitted + ', .de-omitted', thrEl)?.remove();
 		if(this.loadCount === 0) {
 			if(op.trunc) {
 				op.updateMsg(pBuilder.getOpMessage(), maybeSpells.value);
@@ -333,8 +334,8 @@ class Thread {
 		let needToHide, needToOmit, needToShow;
 		let post = op.next;
 		let needRMUpdate = false;
-		const hasPosts = post && this.pcount > 1;
-		let existed = hasPosts ? this.pcount - post.count : 0;
+		const hasPosts = post && this.postsCount > 1;
+		let existed = hasPosts ? this.postsCount - post.count : 0;
 		switch(last) {
 		case 'new': // get new posts
 			needToHide = $Q('.de-hidden', thrEl).length;
@@ -374,7 +375,7 @@ class Thread {
 			if(maybeVParser.hasValue) {
 				maybeVParser.value.endParser();
 			}
-			$after(op.wrap, fragm);
+			op.wrap.after(fragm);
 			DollchanAPI.notify('newpost', nums);
 			last.next = post;
 			if(post) {
@@ -402,10 +403,11 @@ class Thread {
 		}
 		const btns = this._moveBtnsToEnd();
 		if(!$q('.de-thr-collapse', btns)) {
-			$bEnd(btns, `<span class="de-thr-collapse"> [<a class="de-thr-collapse-link de-abtn" href="${
-				aib.getThrUrl(aib.b, this.num) }"></a>]</span>`);
+			btns.insertAdjacentHTML('beforeend',
+				`<span class="de-thr-collapse"> [<a class="de-thr-collapse-link de-abtn" href="${
+					aib.getThrUrl(aib.b, this.num) }"></a>]</span>`);
 		}
-		if(needToShow > visPosts) {
+		if(needToShow > Thread.visPosts) {
 			thrNavPanel.addThr(this);
 			btns.lastChild.style.display = 'initial';
 		} else {
@@ -428,15 +430,15 @@ class Thread {
 		closePopup('load-thr');
 	}
 	_loadNewFromBuilder(pBuilder) {
-		const lastOffset = pr.isVisible ? pr.top : null;
+		const lastOffset = postform.isVisible ? postform.top : null;
 		const [newPosts, newVisPosts] = this._parsePosts(pBuilder);
 		this._moveBtnsToEnd();
 		if(lastOffset !== null) {
-			scrollTo(deWindow.pageXOffset, deWindow.pageYOffset + pr.top - lastOffset);
+			scrollTo(deWindow.pageXOffset, deWindow.pageYOffset + postform.top - lastOffset);
 		}
-		if(newPosts !== 0 || Panel.isNew) {
+		if(newPosts !== 0) {
 			Panel.updateCounter(
-				pBuilder.length + 1 - (Cfg.panelCounter === 2 ? this.hidCounter : 0),
+				pBuilder.length + 1 - (Cfg.panelCounter === 2 ? this.hiddenCount : 0),
 				$Q(`.de-reply:not(.de-post-removed) ${
 					aib.qPostImg }, .de-oppost ${ aib.qPostImg }`, this.el).length,
 				pBuilder.postersCount);
@@ -450,7 +452,7 @@ class Thread {
 	_moveBtnsToEnd() {
 		const { btns, el } = this;
 		if(btns !== el.lastChild) {
-			el.appendChild(btns);
+			el.append(btns);
 		}
 		return btns;
 	}
@@ -463,7 +465,7 @@ class Thread {
 		const maybeSpells = new Maybe(SpellsRunner);
 		const maybeVParser = new Maybe(Cfg.embedYTube ? VideosParser : null);
 		const { count } = post;
-		if(count !== 0 && (aib.dobrochan || count > len || pBuilder.getPNum(count - 1) !== post.num)) {
+		if(count !== 0 && (count > len || pBuilder.getPNum(count - 1) !== post.num)) {
 			post = this.op.nextNotDeleted;
 			let i = post.count - 1;
 			let firstChangedPost = null;
@@ -492,9 +494,9 @@ class Thread {
 				} while(pBuilder.getPNum(i) < num);
 				const res = this._importPosts(prev, pBuilder, i - cnt, i, maybeVParser, maybeSpells);
 				newPosts += res[0];
-				this.pcount += res[0];
+				this.postsCount += res[0];
 				newVisPosts += res[1];
-				$after(prev.wrap, res[2]);
+				prev.wrap.after(res[2]);
 				res[3].next = post;
 				post.prev = res[3];
 				DollchanAPI.notify('newpost', res[4]);
@@ -516,17 +518,19 @@ class Thread {
 				}
 			}
 		}
-		if(len + 1 > this.pcount) {
+		if(len + 1 > this.postsCount) {
 			const res = this._importPosts(this.last, pBuilder, this.lastNotDeleted.count,
 				len, maybeVParser, maybeSpells);
 			newPosts += res[0];
 			newVisPosts += res[1];
-			(aib.qPostsParent ? $q(aib.qPostsParent, this.el) : this.el).appendChild(res[2]);
+			(aib.qPostsParent ? $q(aib.qPostsParent, this.el) : this.el).append(res[2]);
 			this.last = res[3];
 			DollchanAPI.notify('newpost', res[4]);
-			this.pcount = len + 1;
+			this.postsCount = len + 1;
 		}
-		updateFavorites(this.op.num, [this.pcount, this.last.num], 'update');
+		// Updating Favorites: successed thread loading
+		updateFavorites(this.op.num,
+			[this.postsCount, newPosts, updater.getRepliesToYou, this.last.num], 'update');
 		if(maybeVParser.hasValue) {
 			maybeVParser.value.endParser();
 		}
@@ -545,14 +549,15 @@ class Thread {
 		}
 		this.btnReplies.firstElementChild.className =
 			`${ isHide ? 'de-replies-show' : 'de-replies-hide' } de-abtn`;
-		$each(this.btns.children, el => el !== this.btnReplies && $toggle(el, !isHide));
-		$del($q(aib.qOmitted + ', .de-omitted', this.el));
-		i = this.pcount - 1 - (isHide ? 0 : i);
+		[...this.btns.children].forEach(el => el !== this.btnReplies && $toggle(el, !isHide));
+		$q(aib.qOmitted + ', .de-omitted', this.el)?.remove();
+		i = this.postsCount - 1 - (isHide ? 0 : i);
 		if(i) {
 			this.op.el.insertAdjacentHTML('afterend', `<span class="de-omitted">${ i }</span> `);
 		}
 	}
 }
+Thread.visPosts = 2;
 
 const thrNavPanel = {
 	addThr(thr) {
@@ -567,13 +572,13 @@ const thrNavPanel = {
 	handleEvent(e) {
 		switch(e.type) {
 		case 'scroll': deWindow.requestAnimationFrame(() => this._checkThreads()); break;
-		case 'mouseover': this._expandCollapse(true, fixEventEl(e.relatedTarget)); break;
-		case 'mouseout': this._expandCollapse(false, fixEventEl(e.relatedTarget)); break;
+		case 'mouseover': this._expandCollapse(true, nav.fixEventEl(e.relatedTarget)); break;
+		case 'mouseout': this._expandCollapse(false, nav.fixEventEl(e.relatedTarget)); break;
 		case 'click': this._handleClick(e); break;
 		}
 	},
 	initThrNav() {
-		const el = $bEnd(docBody, `
+		const el = $bEnd(doc.body, `
 		<div id="de-thr-navpanel" class="de-thr-navpanel-hidden" style="display: none;">
 			<svg id="de-thr-navarrow"><use xlink:href="#de-symbol-thr-nav-arrow"/></svg>
 			<div id="de-thr-navup">
@@ -583,9 +588,7 @@ const thrNavPanel = {
 				<svg viewBox="0 0 24 24"><use xlink:href="#de-symbol-thr-nav-down"/></svg>
 			</div>
 		</div>`);
-		el.addEventListener('mouseover', this, true);
-		el.addEventListener('mouseout', this, true);
-		el.addEventListener('click', this, true);
+		['mouseover', 'mouseout', 'click'].forEach(e => el.addEventListener(e, this, true));
 		this._el = el;
 		this._thrs = new Set();
 	},
@@ -601,7 +604,7 @@ const thrNavPanel = {
 
 	_currentThr : null,
 	_el         : null,
-	_toggleTO   : 0,
+	_toggleTO   : null,
 	_thrs       : null,
 	_visible    : false,
 	_checkThreads() {
@@ -615,10 +618,10 @@ const thrNavPanel = {
 			this._toggleNavPanel(true);
 		}
 	},
-	_expandCollapse(isExpand, rt) {
-		if(!rt || !this._el.contains(rt.farthestViewportElement || rt)) {
+	_expandCollapse(isExpand, targetEl) {
+		if(!$contains(this._el, targetEl)) {
 			clearTimeout(this._toggleTO);
-			this._toggleTO = setTimeout(() => this._el.classList.toggle('de-thr-navpanel-hidden', !isExpand),
+			this._toggleTO =setTimeout(() => this._el.classList.toggle('de-thr-navpanel-hidden', !isExpand),
 				Cfg.linksOver);
 		}
 	},
@@ -641,7 +644,7 @@ const thrNavPanel = {
 		return this._findCurrentThread();
 	},
 	_handleClick(e) {
-		const el = fixEventEl(e.target);
+		const el = nav.fixEventEl(e.target);
 		switch((el.tagName.toLowerCase() === 'svg' ? el.parentNode : el).id) {
 		case 'de-thr-navup':
 			scrollTo(deWindow.pageXOffset, deWindow.pageYOffset +

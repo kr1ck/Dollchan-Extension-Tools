@@ -28,13 +28,23 @@ function initNavFuncs() {
 	const isChrome = isWebkit && ua.includes('Chrome/');
 	const isSafari = isWebkit && !isChrome;
 	const hasPrestoStorage = !!prestoStorage && !ua.includes('Opera Mobi');
-	const hasNewGM = /* global GM */ typeof GM !== 'undefined' && typeof GM.xmlHttpRequest === 'function';
 	const canUseFetch = 'AbortController' in deWindow; // Firefox 57+, Chrome 66+, Safari 11.1+
-	let scriptHandler, hasWebStorage = false;
-	let hasOldGM = false;
+	const hasNewGM = typeof GM !== 'undefined' && typeof GM.xmlHttpRequest === 'function';
+	let hasGMXHR, hasOldGM, hasWebStorage, scriptHandler;
 	if(hasNewGM) {
-		scriptHandler = GM.info ? `${ GM.info.scriptHandler } ${ GM.info.version }` : 'Greasemonkey';
+		const inf = GM.info;
+		const handlerName = inf ? inf.scriptHandler : '';
+		if(handlerName === 'FireMonkey') {
+			hasGMXHR = false;
+			hasOldGM = true;
+		} else {
+			hasGMXHR = typeof GM.xmlHttpRequest === 'function';
+			hasOldGM = false;
+		}
+		hasWebStorage = false;
+		scriptHandler = inf ? handlerName + ' ' + inf.version : 'Greasemonkey';
 	} else {
+		hasGMXHR = typeof GM_xmlhttpRequest === 'function';
 		try {
 			hasOldGM = (typeof GM_setValue === 'function') &&
 				(!isChrome || !GM_setValue.toString().includes('not supported'));
@@ -51,18 +61,6 @@ function initNavFuncs() {
 	if(!('requestAnimationFrame' in deWindow)) { // XXX: Opera Presto
 		deWindow.requestAnimationFrame = fn => setTimeout(fn, 0);
 	}
-	if(!('remove' in Element.prototype)) { // XXX: Opera Presto
-		Element.prototype.remove = function() {
-			const el = this.parentNode;
-			if(el) {
-				el.removeChild(this);
-			}
-		};
-	}
-	const nlProto = NodeList.prototype;
-	$each = 'forEach' in nlProto ?
-		(els, cb) => nlProto.forEach.call(els, cb) :
-		(els, cb) => aProto.forEach.call(els, cb);
 	let needFileHack = false;
 	try {
 		new File([''], '');
@@ -72,7 +70,7 @@ function initNavFuncs() {
 	} catch(err) {
 		needFileHack = true;
 	}
-	if(needFileHack && FormData) { // XXX: Firefox < 39, Chrome < 50, Safari < 11
+	if(needFileHack && FormData) { // XXX: Firefox < 39, Chrome < 50, Safari < 11 - FormData hack
 		const OrigFormData = FormData;
 		const origAppend = FormData.prototype.append;
 		FormData = function FormData(form) {
@@ -81,7 +79,7 @@ function initNavFuncs() {
 				if(value instanceof Blob && 'name' in value && fileName === null) {
 					return origAppend.call(this, name, value, value.name);
 				}
-				return origAppend.apply(this, arguments);
+				return origAppend.apply(this, [name, value, fileName]);
 			};
 			return rv;
 		};
@@ -93,26 +91,25 @@ function initNavFuncs() {
 	}
 	nav = {
 		canUseFetch,
-		canUseFetchBlob  : canUseFetch && !(isChrome && scriptHandler === 'WebExtension'),
 		canUseNativeXHR  : true,
 		firefoxVer       : isFirefox ? +(ua.match(/Firefox\/(\d+)/) || [0, 0])[1] : 0,
-		fixLink          : isSafari ? getAbsLink : url => url,
 		hasGlobalStorage : hasOldGM || hasNewGM || hasWebStorage || hasPrestoStorage,
-		hasGMXHR         : (typeof GM_xmlhttpRequest === 'function') ||
-			hasNewGM && (typeof GM.xmlHttpRequest === 'function'),
+		hasGMXHR,
 		hasNewGM,
 		hasOldGM,
 		hasPrestoStorage,
 		hasWebStorage,
-		isChrome,
-		isESNext : typeof deMainFuncOuter === 'undefined',
+		isESNext         : typeof deMainFuncOuter === 'undefined',
 		isFirefox,
-		isMsEdge : ua.includes('Edge/'),
-		isPresto : !!deWindow.opera,
+		isMsEdge         : ua.includes('Edge/'),
+		isMobile         : /Android|iPhone/i.test(ua),
+		isPresto         : !!deWindow.opera,
 		isSafari,
+		isTampermonkey   : scriptHandler.startsWith('Tampermonkey'),
+		isViolentmonkey  : scriptHandler.startsWith('Violentmonkey'),
 		isWebkit,
 		scriptHandler,
-		ua       : navigator.userAgent + (isFirefox ? ` [${ navigator.buildID }]` : ''),
+		ua               : ua + (isFirefox ? ` [${ navigator.buildID }]` : ''),
 
 		get canPlayMP3() {
 			const value = !!new Audio().canPlayType('audio/mpeg;');
@@ -145,19 +142,28 @@ function initNavFuncs() {
 		},
 		get viewportHeight() {
 			const value = doc.compatMode && doc.compatMode === 'CSS1Compat' ?
-				() => doc.documentElement.clientHeight : () => docBody.clientHeight;
+				() => doc.documentElement.clientHeight : () => doc.body.clientHeight;
 			Object.defineProperty(this, 'viewportHeight', { value });
 			return value;
 		},
 		get viewportWidth() {
 			const value = doc.compatMode && doc.compatMode === 'CSS1Compat' ?
-				() => doc.documentElement.clientWidth : () => docBody.clientWidth;
+				() => doc.documentElement.clientWidth : () => doc.body.clientWidth;
 			Object.defineProperty(this, 'viewportWidth', { value });
 			return value;
 		},
-		getUnsafeUint8Array(data, i, len) { // XXX: Old Greasemonkeys
+		// XXX: Opera Presto - hack for SVG events
+		get fixEventEl() {
+			const value = !this.isPresto ? el => el :
+				el => el?.correspondingUseElement?.ownerSVGElement || el;
+			Object.defineProperty(this, 'fixEventEl', { value });
+			return value;
+		},
+		// XXX: Firefox + old Greasemonkey - hack to prevent
+		//    'Accessing TypedArray data over Xrays is slow, and forbidden' errors
+		getUnsafeUint8Array(data, i, len) {
 			let Ctor = Uint8Array;
-			if(nav.isFirefox && nav.hasOldGM) {
+			if(this.isFirefox && (this.hasOldGM || this.isTampermonkey)) {
 				try {
 					if(!(new Uint8Array(data) instanceof Uint8Array)) {
 						Ctor = unsafeWindow.Uint8Array;
@@ -173,10 +179,10 @@ function initNavFuncs() {
 			}
 			throw new Error();
 		},
-		getUnsafeDataView(data, offset) { // XXX: Old Greasemonkeys
+		getUnsafeDataView(data, offset) { // XXX: Firefox + old Greasemonkey
 			const value = new DataView(data, offset || 0);
-			return !nav.isFirefox || !nav.hasOldGM || (value instanceof DataView) ? value :
-				new unsafeWindow.DataView(data, offset || 0);
+			return this.isFirefox && this.hasOldGM && !(value instanceof DataView) ?
+				new unsafeWindow.DataView(data, offset || 0) : value;
 		}
 	};
 }

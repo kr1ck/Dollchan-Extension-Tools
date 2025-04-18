@@ -12,6 +12,7 @@ class PostForm {
 		this.pArea = [];
 		this.pForm = null;
 		this.qArea = null;
+		this.quotedText = '';
 		this._pBtn = [];
 		const qOeForm = 'form[name="oeform"], form[action*="paint"]';
 		this.oeForm = oeForm || $q(qOeForm);
@@ -20,8 +21,9 @@ class PostForm {
 				ajaxLoad(aib.getThrUrl(aib.b, Thread.first.num), false).then(loadedDoc => {
 					const form = $q(aib.qForm, loadedDoc);
 					const oeForm = $q(qOeForm, loadedDoc);
-					pr = new PostForm(form && doc.adoptNode(form), oeForm && doc.adoptNode(oeForm), true);
-				}, () => (pr = new PostForm(null, null, true)));
+					postform = new PostForm(form && doc.adoptNode(form),
+						oeForm && doc.adoptNode(oeForm), true);
+				}, () => (postform = new PostForm(null, null, true)));
 			} else {
 				this.form = null;
 			}
@@ -54,18 +56,18 @@ class PostForm {
 		this._initTextarea();
 		this.addMarkupPanel();
 		this.setPlaceholders();
-		this.updateLanguage();
 		this._initCaptcha();
 		this._initSubmit();
+		aib.updateSubmitBtn(this.subm);
 		if(Cfg.ajaxPosting) {
 			this._initAjaxPosting();
 		}
 		if(Cfg.addSageBtn && this.mail) {
-			PostForm.hideField($parent(this.mail, 'LABEL') || this.mail);
+			PostForm.hideField(this.mail.closest('label') || this.mail);
 			setTimeout(() => this.toggleSage(), 0);
 		}
 		if(Cfg.noPassword && this.passw) {
-			$hide($qParent(this.passw, aib.qFormTr));
+			$hide(this.passw.closest(aib.qFormTr));
 		}
 		if(Cfg.noName && this.name) {
 			PostForm.hideField(this.name);
@@ -81,26 +83,32 @@ class PostForm {
 		}
 	}
 	static hideField(el) {
-		const next = el.nextElementSibling;
-		$toggle(next && (next.style.display !== 'none') ||
-			el.previousElementSibling ? el : $qParent(el, aib.qFormTr));
+		const els = el.parentNode.children;
+		let hideTr = true;
+		for(let i = 0, len = els.length; i < len; ++i) {
+			if(els[i] !== el && els[i].style.display !== 'none') {
+				hideTr = false;
+				break;
+			}
+		}
+		$toggle(hideTr ? el.closest(aib.qFormTr) : el);
 	}
-	static setUserName() {
+	static async setUserName() {
 		const el = $q('input[info="nameValue"]');
 		if(el) {
-			saveCfg('nameValue', el.value);
+			await CfgSaver.save('nameValue', el.value);
 		}
-		pr.name.value = Cfg.userName ? Cfg.nameValue : '';
+		postform.name.value = Cfg.userName ? Cfg.nameValue : '';
 	}
-	static setUserPassw() {
+	static async setUserPassw() {
 		if(!Cfg.userPassw) {
 			return;
 		}
 		const el = $q('input[info="passwValue"]');
 		if(el) {
-			saveCfg('passwValue', el.value);
+			await CfgSaver.save('passwValue', el.value);
 		}
-		const value = pr.passw.value = Cfg.passwValue;
+		const value = postform.passw.value = Cfg.passwValue;
 		for(const { passEl } of DelForm) {
 			if(passEl) {
 				passEl.value = value;
@@ -117,8 +125,8 @@ class PostForm {
 	get sageBtn() {
 		const value = $aEnd(this.subm, '<span id="de-sagebtn"><svg class="de-btn-sage">' +
 			'<use xlink:href="#de-symbol-post-sage"/></svg></span>');
-		value.onclick = () => {
-			toggleCfg('sageReply');
+		value.onclick = async () => {
+			await toggleCfg('sageReply');
 			this.toggleSage();
 		};
 		Object.defineProperty(this, 'sageBtn', { value });
@@ -130,16 +138,15 @@ class PostForm {
 	addMarkupPanel() {
 		let el = $id('de-txt-panel');
 		if(!Cfg.addTextBtns) {
-			$del(el);
+			aib.removeMarkupButtons(el);
 			return;
 		}
 		if(!el) {
 			el = $add('<span id="de-txt-panel"></span>');
-			el.addEventListener('click', this);
-			el.addEventListener('mouseover', this);
+			['click', 'mouseover'].forEach(e => el.addEventListener(e, this));
 		}
 		el.style.cssFloat = Cfg.txtBtnsLoc ? 'none' : 'right';
-		$after(Cfg.txtBtnsLoc ? $id('de-resizer-text') || this.txta : this.subm, el);
+		aib.insertMarkupButtons(this, el);
 		const id = ['bold', 'italic', 'under', 'strike', 'spoil', 'code', 'sup', 'sub'];
 		const val = ['B', 'i', 'U', 'S', '%', 'C', 'x\u00b2', 'x\u2082'];
 		const mode = Cfg.addTextBtns;
@@ -182,9 +189,12 @@ class PostForm {
 			this.setReply(false, !aib.t || Cfg.addPostForm > 1);
 		}
 	}
+	getSelectedText() {
+		this.quotedText = deWindow.getSelection().toString();
+	}
 	handleEvent(e) {
 		let el = e.target;
-		if(el.tagName !== 'DIV') {
+		if(el.tagName.toLowerCase() !== 'div') {
 			el = el.parentNode;
 		}
 		const { id } = el;
@@ -193,7 +203,7 @@ class PostForm {
 		}
 		if(e.type === 'mouseover') {
 			if(id === 'de-btn-quote') {
-				quotedText = deWindow.getSelection().toString();
+				this.getSelectedText();
 			}
 			let key = -1;
 			if(HotKeys.enabled) {
@@ -208,32 +218,31 @@ class PostForm {
 			KeyEditListener.setTitle(el, key);
 			return;
 		}
-		const txtaEl = pr.txta;
+		const txtaEl = postform.txta;
 		const { selectionStart: start, selectionEnd: end } = txtaEl;
 		const quote = Cfg.spacedQuote ? '> ' : '>';
 		if(id === 'de-btn-quote') {
-			insertText(txtaEl, quote + (start === end ? quotedText : txtaEl.value.substring(start, end))
-				.replace(/^[\r\n]|[\r\n]+$/g, '').replace(/\n/gm, '\n' + quote) + '\n');
-			quotedText = '';
+			insertText(txtaEl, quote + (start === end ? this.quotedText : txtaEl.value.substring(start, end))
+				.replace(/^[\r\n]|[\r\n]+$/g, '')
+				.replace(/\n/gm, '\n' + quote) + (this.quotedText ? '\n' : ''));
+			this.quotedText = '';
 		} else {
-			const { scrtop } = txtaEl;
-			const val = PostForm._wrapText(el.getAttribute('de-tag'), txtaEl.value.substring(start, end));
+			const { scrtop, value } = txtaEl;
+			const val = PostForm._wrapText(el.getAttribute('de-tag'), value.substring(start, end));
 			const len = start + val[0];
-			txtaEl.value = txtaEl.value.substr(0, start) + val[1] + txtaEl.value.substr(end);
+			txtaEl.value = value.substr(0, start) + val[1] + value.substr(end);
 			txtaEl.setSelectionRange(len, len);
 			txtaEl.focus();
 			txtaEl.scrollTop = scrtop;
 		}
-		$pd(e);
+		e.preventDefault();
 		e.stopPropagation();
 	}
-	refreshCap(isErr = false) {
-		if(this.cap) {
-			this.cap.refreshCaptcha(isErr, isErr, this.tNum);
-		}
+	refreshCap(isError = false) {
+		this.cap?.refreshCaptcha(isError, isError, this.tNum);
 	}
 	setPlaceholders() {
-		if(aib.kusaba || !aib.multiFile && Cfg.fileInputs === 2) {
+		if(aib.formHeaders || !aib.multiFile && Cfg.fileInputs === 2) {
 			return;
 		}
 		this._setPlaceholder('name');
@@ -246,10 +255,10 @@ class PostForm {
 	}
 	setReply(isQuick, needToHide) {
 		if(isQuick) {
-			$after(this.qArea.firstChild, this.pForm);
+			this.qArea.firstChild.after(this.pForm);
 		} else {
-			$after(this.pArea[+this.isBottom], this.qArea);
-			$after(this._pBtn[+this.isBottom], this.pForm);
+			this.pArea[+this.isBottom].after(this.qArea);
+			this._pBtn[+this.isBottom].after(this.pForm);
 		}
 		this.isHidden = needToHide;
 		$toggle(this.qArea, isQuick);
@@ -271,7 +280,7 @@ class PostForm {
 			this.setReply(false, false);
 		}
 		if(e) {
-			$pd(e);
+			e.preventDefault();
 		}
 	}
 	showQuickReply(post, pNum, isCloseReply, isNumClick, isNoLink = false) {
@@ -280,13 +289,13 @@ class PostForm {
 			this.setReply(true, false);
 			$q('a', this._pBtn[+this.isBottom]).className =
 				`de-abtn de-parea-btn-${ aib.t ? 'reply' : 'thr' }`;
-		} else if(isCloseReply && !quotedText && post.wrap.nextElementSibling === this.qArea) {
+		} else if(isCloseReply && !this.quotedText && post.wrap.nextElementSibling === this.qArea) {
 			this.closeReply();
 			return;
 		}
-		$after(post.wrap, this.qArea);
+		post.wrap.after(this.qArea);
 		if(this.qArea.classList.contains('de-win')) {
-			updateWinZ(this.qArea.style);
+			updateWinZ(this.qArea);
 		}
 		const qNum = post.thr.num;
 		if(!aib.t) {
@@ -306,8 +315,8 @@ class PostForm {
 			isNumClick ? `>>${ pNum }${ isOnNewLine ? '\n' : '' }` :
 			(isOnNewLine ? '' : '\n') +
 				(this.lastQuickPNum === pNum && txt.includes('>>' + pNum) ? '' : `>>${ pNum }\n`);
-		const quote = !quotedText ? '' : `${ quotedText.replace(/^[\r\n]|[\r\n]+$/g, '')
-			.replace(/(^|\n)(.)/gm, `$1>${ Cfg.spacedQuote ? ' ' : '' }$2`) }\n`;
+		const quote = this.quotedText ? `${ this.quotedText.replace(/^[\r\n]|[\r\n]+$/g, '')
+			.replace(/(^|\n)(.)/gm, `$1>${ Cfg.spacedQuote ? ' ' : '' }$2`) }\n` : '';
 		insertText(this.txta, link + quote);
 		const winTitle = post.thr.op.title.trim();
 		$q('.de-win-title', this.qArea).textContent =
@@ -320,16 +329,12 @@ class PostForm {
 		}
 		const isSage = Cfg.sageReply;
 		this.sageBtn.style.opacity = isSage ? '1' : '.3';
-		this.sageBtn.title = isSage ? 'SAGE!' : Lng.noSage[lang];
+		this.sageBtn.title = isSage ? Lng.disableSage[lang] : Lng.enableSage[lang];
 		if(this.mail.type === 'text') {
 			this.mail.value = isSage ? 'sage' : aib._4chan ? 'noko' : '';
 		} else {
 			this.mail.checked = isSage;
 		}
-	}
-	updateLanguage() {
-		this.txta.title = Lng.pasteImage[lang];
-		aib.updateSubmitBtn(this.subm);
 	}
 	updatePAreaBtns() {
 		const txt = 'de-abtn de-parea-btn-';
@@ -353,7 +358,9 @@ class PostForm {
 			const str = `${ m[1] }[${ tag }]${ m[2] }[/${ tag }]${ m[3] }`;
 			return [!m[2].length ? m[1].length + tag.length + 2 : str.length, str];
 		}
-		let m, rv = '', i = 0;
+		let m;
+		let rv = '';
+		let i = 0;
 		const arr = text.split('\n');
 		for(let len = arr.length; i < len; ++i) {
 			m = arr[i].match(/^(\s*)(.*?)(\s*)$/);
@@ -366,13 +373,18 @@ class PostForm {
 	_initAjaxPosting() {
 		let el;
 		if(aib.qFormRedir && (el = $q(aib.qFormRedir, this.form))) {
-			aib.disableRedirection(el);
+			$hide(el.closest(aib.qFormTr));
+			el.checked = true;
 		}
-		this.form.onsubmit = e => {
-			$pd(e);
+		this.form.onsubmit = async e => {
+			e.preventDefault();
 			$popup('upload', Lng.sending[lang], true);
-			html5Submit(this.form, this.subm, true).then(checkUpload)
-				.catch(err => $popup('upload', getErrorMessage(err)));
+			try {
+				const data = await html5Submit(this.form, this.subm, true);
+				await checkSubmit(data);
+			} catch(err) {
+				showSubmitError(err);
+			}
 		};
 	}
 	_initCaptcha() {
@@ -399,7 +411,7 @@ class PostForm {
 			return;
 		}
 		if(aib.fixFileInputs) {
-			aib.fixFileInputs($qParent(fileEl, aib.qFormTd));
+			aib.fixFileInputs(fileEl.closest(aib.qFormTd));
 		}
 		this.files = new Files(this, $q(aib.qFormFile, this.form));
 		// We need to clear file inputs in case if session was restored.
@@ -408,18 +420,8 @@ class PostForm {
 	}
 	_initSubmit() {
 		this.subm.addEventListener('click', e => {
-			/* if(aib.makaba && !aib._2channel && !Cfg.altCaptcha) {
-				if(!this.cap.isSubmitWait) {
-					$pd(e);
-					$popup('upload', 'reCaptcha...', true);
-					this.cap.isSubmitWait = true;
-					this.refreshCap();
-					return;
-				}
-				this.cap.isSubmitWait = false;
-			} */
 			if(Cfg.warnSubjTrip && this.subj && /#.|##./.test(this.subj.value)) {
-				$pd(e);
+				e.preventDefault();
 				$popup('upload', Lng.subjHasTrip[lang]);
 				return;
 			}
@@ -441,22 +443,19 @@ class PostForm {
 			if(Cfg.ajaxPosting) {
 				$popup('upload', Lng.checking[lang], true);
 			}
-			if(this.video && (val = this.video.value) && (val = val.match(Videos.ytReg))) {
+			if(this.video && (val = this.video.value?.match(Videos.ytReg))) {
 				this.video.value = 'http://www.youtube.com/watch?v=' + val[1];
 			}
 			if(this.isQuick) {
 				$hide(this.pForm);
 				$hide(this.qArea);
-				$after(this._pBtn[+this.isBottom], this.pForm);
+				this._pBtn[+this.isBottom].after(this.pForm);
 			}
 			updater.pauseUpdater();
 		});
 	}
 	_initTextarea() {
 		const el = this.txta;
-		if(aib.dobrochan) {
-			el.removeAttribute('id');
-		}
 		el.classList.add('de-textarea');
 		const { style } = el;
 		style.setProperty('width', Cfg.textaWidth + 'px', 'important');
@@ -470,19 +469,15 @@ class PostForm {
 			}
 		});
 		// Add image from clipboard to file inputs on Ctrl+V
-		el.addEventListener('paste', e => {
-			if('clipboardData' in e) {
-				for(const item of e.clipboardData.items) {
-					if(item.kind === 'file') {
-						const inputs = this.files._inputs;
-						for(let i = 0, len = inputs.length; i < len; ++i) {
-							const input = inputs[i];
-							if(!input.hasFile) {
-								const file = item.getAsFile();
-								input._addUrlFile(URL.createObjectURL(file), file);
-								break;
-							}
-						}
+		el.addEventListener('paste', async e => {
+			const files = e?.clipboardData?.files;
+			for(const file of files) {
+				const inputs = this.files._inputs;
+				for(let i = 0, len = inputs.length; i < len; ++i) {
+					const input = inputs[i];
+					if(!input.hasFile) {
+						await input.addUrlFile(URL.createObjectURL(file), file);
+						break;
 					}
 				}
 			}
@@ -494,8 +489,8 @@ class PostForm {
 				const { width, height } = s;
 				s.setProperty('width', width + 'px', 'important');
 				s.setProperty('height', height + 'px', 'important');
-				saveCfg('textaWidth', parseInt(width, 10));
-				saveCfg('textaHeight', parseInt(height, 10));
+				/* await */ CfgSaver.save('textaWidth', parseInt(width, 10),
+					'textaHeight', parseInt(height, 10));
 			});
 			return;
 		}
@@ -505,9 +500,8 @@ class PostForm {
 			handleEvent(e) {
 				switch(e.type) {
 				case 'mousedown':
-					docBody.addEventListener('mousemove', this);
-					docBody.addEventListener('mouseup', this);
-					$pd(e);
+					['mousemove', 'mouseup'].forEach(e => doc.body.addEventListener(e, this));
+					e.preventDefault();
 					return;
 				case 'mousemove': {
 					const cr = this._el.getBoundingClientRect();
@@ -516,22 +510,16 @@ class PostForm {
 					return;
 				}
 				default: // mouseup
-					docBody.removeEventListener('mousemove', this);
-					docBody.removeEventListener('mouseup', this);
-					saveCfg('textaWidth', parseInt(this._elStyle.width, 10));
-					saveCfg('textaHeight', parseInt(this._elStyle.height, 10));
+					['mousemove', 'mouseup'].forEach(e => doc.body.removeEventListener(e, this));
+					/* await */ CfgSaver.save('textaWidth', parseInt(this._elStyle.width, 10),
+						'textaHeight', parseInt(this._elStyle.height, 10));
 				}
 			}
 		});
 	}
 	_makeHideableContainer() {
-		this.pForm = $add('<div id="de-pform" class="de-win-body"></div>');
-		if(this.form) {
-			this.pForm.appendChild(this.form);
-		}
-		if(this.oeForm) {
-			this.pForm.appendChild(this.oeForm);
-		}
+		(this.pForm = $add('<div id="de-pform" class="de-win-body"></div>'))
+			.append(this.form || '', this.oeForm || '');
 		const html = '<div class="de-parea"><div>[<a href="#"></a>]</div><hr></div>';
 		this.pArea = [
 			$bBegin(DelForm.first.el, html),
@@ -562,25 +550,25 @@ class PostForm {
 		const buttons = $q('.de-win-buttons', this.qArea);
 		buttons.onmouseover = ({ target }) => {
 			const el = target.parentNode;
-			switch(fixEventEl(target).classList[0]) {
+			switch(nav.fixEventEl(target).classList[0]) {
 			case 'de-win-btn-clear': el.title = Lng.clearForm[lang]; break;
 			case 'de-win-btn-close': el.title = Lng.closeReply[lang]; break;
 			case 'de-win-btn-toggle': el.title = Cfg.replyWinDrag ? Lng.underPost[lang] : Lng.makeDrag[lang];
 			}
 		};
 		const [clearBtn, toggleBtn, closeBtn] = [...buttons.children];
-		clearBtn.onclick = () => {
-			saveCfg('sageReply', 0);
+		clearBtn.onclick = async () => {
+			await CfgSaver.save('sageReply', 0);
 			this.toggleSage();
 			this.files.clearInputs();
 			[this.txta, this.name, this.mail, this.subj, this.video, this.cap && this.cap.textEl].forEach(
 				el => el && (el.value = ''));
 		};
-		toggleBtn.onclick = () => {
-			toggleCfg('replyWinDrag');
+		toggleBtn.onclick = async () => {
+			await toggleCfg('replyWinDrag');
 			if(Cfg.replyWinDrag) {
 				this.qArea.className = aib.cReply + ' de-win';
-				updateWinZ(this.qArea.style);
+				updateWinZ(this.qArea);
 			} else {
 				this.qArea.className = aib.cReply + ' de-win-inpost';
 				this.txta.focus();
@@ -591,12 +579,16 @@ class PostForm {
 	_setPlaceholder(val) {
 		const el = val === 'cap' ? this.cap.textEl : this[val];
 		if(el) {
-			toggleAttr(el, 'placeholder', Lng[val][lang], aib.multiFile || Cfg.fileInputs !== 2);
+			if(aib.multiFile || Cfg.fileInputs !== 2) {
+				el.placeholder = Lng[val][lang];
+			} else {
+				el.removeAttribute('placeholder');
+			}
 		}
 	}
 	_toggleQuickReply(tNum) {
 		if(this.oeForm) {
-			$del($q('input[name="oek_parent"]', this.oeForm));
+			$q('input[name="oek_parent"]', this.oeForm)?.remove();
 			if(tNum) {
 				this.oeForm.insertAdjacentHTML('afterbegin',
 					`<input type="hidden" value="${ tNum }" name="oek_parent">`);
@@ -606,7 +598,7 @@ class PostForm {
 			if(aib.changeReplyMode && tNum !== this.tNum) {
 				aib.changeReplyMode(this.form, tNum);
 			}
-			$del($q(`input[name="${ aib.formParent }"]`, this.form));
+			$q(`input[name="${ aib.formParent }"]`, this.form)?.remove();
 			if(tNum) {
 				this.form.insertAdjacentHTML('afterbegin',
 					`<input type="hidden" name="${ aib.formParent }" value="${ tNum }">`);

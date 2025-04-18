@@ -5,8 +5,7 @@
 // Gets data from the global storage
 async function getStored(id) {
 	if(nav.hasNewGM) {
-		const value = await GM.getValue(id);
-		return value;
+		return await GM.getValue(id);
 	} else if(nav.hasOldGM) {
 		return GM_getValue(id);
 	} else if(nav.hasWebStorage) {
@@ -32,22 +31,26 @@ function setStored(id, value) {
 	} else if(nav.hasOldGM) {
 		GM_setValue(id, value);
 	} else if(nav.hasWebStorage) {
-		const obj = {};
-		obj[id] = value;
-		chrome.storage.sync.set(obj, () => {
-			if(chrome.runtime.lastError) {
-				// Store into storage.local if the storage.sync limit is exceeded
-				chrome.storage.local.set(obj, emptyFn);
-				chrome.storage.sync.remove(id, emptyFn);
-			} else {
-				chrome.storage.local.remove(id, emptyFn);
-			}
+		return new Promise(resolve => {
+			const obj = {};
+			obj[id] = value;
+			chrome.storage.sync.set(obj, () => {
+				if(chrome.runtime.lastError) {
+					// Store into storage.local if the storage.sync limit is exceeded
+					chrome.storage.local.set(obj, Function.prototype);
+					chrome.storage.sync.remove(id, Function.prototype);
+				} else {
+					chrome.storage.local.remove(id, Function.prototype);
+				}
+				resolve();
+			});
 		});
 	} else if(nav.hasPrestoStorage) {
 		prestoStorage.setItem(id, value);
 	} else {
 		locStorage[id] = value;
 	}
+	return null;
 }
 
 // Removes data from the global storage
@@ -58,7 +61,7 @@ function delStored(id) {
 	} else if(nav.hasOldGM) {
 		GM_deleteValue(id);
 	} else if(nav.hasWebStorage) {
-		chrome.storage.sync.remove(id, emptyFn);
+		chrome.storage.sync.remove(id, Function.prototype);
 	} else if(nav.hasPrestoStorage) {
 		prestoStorage.removeItem(id);
 	} else {
@@ -71,40 +74,82 @@ async function getStoredObj(id) {
 	return JSON.parse(await getStored(id) || '{}') || {};
 }
 
-// Replaces the domain config with an object. Removes the domain config, if there is no object.
-function saveCfgObj(dm, obj) {
-	getStoredObj('DESU_Config').then(val => {
-		if(obj) {
-			val[dm] = obj;
-		} else {
-			delete val[dm];
-		}
-		setStored('DESU_Config', JSON.stringify(val));
-	});
-}
+// == CONFIG DATA ============================================================================================
 
-// Saves the value for a particular config option
-function saveCfg(id, val) {
-	if(Cfg[id] !== val) {
-		Cfg[id] = val;
-		saveCfgObj(aib.dm, Cfg);
-	}
-}
+// Asynchronous saving of config. Fixes a race condition when saving from different browser tabs.
+const CfgSaver = {
+	// Saves enumerated options and values
+	async save(...args) {
+		let isChanged = false;
+		for(let i = 0; i < args.length; i += 2) {
+			const id = args[i];
+			const val = args[i + 1];
+			if(Cfg[id] !== val) {
+				Cfg[id] = val;
+				isChanged = true;
+			}
+		}
+		if(isChanged) {
+			await this.saveObj(aib.domain, loadedCfg => {
+				for(let i = 0; i < args.length; i += 2) {
+					loadedCfg[args[i]] = args[i + 1];
+				}
+				return loadedCfg;
+			});
+		}
+	},
+	// Saves all domain options as an object
+	async saveObj(domain, fn) {
+		if(this._isBusy) {
+			await new Promise((resolve, reject) => {
+				this._queue.push([domain, fn, resolve, reject]);
+			});
+			return;
+		}
+		this._isBusy = true;
+		await this.saveObjHelper(domain, fn);
+		if(this._queue.length > 0) {
+			while(this._queue.length > 0) {
+				const [[qDomain, qFn, resolve, reject]] = this._queue.splice(0, 1);
+				try {
+					await this.saveObjHelper(qDomain, qFn);
+					resolve();
+				} catch(err) {
+					reject(err);
+				}
+			}
+		}
+		this._isBusy = false;
+	},
+	async saveObjHelper(domain, fn) {
+		const val = await getStoredObj('DESU_Config');
+		const res = fn(val[domain]);
+		if(res) {
+			val[domain] = res;
+		} else {
+			delete val[domain];
+		}
+		const rv = setStored('DESU_Config', JSON.stringify(val));
+		// Violentmonkey bug: GM.setValue promise is not fulfilled.
+		if(rv && !nav.isViolentmonkey) {
+			await rv;
+		}
+	},
+
+	_isBusy : false,
+	_queue  : []
+};
 
 // Toggles a particular config option (1|0)
-function toggleCfg(id) {
-	saveCfg(id, +!Cfg[id]);
-}
-
-function readData() {
-	return Promise.all([readFavorites(), readCfg()]);
+async function toggleCfg(id) {
+	await CfgSaver.save(id, +!Cfg[id]);
 }
 
 // Config initialization, checking for Dollchan update.
 async function readCfg() {
 	let obj;
 	const val = await getStoredObj('DESU_Config');
-	if(!(aib.dm in val) || $isEmpty(obj = val[aib.dm])) {
+	if(!(aib.domain in val) || $isEmpty(obj = val[aib.domain])) {
 		const isGlobal = nav.hasGlobalStorage && !!val.global;
 		obj = isGlobal ? val.global : {};
 		if(isGlobal) {
@@ -113,19 +158,17 @@ async function readCfg() {
 		}
 	}
 	defaultCfg.captchaLang = aib.captchaLang;
-	defaultCfg.language = +!String(navigator.language).toLowerCase().startsWith('ru');
+	const browserLang = String(navigator.language).toLowerCase();
+	defaultCfg.language =
+		browserLang.startsWith('ru') ? 0 :
+		browserLang.startsWith('en') ? 1 :
+		browserLang.startsWith('uk') ? 2 : defaultCfg.language;
 	Cfg = Object.assign(Object.create(defaultCfg), obj);
 	if(!Cfg.timeOffset) {
 		Cfg.timeOffset = '+0';
 	}
 	if(!Cfg.timePattern) {
 		Cfg.timePattern = aib.timePattern;
-	}
-	if(aib.prot !== 'http:') { // Vocaroo doesn't support https
-		Cfg.addVocaroo = 0;
-	}
-	if(aib.dobrochan && !Cfg.useDobrAPI) {
-		aib.JsonBuilder = null;
 	}
 	if(!('FormData' in deWindow)) {
 		Cfg.ajaxPosting = 0;
@@ -159,11 +202,8 @@ async function readCfg() {
 	if(!Cfg.stats) {
 		Cfg.stats = { view: 0, op: 0, reply: 0 };
 	}
-	if(Cfg.addYouTube !== undefined) {
-		Cfg.embedYTube = Cfg.addYouTube === 0 ? 0 : Cfg.addYouTube === 1 ? 2 : 1;
-		delete Cfg.addYouTube;
-	}
 	lang = Cfg.language;
+	val[aib.domain] = Cfg;
 	if(val.commit !== commit && !localData) {
 		if(doc.readyState === 'loading') {
 			doc.addEventListener('DOMContentLoaded', () => setTimeout(showDonateMsg, 1e3));
@@ -180,22 +220,24 @@ async function readCfg() {
 			} else {
 				$popup('updavail', html);
 			}
-		}, emptyFn);
+		}, Function.prototype);
 	}
 }
 
-// Initialize of hidden and favorites. Run spells.
+// == POSTS DATA =============================================================================================
+
+// Initialization of hidden and favorites. Run spells.
 function readPostsData(firstPost, favObj) {
 	let sVis = null;
 	try {
-		// Get hidden posts and threads that cached in current session
+		// Get hidden posts and threads from current session
 		const str = aib.t ? sesStorage['de-hidden-' + aib.b + aib.t] : null;
 		if(str) {
 			const json = JSON.parse(str);
 			if(json.hash === (Cfg.hideBySpell ? Spells.hash : 0) &&
 				pByNum.has(json.lastNum) && pByNum.get(json.lastNum).count === json.lastCount
 			) {
-				sVis = json.data && json.data[0] instanceof Array ? json.data : null;
+				sVis = json.data?.[0] instanceof Array ? json.data : null;
 			}
 		}
 	} catch(err) {
@@ -204,38 +246,58 @@ function readPostsData(firstPost, favObj) {
 	if(!firstPost) {
 		return;
 	}
-	let updateFav = null;
-	const favBrd = (aib.host in favObj) && (aib.b in favObj[aib.host]) ? favObj[aib.host][aib.b] : {};
+
+	let updatedFav = null;
+	const favBoardObj = favObj[aib.host]?.[aib.b] || {};
 	const spellsHide = Cfg.hideBySpell;
 	const maybeSpells = new Maybe(SpellsRunner);
-
-	// Search existed posts in stored data
 	for(let post = firstPost; post; post = post.next) {
 		const { num } = post;
 		// Mark favorite threads, update favorites data
-		if(post.isOp && (num in favBrd)) {
-			const f = favBrd[num];
-			const { thr } = post;
+		if(post.isOp && (num in favBoardObj)) {
+			let newCount = 0;
+			let youCount = 0;
 			post.toggleFavBtn(true);
-			post.thr.isFav = true;
-			if(aib.t) {
-				f.cnt = thr.pcount;
-				f.new = f.you = 0;
-				if(Cfg.markNewPosts && f.last) {
-					let lastPost = pByNum.get(+f.last.match(/\d+/));
-					if(lastPost) {
-						// Mark all new posts after last viewed post
-						while((lastPost = lastPost.next)) {
-							Post.addMark(lastPost.el, true);
+			const { thr } = post;
+			thr.isFav = true;
+			const isThrActive = aib.t && !doc.hidden;
+			const entry = favBoardObj[num];
+			let _post = pByNum.get(+entry.last.match(/\d+/));
+			if(_post) {
+				while((_post = _post.nextInThread)) {
+					if(Cfg.markNewPosts) {
+						Post.addMark(_post.el, true);
+					}
+					if(!isThrActive) {
+						newCount++;
+						if(isPostRefToYou(_post.el)) {
+							youCount++;
 						}
 					}
 				}
-				f.last = aib.anchor + thr.last.num;
-			} else {
-				f.new = thr.pcount - f.cnt;
+			} else if(!aib.t) {
+				newCount = entry.new + thr.postsCount - entry.cnt;
+				_post = post;
+				while((_post = _post.nextInThread)) {
+					if(Cfg.markNewPosts) {
+						Post.addMark(_post.el, true);
+					}
+					if(isPostRefToYou(_post.el)) {
+						youCount++;
+					}
+				}
 			}
-			updateFav = [aib.host, aib.b, aib.t, [thr.pcount, thr.last.num], 'update'];
+			if(isThrActive) {
+				entry.last = aib.anchor + thr.last.num;
+			}
+			updatedFav = [aib.host, aib.b, aib.t, [
+				entry.cnt = thr.postsCount,
+				entry.new = newCount,
+				entry.you = youCount,
+				thr.last.num
+			], 'update'];
 		}
+		// Search existed posts in hidden posts data and apply spells
 		if(HiddenPosts.has(num)) {
 			HiddenPosts.hideHidden(post, num);
 			continue;
@@ -245,15 +307,15 @@ function readPostsData(firstPost, favObj) {
 			if(HiddenThreads.has(num)) {
 				hideData = [true, null];
 			} else if(spellsHide) {
-				hideData = sVis && sVis[post.count];
+				hideData = sVis?.[post.count];
 			}
 		} else if(spellsHide) {
-			hideData = sVis && sVis[post.count];
+			hideData = sVis?.[post.count];
 		} else {
 			continue;
 		}
 		if(!hideData) {
-			maybeSpells.value.runSpells(post); // Apply spells if posts not hidden
+			maybeSpells.value.runSpells(post);
 		} else if(hideData[0]) {
 			if(post.isHidden) {
 				post.spellHidden = true;
@@ -266,12 +328,14 @@ function readPostsData(firstPost, favObj) {
 		maybeSpells.value.endSpells();
 	}
 	if(aib.t && Cfg.panelCounter === 2) {
-		$id('de-panel-info-pcount').textContent = Thread.first.pcount - Thread.first.hidCounter;
+		$id('de-panel-info-posts').textContent = Thread.first.postsCount - Thread.first.hiddenCount;
 	}
-	if(updateFav) {
+	if(updatedFav) {
 		saveFavorites(favObj);
-		sendStorageEvent('__de-favorites', updateFav);
+		// Updating Favorites: page is loaded
+		sendStorageEvent('__de-favorites', updatedFav);
 	}
+
 	// After following a link from Favorites, we need to open Favorites again.
 	const hasFavWinKey = sesStorage['de-fav-win'] === '1';
 	if(hasFavWinKey || Cfg.favWinOn) {
@@ -281,7 +345,7 @@ function readPostsData(firstPost, favObj) {
 		}
 	}
 	let data = sesStorage['de-fav-newthr'];
-	if(data) { // Detecting the created new thread and adding it to Favorites.
+	if(data) { // Detecting the new created thread and adding it to Favorites.
 		data = JSON.parse(data);
 		const isTimeOut = !data.num && (Date.now() - data.date > 2e4);
 		if(data.num === firstPost.num || !firstPost.next && !isTimeOut) {
@@ -292,8 +356,7 @@ function readPostsData(firstPost, favObj) {
 		}
 	}
 	if(Cfg.nextPageThr && DelForm.first === DelForm.last) {
-		const hidThrEls = $Q('.de-thr-hid', firstPost.thr.form.el);
-		const hidThrLen = hidThrEls.length;
+		const hidThrLen = $Q('.de-thr-hid', firstPost.thr.form.el).length;
 		if(hidThrLen) {
 			Pages.addPage(hidThrLen);
 		}
@@ -325,14 +388,14 @@ function readViewedPosts() {
 	}
 }
 
-// HIDDEN AND MY POSTS STORAGE
-
 class PostsStorage {
 	constructor() {
 		this.storageName = '';
 		this.__cachedTime = null;
 		this._cachedStorage = null;
 		this._cacheTO = null;
+		this._onReadNew = null;
+		this._onAfterSave = null;
 	}
 	get(num) {
 		const storage = this._readStorage()[aib.b];
@@ -350,7 +413,7 @@ class PostsStorage {
 		this._cacheTO = this.__cachedTime = this._cachedStorage = null;
 	}
 	removeStorage(num, board = aib.b) {
-		const storage = this._readStorage();
+		const storage = this._readStorage(true);
 		const bStorage = storage[board];
 		if(bStorage && $hasProp(bStorage, num)) {
 			delete bStorage[num];
@@ -361,12 +424,18 @@ class PostsStorage {
 		}
 	}
 	set(num, thrNum, data = true) {
-		const storage = this._readStorage();
+		const storage = this._readStorage(true);
+		this._removeOldItems(storage);
+		(storage[aib.b] || (storage[aib.b] = {}))[num] = [this._cachedTime, thrNum, data];
+		this._saveStorage();
+	}
+
+	_removeOldItems(storage) {
 		if(storage && storage.$count > 5e3) {
 			const minDate = Date.now() - 5 * 24 * 3600 * 1e3;
-			for(const b in storage) {
-				if($hasProp(storage, b)) {
-					const data = storage[b];
+			for(const board in storage) {
+				if($hasProp(storage, board)) {
+					const data = storage[board];
 					for(const key in data) {
 						if($hasProp(data, key) && data[key][0] < minDate) {
 							delete data[key];
@@ -375,30 +444,26 @@ class PostsStorage {
 				}
 			}
 		}
-		(storage[aib.b] || (storage[aib.b] = {}))[num] = [this._cachedTime, thrNum, data];
-		this._saveStorage();
-	}
-
-	static _migrateOld(newName, oldName) {
-		if($hasProp(locStorage, oldName)) {
-			locStorage[newName] = locStorage[oldName];
-			locStorage.removeItem(oldName);
-		}
 	}
 	get _cachedTime() {
 		return this.__cachedTime || (this.__cachedTime = Date.now());
 	}
-	_readStorage() {
-		if(this._cachedStorage) {
+	_readStorage(ignoreCache = false) {
+		if(!ignoreCache && this._cachedStorage) {
 			return this._cachedStorage;
 		}
 		const data = locStorage[this.storageName];
+		let rv = {};
 		if(data) {
 			try {
-				return (this._cachedStorage = JSON.parse(data));
+				rv = this._cachedStorage = JSON.parse(data);
 			} catch(err) {}
 		}
-		return (this._cachedStorage = {});
+		this._cachedStorage = rv;
+		if(this._onReadNew) {
+			this._onReadNew(rv);
+		}
+		return rv;
 	}
 	_saveStorage() {
 		if(this._cacheTO === null) {
@@ -407,6 +472,7 @@ class PostsStorage {
 					locStorage[this.storageName] = JSON.stringify(this._cachedStorage);
 				}
 				this.purge();
+				this._onAfterSave?.();
 			}, 0);
 		}
 	}
@@ -425,11 +491,6 @@ const HiddenPosts = new class HiddenPostsClass extends PostsStorage {
 			post.setUserVisib(!!uHideData, false);
 		}
 	}
-
-	_readStorage() {
-		PostsStorage._migrateOld(this.storageName, 'de-threads-new'); // Old storage has wrong name
-		return super._readStorage();
-	}
 }();
 
 const HiddenThreads = new class HiddenThreadsClass extends PostsStorage {
@@ -440,8 +501,10 @@ const HiddenThreads = new class HiddenThreadsClass extends PostsStorage {
 	getCount() {
 		const storage = this._readStorage();
 		let rv = 0;
-		for(const b in storage) {
-			rv += Object.keys(storage[b]).length;
+		for(const board in storage) {
+			if($hasProp(storage, board)) {
+				rv += Object.keys(storage[board]).length;
+			}
 		}
 		return rv;
 	}
@@ -452,11 +515,6 @@ const HiddenThreads = new class HiddenThreadsClass extends PostsStorage {
 		locStorage[this.storageName] = JSON.stringify(data);
 		this.purge();
 	}
-
-	_readStorage() {
-		PostsStorage._migrateOld(this.storageName, ''); // Old storage has wrong name
-		return super._readStorage();
-	}
 }();
 
 const MyPosts = new class MyPostsClass extends PostsStorage {
@@ -464,9 +522,20 @@ const MyPosts = new class MyPostsClass extends PostsStorage {
 		super();
 		this.storageName = 'de-myposts';
 		this._cachedData = null;
+		this._onReadNew = newStorage => {
+			this._cachedData = newStorage[aib.b] ?
+				new Set(Object.keys(newStorage[aib.b]).map(val => +val)) : new Set();
+		};
+		this._onAfterSave = () => sendStorageEvent('__de-mypost', 1);
 	}
 	has(num) {
 		return this._cachedData.has(num);
+	}
+	update() {
+		this.purge();
+		for(const num of this._cachedData) {
+			pByNum[num]?.changeMyMark(true);
+		}
 	}
 	purge() {
 		super.purge();
@@ -479,17 +548,6 @@ const MyPosts = new class MyPostsClass extends PostsStorage {
 	set(num, thrNum) {
 		super.set(num, thrNum);
 		this._cachedData.add(+num);
-		sendStorageEvent('__de-mypost', 1);
-	}
-
-	_readStorage() {
-		if(this._cachedData && this._cachedStorage) {
-			return this._cachedStorage;
-		}
-		PostsStorage._migrateOld(this.storageName, 'de-myposts-new');
-		const rv = super._readStorage();
-		this._cachedData = rv[aib.b] ? new Set(Object.keys(rv[aib.b]).map(val => +val)) : new Set();
-		return rv;
 	}
 }();
 
@@ -519,7 +577,8 @@ function sendStorageEvent(name, value) {
 
 function initStorageEvent() {
 	doc.defaultView.addEventListener('storage', e => {
-		let data, temp, val = e.newValue;
+		let data, temp;
+		let val = e.newValue;
 		if(!val) {
 			return;
 		}
@@ -530,10 +589,11 @@ function initStorageEvent() {
 			} catch(err) {
 				return;
 			}
+			// Updating Favorites: keep in sync with other tab
 			updateFavWindow(...data);
 			return;
 		}
-		case '__de-mypost': MyPosts.purge(); return;
+		case '__de-mypost': MyPosts.update(); return;
 		case '__de-highlighted': HighlightedPosts.purge(); return;
 		case '__de-webmvolume':
 			val = +val || 0;
@@ -568,7 +628,7 @@ function initStorageEvent() {
 			Thread.first.updateHidden(HiddenThreads.getRawData()[aib.b]);
 			toggleWindow('hid', true);
 			return;
-		case '__de-spells': (() => {
+		case '__de-spells': (async () => {
 			try {
 				data = JSON.parse(val);
 			} catch(err) {
@@ -579,9 +639,9 @@ function initStorageEvent() {
 			if(temp) {
 				temp.checked = data.hide;
 			}
-			$hide(docBody);
+			$hide(doc.body);
 			if(data.data) {
-				Spells.setSpells(data.data, false);
+				await Spells.setSpells(data.data, false);
 				Cfg.spells = JSON.stringify(data.data);
 				temp = $id('de-spell-txt');
 				if(temp) {
@@ -589,14 +649,14 @@ function initStorageEvent() {
 				}
 			} else {
 				SpellsRunner.unhideAll();
-				Spells.disableSpells();
+				await Spells.disableSpells();
 				temp = $id('de-spell-txt');
 				if(temp) {
 					temp.value = '';
 				}
 			}
-			$show(docBody);
+			$show(doc.body);
 		})();
 		}
-	});
+	}, false);
 }

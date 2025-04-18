@@ -47,7 +47,7 @@ const Spells = Object.create({
 	get needArg() {
 		return [
 			/* words */ true, /* exp */ true, /* exph */ true, /* imgn */ true, /* ihash */ true,
-			/* subj */ false, /* name */ true, /* trip */ false, /* img */ false, /* sage */ false,
+			/* subj */ false, /* name */ false, /* trip */ false, /* img */ false, /* sage */ false,
 			/* op */ false, /* tlen */ false, /* all */ false, /* video */ false, /* wipe */ false,
 			/* num */ true, /* vauthor */ true, /* // */ false
 		];
@@ -60,19 +60,20 @@ const Spells = Object.create({
 		this._initSpells();
 		return this.reps;
 	},
-	addSpell(type, arg, isNeg) {
-		const fld = $id('de-spell-txt');
-		const val = fld && fld.value;
-		const chk = $q('input[info="hideBySpell"]');
-		let spells = val && this.parseText(val);
-		if(!val || spells) {
+	async addSpell(type, arg, isNeg) {
+		const inputEl = $id('de-spell-txt');
+		const value = inputEl?.value;
+		const checkboxEl = $q('input[info="hideBySpell"]');
+		let spells = value && this.parseText(value);
+		if(!value || spells) {
 			if(!spells) {
 				try {
 					spells = JSON.parse(Cfg.spells);
 				} catch(err) {}
 				spells = spells || [Date.now(), [], null, null];
 			}
-			let idx, isAdded = true;
+			let idx;
+			let isAdded = true;
 			const scope = aib.t ? [aib.b, aib.t] : null;
 			if(spells[1]) {
 				const sScope = String(scope);
@@ -117,32 +118,35 @@ const Spells = Object.create({
 				isAdded = false;
 			}
 			if(isAdded) {
-				saveCfg('hideBySpell', 1);
-				if(chk) {
-					chk.checked = true;
+				await CfgSaver.save('hideBySpell', 1);
+				if(checkboxEl) {
+					checkboxEl.checked = true;
 				}
 			} else if(!spells[1] && !spells[2] && !spells[3]) {
-				saveCfg('hideBySpell', 0);
-				if(chk) {
-					chk.checked = false;
+				await CfgSaver.save('hideBySpell', 0);
+				if(checkboxEl) {
+					checkboxEl.checked = false;
 				}
 			}
-			saveCfg('spells', JSON.stringify(spells));
-			this.setSpells(spells, true);
-			if(fld) {
-				fld.value = this.list;
+			if(spells[1] && Cfg.sortSpells) {
+				this._sort(spells[1]);
+			}
+			await CfgSaver.save('spells', JSON.stringify(spells));
+			await this.setSpells(spells, true);
+			if(inputEl) {
+				inputEl.value = this.list;
 			}
 			Pview.updatePosition(true);
 			return;
 		}
-		if(chk) {
-			chk.checked = false;
+		if(checkboxEl) {
+			checkboxEl.checked = false;
 		}
 	},
 	decompileSpell(type, neg, val, scope, wipeMsg = null) {
 		let spell = (neg ? '!#' : '#') + this.names[type] +
 			(scope ? `[${ scope[0] }${ scope[1] ? `,${ scope[1] === -1 ? '' : scope[1] }` : '' }]` : '');
-		if(!val) {
+		if(!val && val !== 0) {
 			return spell;
 		}
 		switch(type) {
@@ -178,7 +182,8 @@ const Spells = Object.create({
 		}
 		case 11: // #tlen
 		case 15: { // #num
-			let temp_, temp = val[1].length - 1;
+			let temp_;
+			let temp = val[1].length - 1;
 			if(temp !== -1) {
 				for(temp_ = []; temp >= 0; --temp) {
 					temp_.push(val[1][temp][0] + '-' + val[1][temp][1]);
@@ -197,14 +202,12 @@ const Spells = Object.create({
 		case 0: // #words
 		case 6: // #name
 		case 7: // #trip
-		case 16: // #vauthor
-			return `${ spell }(${ val.replace(/([)\\])/g, '\\$1').replace(/\n/g, '\\n') })`;
-		case 17: // // comment
-			return '//' + String(val);
+		case 16: return `${ spell }(${ val.replace(/([)\\])/g, '\\$1').replace(/\n/g, '\\n') })`; // #vauthor
+		case 17: return '//' + String(val); // comment
 		default: return `${ spell }(${ String(val) })`;
 		}
 	},
-	disableSpells() {
+	async disableSpells() {
 		const value = null;
 		const configurable = true;
 		Object.defineProperties(this, {
@@ -212,7 +215,7 @@ const Spells = Object.create({
 			outreps : { configurable, value },
 			reps    : { configurable, value }
 		});
-		saveCfg('hideBySpell', 0);
+		await CfgSaver.save('hideBySpell', 0);
 	},
 	outReplace(txt) {
 		for(const orep of this.outreps) {
@@ -239,45 +242,45 @@ const Spells = Object.create({
 		}
 		return txt;
 	},
-	setSpells(spells, sync) {
+	async setSpells(spells, sync) {
 		if(sync) {
 			this._sync(spells);
 		}
 		if(!Cfg.hideBySpell) {
 			SpellsRunner.unhideAll();
-			this.disableSpells();
+			await this.disableSpells();
 			return;
 		}
 		this._optimize(spells);
-		if(this.hiders) {
-			const sRunner = new SpellsRunner();
-			for(let post = Thread.first.op; post; post = post.next) {
-				sRunner.runSpells(post);
-			}
-			sRunner.endSpells();
-		} else {
+		if(!this.hiders) {
 			SpellsRunner.unhideAll();
+			return;
 		}
+		const sRunner = new SpellsRunner();
+		for(let post = Thread.first.op; post; post = post.next) {
+			sRunner.runSpells(post);
+		}
+		sRunner.endSpells();
 	},
-	toggle() {
+	async toggle() {
 		let spells;
-		const fld = $id('de-spell-txt');
-		const val = fld.value;
-		if(val && (spells = this.parseText(val))) {
+		const inputEl = $id('de-spell-txt');
+		const { value } = inputEl;
+		if(value && (spells = this.parseText(value))) {
 			closePopup('err-spell');
-			this.setSpells(spells, true);
-			saveCfg('spells', JSON.stringify(spells));
-			fld.value = this.list;
-		} else {
-			if(!val) {
-				closePopup('err-spell');
-				SpellsRunner.unhideAll();
-				this.disableSpells();
-				saveCfg('spells', JSON.stringify([Date.now(), null, null, null]));
-				sendStorageEvent('__de-spells', '{ hide: false, data: null }');
-			}
-			$q('input[info="hideBySpell"]').checked = false;
+			await this.setSpells(spells, true);
+			await CfgSaver.save('spells', JSON.stringify(spells));
+			inputEl.value = this.list;
+			return;
 		}
+		if(!value) {
+			closePopup('err-spell');
+			SpellsRunner.unhideAll();
+			await this.disableSpells();
+			await CfgSaver.save('spells', JSON.stringify([Date.now(), null, null, null]));
+			sendStorageEvent('__de-spells', '{ hide: false, data: null }');
+		}
+		$q('input[info="hideBySpell"]').checked = false;
 	},
 
 	_decompileRep(rep, isOrep) {
@@ -344,7 +347,7 @@ const Spells = Object.create({
 		if(spells) {
 			this._optimize(spells);
 		} else {
-			this.disableSpells();
+			/* await */ this.disableSpells();
 		}
 	},
 	_initHiders(data) {
@@ -357,7 +360,7 @@ const Spells = Object.create({
 					case 2:
 					case 3:
 					case 5:
-					case 13: item[1] = toRegExp(val, true); break;
+					case 13: item[1] = strToRegExp(val, true); break;
 					case 0xFF: this._initHiders(val);
 					}
 				}
@@ -368,7 +371,7 @@ const Spells = Object.create({
 	_initReps(data) {
 		if(data) {
 			for(const item of data) {
-				item[0] = toRegExp(item[0], false);
+				item[0] = strToRegExp(item[0], false);
 			}
 		}
 		return data;
@@ -393,7 +396,8 @@ const Spells = Object.create({
 		return !rv.length ? null : rv;
 	},
 	_optimizeSpells(spells) {
-		let neg, lastSpell = -1;
+		let neg;
+		let lastSpell = -1;
 		let newSpells = [];
 		for(let i = 0, len = spells.length; i < len; ++i) {
 			let j;
@@ -467,7 +471,9 @@ const Spells = Object.create({
 				sp.splice(i, 0, temp);
 			}
 		}
-		sp = sp.sort();
+		sp = sp.sort().sort((a, b) =>
+			// Sort spells by scope
+			a[2] && !b[2] || a[2] && b[2] && (a[2][0] > b[2][0] || a[2][1] > b[2][1]) ? 1 : 0);
 		for(let i = 0, len = sp.length - 1; i < len; ++i) {
 			// Removes duplicates and weaker spells
 			const j = i + 1;
@@ -519,8 +525,8 @@ class SpellsCodegen {
 	}
 
 	static _getScope(str) {
-		const m = str.match(/^\[([a-z0-9/]+)(?:(,)|,(\s*[0-9]+))?\]/);
-		return m ? [m[0].length, [m[1], m[3] ? +m[3] : m[2] ? -1 : false]] : null;
+		const m = str.match(/^\[([a-z0-9/-]+)?(?:(,)|,(\s*[0-9]+))?\]/);
+		return m ? [m[0].length, [m[1] || '', m[3] ? +m[3] : m[2] ? -1 : false]] : null;
 	}
 	static _getText(str, haveBracket) {
 		if(haveBracket && (str[0] !== '(')) {
@@ -682,7 +688,7 @@ class SpellsCodegen {
 				}
 				lastType = this.TYPE_NOT;
 				break;
-			case '/': {
+			case '/': { // "//" Comment
 				i++;
 				this._col++;
 				if(sList[i] === '/') {
@@ -743,7 +749,7 @@ class SpellsCodegen {
 		}
 		const val = m[1];
 		try {
-			toRegExp(val, true);
+			strToRegExp(val, true);
 		} catch(err) {
 			this._col++;
 			this._setError(Lng.seErrRegex[lang], val);
@@ -779,7 +785,8 @@ class SpellsCodegen {
 		return null;
 	}
 	_doSpell(name, str, isNeg) {
-		let m, i = 0;
+		let m;
+		let i = 0;
 		const spellIdx = Spells.names.indexOf(name);
 		if(spellIdx === -1) {
 			this._col -= name.length + 1;
@@ -1240,7 +1247,7 @@ class SpellsInterpreter {
 		const txt = this._post.text;
 		// (1 << 0): samelines
 		if(val & 1) {
-			arr = txt.replace(/>/g, '').split(/\s*\n\s*/);
+			arr = txt.replaceAll('>', '').split(/\s*\n\s*/);
 			if((len = arr.length) > 5) {
 				arr.sort();
 				for(let i = 0, n = len / 4; i < len;) {

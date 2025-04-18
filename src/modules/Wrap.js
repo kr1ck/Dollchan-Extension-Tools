@@ -1,16 +1,14 @@
-/* eslint indent: ["error", "tab", {
-	"flatTernaryExpressions": true,
-	"outerIIFEBody": 0 }] */
+/* eslint indent: ["error", "tab", { "flatTernaryExpressions": true, "outerIIFEBody": 0 }] */
 
 (function deMainFuncInner(deWindow, prestoStorage, FormData, scrollTo, localData) {
 'use strict';
 
-const version = '21.7.17';
-const commit = '01d93ce';
+const version = '24.9.16.0';
+const commit = '44dbfcf';
 
+/* ==[ GlobalVars.js ]== */
 /* ==[ DefaultCfg.js ]== */
 /* ==[ Localization.js ]== */
-/* ==[ GlobalVars.js ]== */
 /* ==[ Utils.js ]== */
 /* ==[ Storage.js ]== */
 /* ==[ Panel.js ]== */
@@ -50,7 +48,7 @@ const commit = '01d93ce';
 /* ==[ Tail ]== */
 }(
 	window,
-	window.opera && window.opera.scriptStorage,
+	window.opera?.scriptStorage,
 	window.FormData,
 	(x, y) => window.scrollTo(x, y),
 	/* global localData */ typeof localData === 'object' ? localData : null

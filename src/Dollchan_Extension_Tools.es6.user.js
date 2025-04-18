@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            Dollchan Extension Tools
-// @version         21.7.17
+// @version         21.7.6.0
 // @namespace       http://www.freedollchan.org/scripts/*
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
@@ -22,15 +22,13 @@
 // @include         *
 // ==/UserScript==
 
-/* eslint indent: ["error", "tab", {
-	"flatTernaryExpressions": true,
-	"outerIIFEBody": 0 }] */
+/* eslint indent: ["error", "tab", { "flatTernaryExpressions": true, "outerIIFEBody": 0 }] */
 
 (function deMainFuncInner(deWindow, prestoStorage, FormData, scrollTo, localData) {
 'use strict';
 
-const version = '21.7.17';
-const commit = '01d93ce';
+const version = '21.7.6.0';
+const commit = '19c4044';
 
 /* ==[ DefaultCfg.js ]========================================================================================
                                                 DEFAULT CONFIG
@@ -38,20 +36,21 @@ const commit = '01d93ce';
 
 const defaultCfg = {
 	disabled     : 0,    // Dollchan enabled by default
-	language     : 0,    // Dollchan language [0=ru, 1=en]
+	language     : 1,    // Dollchan language [0=ru, 1=en, 2=ua]
+	// FILTERS
 	hideBySpell  : 1,    // hide posts by spells
 	spells       : null, // user defined spells
 	sortSpells   : 0,    // sort spells and remove duplicates
 	hideRefPsts  : 0,    // hide replies to hidden posts
 	nextPageThr  : 0,    // load threads from next pages instead of hidden
 	delHiddPost  : 0,    // remove placeholders [0=off, 1=all, 2=posts only, 3=threads only]
+	// POSTS
 	ajaxUpdThr   : 1,    // threads updater
 	updThrDelay  : 20,   //    update interval (sec)
 	updCount     : 1,    //    show countdown to thread update
-	favIcoBlink  : 0,    //    blink the favicon on new posts
+	favIcoBlink  : 1,    //    blink the favicon on new posts
 	desktNotif   : 0,    //    desktop notifications for new posts
 	markNewPosts : 1,    //    highlight new posts with color
-	useDobrAPI   : 1,    //    dobrochan: use json API
 	markMyPosts  : 1,    // highlight my own posts
 	expandTrunc  : 0,    // auto-expand truncated posts
 	widePosts    : 0,    // stretch posts to screen width
@@ -60,23 +59,24 @@ const defaultCfg = {
 	showRepBtn   : 1,    // show "Quick reply" buttons [0=off, 1=with menu, 2=no menu]
 	postBtnsCSS  : 2,    // post buttons style [0=simple, 1=gradient grey, 2=custom]
 	postBtnsBack : '#8c8c8c', //    custom background color
-	thrBtns      : 1,    /* additional buttons under threads
-		[0=off, 1=all, 2=all (on board), 3='New posts' on board] */
+	thrBtns      : 1,    // buttons under threads [0=off, 1=all, 2=all (on board), 3='New posts' on board]
 	noSpoilers   : 1,    // text spoilers expansion [0=off, 1=grey, 2=native]
 	noPostNames  : 0,    // hide poster names
 	correctTime  : 0,    // time correction in posts
 	timeOffset   : '+0', //    time offset (h)
 	timePattern  : '',   //    search pattern
 	timeRPattern : '',   //    replace pattern
+	// IMAGES
 	expandImgs   : 2,    // expand images on click [0=off, 1=in post, 2=by center]
 	imgNavBtns   : 1,    //    add buttons to navigate images
 	imgInfoLink  : 1,    //    show name under expanded image
-	resizeDPI    : 0,    //    don't upscale images on high DPI displays
+	resizeDPI    : 0,    //    donʼt upscale images on high DPI displays
 	resizeImgs   : 1,    //    resize large images to fit screen [0=off', '1=by width', '2=width+height]
 	minImgSize   : 100,  //    minimal size for expanded images (px)
-	zoomFactor   : 25,   //    images zoom sensibility [1-100%]
+	maxImgSize   : 2000, //    maximum size for expanded images (px)
+	zoomFactor   : 20,   //    images zoom sensibility [1-100%]
 	webmControl  : 1,    //    show control bar for WebM
-	webmTitles   : 0,    //    load titles from WebM metadata
+	webmTitles   : 1,    //    load titles from WebM metadata
 	webmVolume   : 100,  //    default volume for WebM [0-100%]
 	minWebmWidth : 320,  //    minimal width for WebM (px)
 	preLoadImgs  : 0,    // preload images [0=off, 1=all, 2=non-WebM]
@@ -86,44 +86,46 @@ const defaultCfg = {
 	imgNames     : 0,    // image names in links [0=off, 1=original, 2=hide]
 	maskImgs     : 0,    // NSFW mode
 	maskVisib    : 7,    // image opacity in NSFW mode [0-100%]
+	// LINKS
 	linksNavig   : 1,    // posts navigation by >>links
 	linksOver    : 100,  //    delay appearance (ms)
 	linksOut     : 100, //    delay disappearance (ms)
 	markViewed   : 0,    //    mark viewed posts
 	strikeHidd   : 1,    //    strike >>links to hidden posts
 	removeHidd   : 0,    //        also remove from reply maps
-	noNavigHidd  : 0,    //    don't show previews for hidden posts
+	noNavigHidd  : 0,    //    donʼt show previews for hidden posts
 	markMyLinks  : 1,    // mark links to my posts with (You)
-	crossLinks   : 0,    // replace http:// with >>/b/links*
-	decodeLinks  : 0,    // decode %D0%A5%D1 in links
+	crossLinks   : 1,    // replace http:// with >>/b/links*
+	decodeLinks  : 1,    // decode %D0%A5%D1 in links
 	insertNum    : 1,    // insert >>link on №postnumber click*
-	addOPLink    : 0,    // insert >>link when replying to OP on board
+	addOPLink    : 1,    // insert >>link when replying to OP on board
 	addImgs      : 0,    // load images to jpg/png/gif links*
 	addMP3       : 1,    // embed mp3 links
 	addVocaroo   : 1,    // embed Vocaroo links
 	embedYTube   : 1,    // embed YouTube links [0=off, 1=preview+player, 2=onclick]
 	YTubeWidth   : 360,  //    player width (px)
 	YTubeHeigh   : 270,  //    player height (px)
-	YTubeTitles  : 0,    //    load titles for YouTube links
+	YTubeTitles  : 1,    //    load titles for YouTube links
 	ytApiKey     : '',   //    YouTube API key
 	addVimeo     : 1,    //    embed Vimeo links
+	// POSTFORM
 	ajaxPosting  : 1,    // posting without refresh
 	postSameImg  : 1,    //    ability to post duplicate images
-	removeEXIF   : 1,    //    remove EXIF from JPEG
+	removeEXIF   : 0,    //    remove EXIF from JPEG
 	removeFName  : 0,    //    clear file names [0=off, 1=empty, 2=unixtime, 3=unixtime-random]
 	sendErrNotif : 1,    //    inform in title about post send error
 	scrAfterRep  : 0,    //    scroll to bottom after reply
 	fileInputs   : 2,    //    enhanced file attachment field  [0=off, 1=simple, 2=preview]
 	addPostForm  : 2,    // reply form display in thread [0=at top, 1=at bottom, 2=hidden]
 	spacedQuote  : 1,    // insert a space when quoting "> "
-	favOnReply   : 1,    // add thread to favorites after reply
+	favOnReply   : 1,    // add thread to Favorites after reply
 	warnSubjTrip : 0,    // warn about a tripcode in "Subject" field
 	addSageBtn   : 1,    // replace "Email" with Sage button
 	saveSage     : 1,    //    remember sage
 	sageReply    : 0,    //    reply with sage
 	altCaptcha   : 0,    // use alternative captcha (if available)
 	capUpdTime   : 300,  // captcha update interval (sec)
-	captchaLang  : 1,    // forced captcha input language [0=off, 1=en, 2=ru]
+	captchaLang  : 0,    // forced captcha input language [0=off, 1=en, 2=ru]
 	addTextBtns  : 1,    // text markup buttons [0=off, 1=graphics, 2=text, 3=usual]
 	txtBtnsLoc   : 1,    //    located at [0=top, 1=bottom]
 	userPassw    : 1,    // user password
@@ -134,8 +136,10 @@ const defaultCfg = {
 	noPassword   : 1,    // hide form "Password" field
 	noName       : 0,    // hide form "Name" field
 	noSubj       : 0,    // hide form "Subject" field
-	scriptStyle  : 0,    /* Dollchan style
-		[0=Gradient darkblue, 1=gradient blue, 2=solid grey, 3=transparent blue, 4=square dark] */
+	// COMMON
+	scriptStyle  : 0,    /* Dollchan style [
+		0=gradient darkblue, 1=gradient blue, 2=solid grey, 3=transparent blue, 4=square dark,
+		5=gradient pink] */
 	userCSS      : 0,    // user CSS
 	userCSSTxt   : '',   //    css text
 	expandPanel  : 0,    // show full main panel
@@ -143,16 +147,18 @@ const defaultCfg = {
 	hotKeys      : 1,    // hotkeys
 	loadPages    : 1,    //    number of pages that are loaded on F5
 	panelCounter : 1,    // panel counter for posts/images [0=off, 1=all posts, 2=except hidden]
-	hideReplies  : 0,    // show only op-posts in threads list
 	rePageTitle  : 1,    // show thread title in the page tab
 	inftyScroll  : 1,    // infinite scrolling for pages
+	hideReplies  : 0,    // show only op-posts in threads list
 	scrollToTop  : 0,    // always scroll to top in the threads list
 	saveScroll   : 1,    // remember the scroll position in threads
+	favFolders   : 1,    // boards folders in the Favorites Window
 	favThrOrder  : 0,    /* threads sorting order in the Favorites window
 		[0=by opnum, 1=by opnum (desc), 2=by adding, 3=by adding (desc)] */
 	favWinOn     : 0,    // always open the Favorites window
 	closePopups  : 0,    // close popups automatically
 	updDollchan  : 2,    // Check for Dollchan updates [0=off, 1=per day, 2=2days, 3=week, 4=2weeks, 5=month]
+	// WINDOWS
 	textaWidth   : 300,  // textarea width (px)
 	textaHeight  : 115,  // textarea height (px)
 	replyWinDrag : 0,          // draggable "Quick Reply" form
@@ -179,17 +185,22 @@ const defaultCfg = {
 =========================================================================================================== */
 
 const Lng = {
-	// "Settings" window: tab names
+	// Settings window: tooltips
+	cfgNeedReload: [
+		'Для применения необходима перезагрузка',
+		'Reboot required to apply',
+		'Для застосування необхідне перезавантаження'],
+	// Settings window: tab names
 	cfgTab: {
 		filters : ['Фильтры', 'Filters', 'Фільтри'],
-		posts   : ['Посты', 'Posts', 'Пости'],
+		posts   : ['Посты', 'Posts', 'Дописи'],
 		images  : ['Картинки', 'Images', 'Зображ.'],
 		links   : ['Ссылки', 'Links', 'Посил.'],
 		form    : ['Форма', 'Form', 'Форма'],
 		common  : ['Общее', 'Common', 'Спільне'],
 		info    : ['Инфо', 'Info', 'Інфо']
 	},
-	// "Settings" window: options
+	// Settings window: options
 	cfg: {
 		language: {
 			sel : [['Ru', 'En', 'Ua'], ['Ru', 'En', 'Ua'], ['Ru', 'En', 'Ua']],
@@ -208,7 +219,7 @@ const Lng = {
 		hideRefPsts: [
 			'Скрывать ответы на скрытые посты',
 			'Hide replies to hidden posts',
-			'Ховати відповіді на сховані пости'],
+			'Ховати відповіді на сховані дописи'],
 		nextPageThr: [
 			'Скрытые треды - загружать со следующих страниц',
 			'Load threads from next pages instead of hidden',
@@ -217,7 +228,7 @@ const Lng = {
 			sel: [
 				['Откл.', 'Всё', 'Только посты', 'Только треды'],
 				['Disable', 'All', 'Posts only', 'Threads only'],
-				['Вимк.', 'Все', 'Лише пости', 'Лише треди']],
+				['Вимк.', 'Все', 'Лише дописи', 'Лише треди']],
 			txt: [
 				'Удалять скрытое',
 				'Remove placeholders',
@@ -238,43 +249,39 @@ const Lng = {
 			'Show countdown to thread update',
 			'Зворотній відлік оновлення треду'],
 		favIcoBlink: [
-			'Мигать фавиконом при появлении новых постов',
+			'Мигать фавиконом при новых постах',
 			'Blink the favicon on new posts',
-			'Блимати фавіконом в разі появи нових постів'],
+			'Блимати фавіконом при нових дописах'],
 		desktNotif: [
 			'Уведомлять о новых постах на рабочем столе',
 			'Desktop notifications for new posts',
-			'Повідомляти про нові пости на стільниці'],
+			'Повідомляти про нові дописи на стільниці'],
 		markNewPosts: [
 			'Выделять цветом новые посты',
 			'Highlight new posts with color',
-			'Виділяти кольором нові пости'],
-		useDobrAPI: [
-			'dobrochan: использовать JSON API',
-			'dobrochan: use JSON API',
-			'dobrochan: використовувати JSON API'],
+			'Виділяти кольором нові дописи'],
 		markMyPosts: [
 			'Выделять цветом мои посты',
 			'Highlight my own posts',
-			'Виділяти кольором мої пости'],
+			'Виділяти кольором мої дописи'],
 		expandTrunc: [
-			'Авторазворот сокращенных постов*',
-			'Autoexpand truncated posts*',
-			'Авторозгортання скорочених постів*'],
+			'Авторазворот сокращенных постов',
+			'Autoexpand truncated posts',
+			'Авторозгортання скорочених дописів'],
 		widePosts: [
 			'Растягивать посты по ширине экрана',
 			'Stretch posts to page width',
-			'Розтягувати пости на ширину екрану'],
+			'Розтягувати дописи на ширину екрану'],
 		limitPostMsg: [
 			'Ограничение ширины текста в постах (px)',
 			'Limit text width in posts messages (px)',
-			'Обмеження ширини тексту в постах (px)'
+			'Обмеження ширини тексту в дописах (px)'
 		],
 		thrBtns: {
 			sel: [
 				['Откл.', 'Все', 'Все (на доске)', '"Новые посты" на доске'],
 				['Disable', 'All', 'All (on board)', '"New posts" on board'],
-				['Вимк.', 'Всі', 'Всі (на дошці)', '"Нові пости" на дошці']],
+				['Вимк.', 'Всі', 'Всі (на дошці)', '"Нові дописи" на дошці']],
 			txt: [
 				'Кнопки под тредами',
 				'Buttons under threads',
@@ -288,7 +295,7 @@ const Lng = {
 			txt: [
 				'Кнопки "Скрыть пост/тред"',
 				'"Hide post/thread" buttons',
-				'Кнопки "Сховати пост/тред"']
+				'Кнопки "Сховати допис/тред"']
 		},
 		showRepBtn: {
 			sel: [
@@ -298,7 +305,7 @@ const Lng = {
 			txt: [
 				'Кнопки "Ответить на пост/тред"',
 				'"Reply to post/thread" buttons',
-				'Кнопки "Відповісти на пост/тред"']
+				'Кнопки "Відповісти на допис/тред"']
 		},
 		postBtnsCSS: {
 			sel: [
@@ -308,7 +315,7 @@ const Lng = {
 			txt: [
 				'Кнопки постов ',
 				'Post buttons ',
-				'Кнопки постів ']
+				'Кнопки дописів ']
 		},
 		noSpoilers: {
 			sel: [
@@ -323,11 +330,11 @@ const Lng = {
 		noPostNames: [
 			'Скрывать имена в постах',
 			'Hide poster names',
-			'Ховати імена в постах'],
+			'Ховати імена в дописах'],
 		correctTime: [
-			'Коррекция времени в постах* ',
-			'Time correction in posts* ',
-			'Корекція часу в постах* '],
+			'Коррекция времени',
+			'Time correction',
+			'Корекція часу'],
 		timeOffset: [
 			'разница (ч) ',
 			'time offset (h) ',
@@ -346,7 +353,7 @@ const Lng = {
 			sel: [
 				['Откл.', 'В посте', 'По центру'],
 				['Disable', 'In post', 'By center'],
-				['Вимк.', 'В пості', 'По центру']],
+				['Вимк.', 'В дописі', 'По центру']],
 			txt: [
 				'Раскрывать картинки по клику',
 				'Expand images on click',
@@ -372,12 +379,16 @@ const Lng = {
 			txt: [
 				'Уменьшать при раскрытии в посте',
 				'Fit to screen for expanding in post',
-				'Зменшувати при розкритті в пості']
+				'Зменшувати при розкритті в дописі']
 		},
 		minImgSize: [
-			'Миним. размер раскрытых картинок (px)',
-			'Minimal size for expanded images (px)',
-			'Мінім. розмір розгорнутих зображень (px)'],
+			'мин.',
+			'min',
+			'мін.'],
+		maxImgSize: [
+			'макс. размер раскрытия (px)',
+			'max expansion size (px)',
+			'макс. розмір (px)'],
 		zoomFactor: [
 			'Чувствительность зума картинок [1-100%]',
 			'Images zoom sensibility [1-100%]',
@@ -404,23 +415,23 @@ const Lng = {
 				['Disable', 'All', 'Non-WebM'],
 				['Вимк.', 'Всі', 'Крім WebM']],
 			txt: [
-				'Предварительно загружать картинки*',
-				'Preload images*',
-				'Наперед завантажувати зображення*']
+				'Предварительно загружать картинки',
+				'Preload images',
+				'Наперед завантажувати зображення']
 		},
 		findImgFile: [
-			'Распознавать файлы, встроенные в картинках*',
-			'Detect embedded files in images*',
-			'Розпізнавати файли, що вбудовані в зображення*'],
+			'Распознавать файлы, встроенные в картинках',
+			'Detect embedded files in images',
+			'Розпізнавати файли, вбудовані в зображення'],
 		openImgs: {
 			sel: [
 				['Откл.', 'Все подряд', 'Только GIF', 'Кроме GIF'],
 				['Disable', 'All types', 'Only GIF', 'Non-GIF'],
 				['Вимк.', 'Всі', 'Лише GIF', 'Крім GIF']],
 			txt: [
-				'Заменять тамбнейлы на оригиналы*',
-				'Replace thumbnails with original images*',
-				'Замінювати зображення на оригінали*']
+				'Заменять тамбнейлы на оригиналы',
+				'Replace thumbnails with original images',
+				'Замінювати зображення на оригінали']
 		},
 		imgSrcBtns: [
 			'Добавлять кнопки "Поиск" для картинок',
@@ -429,7 +440,7 @@ const Lng = {
 		imgNames: {
 			sel: [
 				['Не изменять', 'Настоящие (сокр.)', 'Скрывать', 'Настоящие (полные)'],
-				['Don`t change', 'Original (trunc.)', 'Hide', 'Original (full)'],
+				['Donʼt change', 'Original (trunc.)', 'Hide', 'Original (full)'],
 				['Не змінювати', 'Справжні (скороч.)', 'Ховати', 'Справжні (повні)']],
 			txt: [
 				'имена картинок',
@@ -443,9 +454,9 @@ const Lng = {
 
 		// "Links" tab
 		linksNavig: [
-			'Навигация постов по >>ссылкам* ',
-			'Posts navigation by >>links* ',
-			'Навігація постів по >>посиланнях* '],
+			'Навигация постов по >>ссылкам',
+			'Posts navigation by >>links',
+			'Навігація дописів по >>посиланнях'],
 		linksOver: [
 			'Появление ',
 			'Appearance ',
@@ -457,11 +468,11 @@ const Lng = {
 		markViewed: [
 			'Помечать просмотренные посты',
 			'Mark viewed posts',
-			'Позначати переглянуті пости'],
+			'Позначати переглянуті дописи'],
 		strikeHidd: [
 			'Зачеркивать >>ссылки на скрытые посты',
 			'Strike >>links to hidden posts',
-			'Закреслювати >>посилання на сховані пости'],
+			'Закреслювати >>посилання на сховані дописи'],
 		removeHidd: [
 			'Также удалять из обратных >>ссылок',
 			'Also remove from >>backlinks',
@@ -469,57 +480,57 @@ const Lng = {
 		noNavigHidd: [
 			'Не отображать превью для скрытых постов',
 			'Donʼt show previews for hidden posts',
-			'Не показувати превʼю до cхованих постів'],
+			'Не показувати превʼю до cхованих дописів'],
 		markMyLinks: [
 			'Помечать ссылки на мои посты как (You)',
 			'Mark links to my posts with (You)',
-			'Позначати посилання на мої пости як (You)'],
+			'Позначати посилання на мої дописи як (You)'],
 		crossLinks: [
-			'Заменять http:// на >>/b/ссылки*',
-			'Replace http:// with >>/b/links*',
-			'Замінювати https:// на >>/b/посилання*'],
+			'Заменять http:// на >>/b/ссылки',
+			'Replace http:// with >>/b/links',
+			'Замінювати https:// на >>/b/посилання'],
 		decodeLinks: [
-			'Декодировать %D0%A5%D1 в ссылках*',
-			'Decode %D0%A5%D1 in links*',
-			'Декодувати %D0%A5%D1 в посиланнях*'],
+			'Декодировать %D0%A5%D1 в ссылках',
+			'Decode %D0%A5%D1 in links',
+			'Декодувати %D0%A5%D1 в посиланнях'],
 		insertNum: [
-			'Вставлять >>ссылку по клику на №поста*',
-			'Insert >>link on №postnumber click*',
-			'Вставляти >>посилання на клік по №посту*'],
+			'Вставлять >>ссылку по клику на №поста',
+			'Insert >>link on №postnumber click',
+			'Вставляти >>посилання на клік по №допису'],
 		addOPLink: [
 			'>>ссылка при ответе на OP в списке тредов',
 			'Insert >>link when replying to OP on threads list',
 			'>>посилання при відповіді на OP у списці тредів'],
 		addImgs: [
-			'Загружать картинки к jpg/png/gif ссылкам*',
-			'Load images for jpg/png/gif links*',
-			'Додавати зображення до jpg/png/gif посилань*'],
+			'Загружать картинки к jpg/png/gif ссылкам',
+			'Load images for jpg/png/gif links',
+			'Додавати зображення до jpg/png/gif посилань'],
 		addMP3: [
-			'Плеер к mp3 ссылкам* ',
-			'Player for mp3 links* ',
-			'Плеєр до mp3 посилань* '],
+			'Плеер к mp3 ссылкам',
+			'Player for mp3 links',
+			'Плеєр до mp3 посилань'],
 		addVocaroo: [
-			'к Vocaroo ссылкам*',
-			'for Vocaroo links*',
-			'до Vocaroo посилань*'],
+			'к Vocaroo ссылкам',
+			'for Vocaroo links',
+			'до Vocaroo посилань'],
 		addVimeo: [
-			'Добавлять плеер к Vimeo ссылкам*',
-			'Add player for Vimeo links*',
-			'Додавати плеєр до Vimeo посилань*'],
+			'Добавлять плеер к Vimeo ссылкам',
+			'Add player for Vimeo links',
+			'Додавати плеєр до Vimeo посилань'],
 		embedYTube: {
 			sel: [
 				['Ничего', 'Превью+плеер', 'Плеер по клику'],
 				['Nothing', 'Preview+player', 'On click player'],
 				['Нічого', 'Превʼю+плеєр', 'Плеєр по кліку']],
 			txt: [
-				'к YouTube ссылкам* ',
-				'for YouTube links* ',
-				'до YouTube посилань* ']
+				'к YouTube ссылкам',
+				'for YouTube links',
+				'до YouTube посилань']
 		},
 		YTubeTitles: [
-			'Загружать названия к YouTube ссылкам*',
-			'Load titles for YouTube links*',
-			'Отримувати назви до YouTube посилань*'],
+			'Загружать названия к YouTube ссылкам',
+			'Load titles for YouTube links',
+			'Отримувати назви до YouTube посилань'],
 		ytApiKey: [
 			'Ключ YT API*',
 			'YT API Key*',
@@ -527,9 +538,9 @@ const Lng = {
 
 		// "Form" tab
 		ajaxPosting: [
-			'Отправка постов без перезагрузки*',
-			'Posting without page refresh*',
-			'Постування без оновлення сторінки*'],
+			'Отправка постов без перезагрузки',
+			'Posting without page refresh',
+			'Дописування без оновлення сторінки'],
 		postSameImg: [
 			'Возможность отправки одинаковых картинок',
 			'Ability to post duplicate images',
@@ -541,7 +552,7 @@ const Lng = {
 		removeFName: {
 			sel: [
 				['Не изменять', 'Удалять', 'Unixtime', 'Unixtime-random'],
-				['Don`t change', 'Clear', 'Unixtime', 'Unixtime-random'],
+				['Donʼt change', 'Clear', 'Unixtime', 'Unixtime-random'],
 				['Не змінювати', 'Видаляти', 'Unixtime', 'Unixtime-random']],
 			txt: [
 				'имена файлов',
@@ -581,9 +592,9 @@ const Lng = {
 			'Insert a space when quoting "> "',
 			'Вставляти пробіл при цитуванні "> "'],
 		favOnReply: [
-			'Добавлять тред в "Избранное" после ответа',
-			'Add thread to "Favorites" after reply',
-			'Додавати тред в "Вибране" після відповіді'],
+			'Добавлять тред в Избранное после ответа',
+			'Add thread to Favorites after reply',
+			'Додавати тред в Вибране після відповіді'],
 		warnSubjTrip: [
 			'Оповещать о трипкоде в поле "Тема"',
 			'Warn about a tripcode in "Subject" field',
@@ -656,9 +667,12 @@ const Lng = {
 		// "Common" tab
 		scriptStyle: {
 			sel: [
-				['Gradient darkblue', 'Gradient blue', 'Solid grey', 'Transparent blue', 'Square dark'],
-				['Gradient darkblue', 'Gradient blue', 'Solid grey', 'Transparent blue', 'Square dark'],
-				['Gradient darkblue', 'Gradient blue', 'Solid grey', 'Transparent blue', 'Square dark']],
+				['Gradient darkblue', 'Gradient blue', 'Solid grey', 'Transparent blue', 'Square dark',
+					'Gradient pink'],
+				['Gradient darkblue', 'Gradient blue', 'Solid grey', 'Transparent blue', 'Square dark',
+					'Gradient pink'],
+				['Gradient darkblue', 'Gradient blue', 'Solid grey', 'Transparent blue', 'Square dark',
+					'Gradient pink']],
 			txt: [
 				'Стиль Dollchan',
 				'Dollchan style',
@@ -679,29 +693,29 @@ const Lng = {
 		loadPages: [
 			'Количество страниц, загружаемых по F5',
 			'Number of pages that are loaded on F5 ',
-			'Кількість сторінок, що завантажуються по F5'],
+			'Кількість сторінок, оновлюваних по F5'],
 		panelCounter: {
 			sel: [
 				['Откл.', 'Все посты', 'Без скрытых'],
 				['Disabled', 'All posts', 'Except hidden'],
-				['Вимкн.', 'Усі пости', 'Крім схованих']],
+				['Вимкн.', 'Всі дописи', 'Крім схованих']],
 			txt: [
 				'Счетчик постов/картинок в треде',
 				'Сounter for posts/images in thread',
-				'Лічильник постів/зображень в треді']
+				'Лічильник дописів/зображ. в треді']
 		},
 		rePageTitle: [
-			'Название треда в заголовке вкладки*',
-			'Show thread title in the page tab*',
-			'Назва треду в заголовку вкладки*'],
+			'Название треда в заголовке вкладки',
+			'Show thread title in the page tab',
+			'Назва треду в заголовку вкладки'],
 		inftyScroll: [
 			'Бесконечная прокрутка страниц',
 			'Infinite scrolling for pages',
 			'Нескінченна прокрутка сторінок'],
 		hideReplies: [
-			'Показывать только OP в списке тредов*',
-			'Show only OP in threads list*',
-			'Показувати лише OP в списку тредів*'],
+			'Показывать только OP в списке тредов',
+			'Show only OP in threads list',
+			'Показувати лише OP в списку тредів'],
 		scrollToTop: [
 			'Всегда перемещаться вверх в списке тредов',
 			'Always scroll to top in the threads list',
@@ -710,6 +724,10 @@ const Lng = {
 			'Запоминать позицию скролла в тредах',
 			'Remember the scroll position in threads',
 			'Пам`ятати позицію скролла в тредах'],
+		favFolders: [
+			'Папки досок в окне Избранного',
+			'Boards folders in the Favorites window',
+			'Папки дошок в вікні Вибраного'],
 		favThrOrder: {
 			sel: [
 				['По номеру', 'По номеру (убыв)', 'По добавлению', 'По добавлению (убыв)'],
@@ -793,7 +811,7 @@ const Lng = {
 		preimg: [
 			'Предзагрузить картинки\r\n([Ctrl+Click] только для новых постов)',
 			'Preload images\r\n([Ctrl+Click] for new posts only)',
-			'Наперед завантажити зображення\r\n([Ctrl+Click] лише для нових постів)'],
+			'Наперед завантажити зображення\r\n([Ctrl+Click] лише для нових дописів)'],
 		savethr: [
 			'Сохранить на диск',
 			'Save to disk',
@@ -809,7 +827,7 @@ const Lng = {
 		'audio-off': [
 			'Звуковое оповещение о новых постах',
 			'Sound notification about new posts',
-			'Звукове сповіщення про нові пости'],
+			'Звукове сповіщення про нові дописи'],
 		catalog: [
 			'Перейти в каталог',
 			'Go to catalog',
@@ -818,29 +836,29 @@ const Lng = {
 			'Включить/выключить Dollchan',
 			'Turn on/off the Dollchan',
 			'Увімкнути/вимкнути Dollchan'],
-		pcount: [
+		postsCount: [
 			'Постов в треде',
 			'Posts in thread',
-			'Постів у треді'],
-		pcountNotHid: [
+			'Дописів у треді'],
+		postsNotHid: [
 			'Постов в треде (без скрытых)',
 			'Posts in thread (without hidden)',
-			'Постів у треді (крім схованих)'],
-		imglen: [
-			'Картинок в треде',
-			'Images in thread',
-			'Зображень у треді'],
-		posters: [
+			'Дописів у треді (крім схованих)'],
+		filesCount: [
+			'Картинок и видео в треде',
+			'Images and videos in thread',
+			'Зображень та відео у треді'],
+		postersCount: [
 			'Постящих в треде',
 			'Posters in thread',
-			'Постувачів у треді']
+			'Дописувачів у треді']
 	},
 
 	// Post buttons: tooltips
 	togglePost: [
 		'Скрыть/Раскрыть пост',
 		'Hide/Unhide post',
-		'Сховати/показати пост'],
+		'Сховати/показати допис'],
 	toggleThr: [
 		'Скрыть/Раскрыть тред',
 		'Hide/Unhide thread',
@@ -848,7 +866,7 @@ const Lng = {
 	replyToPost: [
 		'Ответить на пост',
 		'Reply to post',
-		'Відповісти на пост'],
+		'Відповісти на допис'],
 	replyToThr: [
 		'Ответить в тред',
 		'Reply to thread',
@@ -890,7 +908,7 @@ const Lng = {
 	underPost: [
 		'Разместить форму после поста',
 		'Move form under post',
-		'Розмістити форму після посту'],
+		'Розмістити форму після допису'],
 	clearForm: [
 		'Очистить форму',
 		'Clear form',
@@ -962,7 +980,7 @@ const Lng = {
 	selExpandThr: [ // "Expand thread" post button
 		['+10 постов', 'Последние 30', 'Последние 50', 'Последние 100', 'Весь тред'],
 		['+10 posts', 'Last 30 posts', 'Last 50 posts', 'Last 100 posts', 'Entire thread'],
-		['+10 постів', 'Останні 30', 'Останні 50', 'Останні 100', 'Весь тред']],
+		['+10 дописів', 'Останні 30', 'Останні 50', 'Останні 100', 'Весь тред']],
 	selAjaxPages: [ // "Refresh" panel button
 		['1 страница', '2 страницы', '3 страницы', '4 страницы', '5 страниц'],
 		['1 page', '2 pages', '3 pages', '4 pages', '5 pages'],
@@ -977,21 +995,21 @@ const Lng = {
 		['Кожні 30 сек.', 'Щохвилини', 'Кожні 2 хв.', 'Кожні 5 хв.']],
 	reportPost: [
 		'Жалоба на пост',
-		'Report post',
-		'Скарга на пост'],
+		'Report a post',
+		'Скарга на допис'],
 	reportThr: [
 		'Жалоба на тред',
-		'Report thread',
+		'Report a thread',
 		'Скарга на тред'],
 	markMyPost: [
-		'Пометить пост как мой',
-		'Mark post as mine',
-		'Відмітити пост як мій'
+		'Пометить как мой пост',
+		'Mark as my post',
+		'Відмітити як мій допис'
 	],
 	deleteMyPost: [
 		'Убрать из моих постов',
 		'Delete from my posts',
-		'Прибрати з моїх постів'
+		'Прибрати з моїх дописів'
 	],
 
 	// Sauce search for images and video frames
@@ -1033,7 +1051,7 @@ const Lng = {
 		'Зберегти отриманий кадр'],
 	errSaucenao: [
 		'Ошибка: не могу загрузить на saucenao.com',
-		'Error: can`t load to saucenao.com',
+		'Error: canʼt load to saucenao.com',
 		'Помилка: не можу завантажити на saucenao.com'],
 
 	// Hotkeys editor
@@ -1091,16 +1109,16 @@ const Lng = {
 		// Ua
 		'%l%i24 – попередня сторінка/зображення%/l',
 		'%l%i217 – наступна сторінка/зображення%/l',
-		'%l%i21 – тред (на дошці)/пост (в треді) нижче%/l',
-		'%l%i20 – тред (на дошці)/пост (в треді) вище%/l',
-		'%l%i31 – пост (на дошці) нижче%/l',
-		'%l%i30 – пост (на дошці) вище%/l',
-		'%l%i23 – приховати пост/тред%/l',
+		'%l%i21 – тред (на дошці)/допис (в треді) нижче%/l',
+		'%l%i20 – тред (на дошці)/допис (в треді) вище%/l',
+		'%l%i31 – допис (на дошці) нижче%/l',
+		'%l%i30 – допис (на дошці) вище%/l',
+		'%l%i23 – приховати допис/тред%/l',
 		'%l%i32 – перейти в тред%/l',
 		'%l%i33 – розгорнути тред%/l',
-		'%l%i211 – розгорнути зображення в пості%/l',
+		'%l%i211 – розгорнути зображення в дописі%/l',
 		'%l%i22 – швидка відповідь%/l',
-		'%l%i25t – відправити пост%/l',
+		'%l%i25t – відправити допис%/l',
 		'%l%i210 – відкрити/закрити "Налаштування"%/l',
 		'%l%i26 – відкрити/закрити "Вибране"%/l',
 		'%l%i27 – відкрити/закрити "Сховане"%/l',
@@ -1135,11 +1153,11 @@ const Lng = {
 		['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
 		['Нед', 'Пон', 'Вів', 'Сер', 'Чет', 'Птн', 'Сбт']],
 	monthDict: {
-		/* eslint-disable */
+		/* eslint-disable key-spacing, max-len, object-property-newline */
 		янв: 0, фев: 1, мар: 2, апр: 3, май: 4, мая: 4, июн: 5, июл: 6, авг: 7, сен: 8, окт: 9, ноя: 10, дек: 11,
 		jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
 		січ: 0, лют: 1, бер: 2, кві: 3, тра: 4, чер: 5, лип: 6, сер: 7, вер: 8, жов: 9, лис: 10, гру: 11
-		/* eslint-enable */
+		/* eslint-enable key-spacing, max-len, object-property-newline */
 	},
 
 	// Spells: popups
@@ -1173,7 +1191,7 @@ const Lng = {
 		'неочікуваний символ: %s'],
 	seMissClBkt: [
 		'пропущена закрывающая скобка',
-		"missing ')' in expression",
+		'missing \')\' in expression',
 		'пропущено закривну дужку'],
 	seRepsInParens: [
 		'спелл #%s не должен располагаться в скобках',
@@ -1268,11 +1286,11 @@ const Lng = {
 	hidPostThr: [
 		'Скрытые посты и треды',
 		'Hidden posts and threads',
-		'Сховані пости та треди'],
+		'Сховані дописи та треди'],
 	myPosts: [
 		'Мои посты',
 		'My posts',
-		'Мої пости'],
+		'Мої дописи'],
 
 	// Settings window: Common/Info tab
 	checkNow: [
@@ -1314,7 +1332,7 @@ const Lng = {
 	postsSent: [
 		'Постов отправлено',
 		'Posts sent',
-		'Постів надіслано'],
+		'дописів надіслано'],
 	total: [
 		'Всего',
 		'Total',
@@ -1329,34 +1347,38 @@ const Lng = {
 		'Інформація для відлагодження'],
 
 	// Favorites window: tooltips
-	infoCount: [
+	refreshCounters: [
 		'Обновить счетчики постов',
 		'Refresh posts counters',
-		'Оновити лічильники постів'],
+		'Оновити лічильники дописів'],
+	refreshClear404: [
+		'Обновить счетчики и очистить недоступные (404) треды',
+		'Refresh counters and clear inaccessible (404) threads',
+		'Оновити лічильники та очистити недоступні (404) треди'],
+	clear404: [
+		'Очистить недоступные (404) треды',
+		'Clear inaccessible (404) threads',
+		'Очистити недоступні (404) треди'],
 	infoPage: [
 		'Проверить положение тредов (до 10-й страницы)',
 		'Check for threads position (up to 10th page)',
 		'Перевірити актуальність тредів (до 10 сторінки)'],
-	clrDeleted: [
-		'Очистить недоступные (404) треды',
-		'Clear inaccessible (404) threads',
-		'Очистити недоступні (404) треди'],
-	oldPosts: [
-		'Постов при последнем посещении',
-		'Posts at the last visit',
-		'Постів під час останнього відвідування'],
+	totalPosts: [
+		'Всего постов в треде',
+		'Total posts in thread',
+		'Всього дописів в треді'],
 	newPosts: [
 		'Количество новых постов',
 		'Number of new posts',
-		'Кількість нових постів'],
+		'Кількість нових дописів'],
 	myPostsRep: [
 		'Ответов на ваши посты',
 		'Replies to your posts',
-		'Відповідей на ваші пости'],
+		'Відповідей на ваші дописи'],
 	thrPage: [
-		'Тред на @странице',
-		'Thread on @page',
-		'Тред на @сторінці'],
+		'На какой странице сейчас тред',
+		'What page is the thread on now',
+		'На якій сторінці зараз тред'],
 	goToThread: [
 		'Перейти к треду',
 		'Go to the thread',
@@ -1405,10 +1427,6 @@ const Lng = {
 		'переглядів: '],
 
 	// Postform file inputs: tooltips
-	pasteImage: [
-		'Ctrl+V - вставить картинку из буфера',
-		'Ctrl+V - paste an image from clipboard',
-		'Ctrl+V - додати зображення з буферу'],
 	dropFileHere: [
 		'Бросьте сюда файл(ы) или ссылку',
 		'Drop file(s) or link here',
@@ -1434,9 +1452,9 @@ const Lng = {
 		'Enter a link to the file manually',
 		'Ввести посилання на файл вручну'],
 	enterTheLink: [
-		"Введите ссылку и нажмите '+'",
-		"Enter the link and click '+'",
-		"Введіть посилання та натисніть '+'"],
+		'Введите ссылку и нажмите \'+\'',
+		'Enter the link and click \'+\'',
+		'Введіть посилання та натисніть \'+\''],
 	helpAddFile: [
 		'Встроить ogg/rar/zip/7z в картинку',
 		'Embed ogg/rar/zip/7z into the image',
@@ -1446,11 +1464,11 @@ const Lng = {
 	expImgInline: [
 		'[Click] открыть в посте, [Ctrl+Click] по центру',
 		'[Click] expand in post, [Ctrl+Click] by center',
-		'[Click] розгорнути в пості, [Ctrl+Click] в центрі'],
+		'[Click] розгорнути в дописі, [Ctrl+Click] в центрі'],
 	expImgFull: [
 		'[Click] открыть по центру, [Ctrl+Click] в посте',
 		'[Click] expand by center, [Ctrl+Click] in post',
-		'[Click] розгорнути в центрі, [Ctrl+Click] в пості'],
+		'[Click] розгорнути в центрі, [Ctrl+Click] в дописі'],
 	nextImg: [
 		'Следующая картинка',
 		'Next image',
@@ -1556,11 +1574,11 @@ const Lng = {
 	postNotFound: [
 		'Пост не найден',
 		'Post not found',
-		'Пост не знайдено'],
+		'Допис не знайдено'],
 	noHidThr: [
 		'Нет скрытых тредов…',
 		'No hidden threads…',
-		'Немає схованих постів…'],
+		'Немає схованих дописів…'],
 	noFavThr: [
 		'Нет избранных тредов…',
 		'Favorites is empty…',
@@ -1587,7 +1605,7 @@ const Lng = {
 		'Завантажте скрипт для відтворення WebM (VP9/Opus)'],
 	errFormLoad: [
 		'Не удаётся загрузить форму ответа',
-		'Can`t load the reply form',
+		'Canʼt load the reply form',
 		'Не вдалося завантажити форму відповіді'
 	],
 
@@ -1632,15 +1650,15 @@ const Lng = {
 	hidePosts: [
 		'Скрыть посты',
 		'Hide posts',
-		'Сховати пости'],
+		'Сховати дописи'],
 	showPosts: [
 		'Показать посты',
 		'Show posts',
-		'Показати пости'],
+		'Показати дописи'],
 	getNewPosts: [
 		'Получить новые посты',
 		'Get new posts',
-		'Отримати нові пости'],
+		'Отримати нові дописи'],
 	makeThr: [
 		'Создать тред',
 		'Create thread',
@@ -1657,10 +1675,14 @@ const Lng = {
 		'Скрыть форму',
 		'Hide form',
 		'Сховати форму'],
-	noSage: [
-		'Без сажи',
-		'No sage',
-		'Без сажі'],
+	enableSage: [
+		'Нажмите, чтобы включить сажу',
+		'Click to enable sage',
+		'Натисніть, щоб увімкнути сажу'],
+	disableSage: [
+		'САЖА включена! Нажмите, чтобы отключить',
+		'SAGE enabled! Click to disable',
+		'САЖА ввімкнена! Натисніть, щоб вимкнути'],
 	postsOmitted: [
 		'Пропущено ответов: ',
 		'Posts omitted: ',
@@ -1668,7 +1690,7 @@ const Lng = {
 	newPost: [
 		['новый пост', 'новых поста', 'новых постов'],
 		['new post', 'new posts', 'new posts'],
-		['новий пост', 'нових пости', 'нових постів']],
+		['новий допис', 'нових дописи', 'нових дописів']],
 	youReplies: [
 		['ответ Вам', 'ответа Вам', 'ответов Вам'],
 		['reply to You', 'replies to You', 'replies to You'],
@@ -1676,11 +1698,16 @@ const Lng = {
 	latestPost: [
 		'Последний пост',
 		'Latest post',
-		'Останній пост'],
+		'Останній допис'],
 	donateMsg: [
 		'<b>Спасибо за использование Dollchan Extension!</b><br>Вы можете поддержать проект пожертвованием',
 		'<b>Thank You for using Dollchan Extension!</b><br>You can support the project by donating',
 		'<b>Дякуємо за використання Dollchan Extension!</b><br>Ви можете підтримати проект пожертвою'],
+	donateOnline: [
+		'Онлайн донат (грн)',
+		'Donate online (UAH)',
+		'Онлайн донат (грн)'
+	],
 	firefoxAddon: [
 		'Firefox аддон</a> доступен!',
 		'Firefox add-on</a> is available!',
@@ -1692,8 +1719,8 @@ const Lng = {
 const doc = deWindow.document;
 const emptyFn = Function.prototype;
 const aProto = Array.prototype;
-const gitWiki = 'https://github.com/kr1ck/Dollchan-Extension-Tools/wiki/';
-const gitRaw = 'https://raw.githubusercontent.com/kr1ck/Dollchan-Extension-Tools/master/';
+const gitWiki = 'https://github.com/SthephanShinkufag/Dollchan-Extension-Tools/wiki/';
+const gitRaw = 'https://raw.githubusercontent.com/SthephanShinkufag/Dollchan-Extension-Tools/master/';
 
 let $each, aib, Cfg, docBody, dTime, dummy, isExpImg, isPreImg, lang, locStorage, nav, needScroll, pByEl,
 	pByNum, pr, sesStorage, updater;
@@ -1707,78 +1734,51 @@ let topWinZ = 10;
 
 // DOM SEARCH
 
-const $Q = (path, root = docBody) => root.querySelectorAll(path);
-
-const $q = (path, root = docBody) => root.querySelector(path);
-
-const $id = id => doc.getElementById(id);
-
-function $parent(el, tagName) {
-	do {
-		el = el.parentElement;
-	} while(el && el.tagName !== tagName);
-	return el;
+function $id(id) {
+	return doc.getElementById(id);
 }
 
-function $qParent(el, path) {
-	do {
-		el = el.parentElement;
-	} while(el && !nav.matchesSelector(el, path));
-	return el;
+function $q(path, rootEl = doc.body) {
+	return rootEl.querySelector(path);
+}
+
+function $Q(path, rootEl = doc.body) {
+	return rootEl.querySelectorAll(path);
+}
+
+function $match(parentStr, ...rules) {
+	return parentStr.split(', ').map(val => val + rules.join(', ' + val)).join(', ');
+}
+
+function $contains(containerEl, el) {
+	el = el?.farthestViewportElement /* for SVG */ || el;
+	return el && (el === containerEl || containerEl.contains(el));
 }
 
 // DOM MODIFIERS
 
-function $before(el, node) {
-	el.parentNode.insertBefore(node, el);
+function $bBegin(siblingEl, html) {
+	siblingEl.insertAdjacentHTML('beforebegin', html);
+	return siblingEl.previousSibling;
 }
 
-function $after(el, node) {
-	const nextEl = el.nextSibling;
-	if(nextEl) {
-		el.parentNode.insertBefore(node, nextEl);
-	} else {
-		el.parentNode.appendChild(node);
-	}
+function $aBegin(parentEl, html) {
+	parentEl.insertAdjacentHTML('afterbegin', html);
+	return parentEl.firstChild;
 }
 
-function $bBegin(sibling, html) {
-	sibling.insertAdjacentHTML('beforebegin', html);
-	return sibling.previousSibling;
+function $bEnd(parentEl, html) {
+	parentEl.insertAdjacentHTML('beforeend', html);
+	return parentEl.lastChild;
 }
 
-function $aBegin(parent, html) {
-	parent.insertAdjacentHTML('afterbegin', html);
-	return parent.firstChild;
+function $aEnd(siblingEl, html) {
+	siblingEl.insertAdjacentHTML('afterend', html);
+	return siblingEl.nextSibling;
 }
 
-function $bEnd(parent, html) {
-	parent.insertAdjacentHTML('beforeend', html);
-	return parent.lastChild;
-}
-
-function $aEnd(sibling, html) {
-	sibling.insertAdjacentHTML('afterend', html);
-	return sibling.nextSibling;
-}
-
-function $replace(origEl, newEl) {
-	if(typeof newEl === 'string') {
-		origEl.insertAdjacentHTML('afterend', newEl);
-		origEl.remove();
-	} else {
-		origEl.parentNode.replaceChild(newEl, origEl);
-	}
-}
-
-function $del(el) {
-	if(el) {
-		el.remove();
-	}
-}
-
-function $delAll(path, root = docBody) {
-	$each(root.querySelectorAll(path, root), el => el.remove());
+function $delAll(path, rootEl = doc.body) {
+	rootEl.querySelectorAll(path, rootEl).forEach(el => el.remove());
 }
 
 function $add(html) {
@@ -1786,41 +1786,36 @@ function $add(html) {
 	return dummy.firstElementChild;
 }
 
-function $btn(value, title, fn, className = 'de-button') {
+function $button(value, title, fn, className = 'de-button') {
 	const el = $add(`<input type="button" class="${ className }" value="${ value }" title="${ title }">`);
 	el.addEventListener('click', fn);
 	return el;
 }
 
 function $script(text) {
-	const el = doc.createElement('script'); // We can't insert scripts directly as html
-	el.type = 'text/javascript';
-	el.textContent = text;
-	doc.head.appendChild(el).remove();
+	try {
+		const el = doc.createElement('script');
+		el.type = 'text/javascript';
+		el.textContent = text;
+		doc.head.append(el);
+		el.remove();
+	} catch(err) {}
 }
 
 function $css(text) {
-	if(nav.isSafari && !('flex' in docBody.style)) {
-		text = text.replace(/(transform|transition|flex|align-items)/g, ' -webkit-$1');
-	}
-	return $bEnd(doc.head, `<style type="text/css">${ text }</style>`);
+	return $bEnd(doc.head, `<style type="text/css">${
+		nav.isSafari && !('flex' in doc.body.style) ?
+			text.replace(/(transform|transition|flex|align-items)/g, ' -webkit-$1') : text
+	}</style>`);
 }
 
-function $DOM(html) {
+function $createDoc(html) {
 	const myDoc = doc.implementation.createHTMLDocument('');
 	myDoc.documentElement.innerHTML = html;
 	return myDoc;
 }
 
-// CSS UTILS
-
-function $toggle(el, needToShow = el.style.display) {
-	if(needToShow) {
-		el.style.removeProperty('display');
-	} else {
-		el.style.display = 'none';
-	}
-}
+// CSS AND ATTRIBUTES
 
 function $show(el) {
 	el.style.removeProperty('display');
@@ -1828,6 +1823,14 @@ function $show(el) {
 
 function $hide(el) {
 	el.style.display = 'none';
+}
+
+function $toggle(el, needToShow = el.style.display) {
+	if(needToShow) {
+		el.style.removeProperty('display');
+	} else {
+		el.style.display = 'none';
+	}
 }
 
 function $animate(el, cName, isRemove = false) {
@@ -1842,75 +1845,10 @@ function $animate(el, cName, isRemove = false) {
 	el.classList.add(cName);
 }
 
-// Checks the validity of the user inputted color
-function checkCSSColor(color) {
-	if(!color || color === 'inherit' || color === 'currentColor') {
-		return false;
-	}
-	if(color === 'transparent') {
-		return true;
-	}
-	const image = doc.createElement('img');
-	image.style.color = 'rgb(0, 0, 0)';
-	image.style.color = color;
-	if(image.style.color !== 'rgb(0, 0, 0)') {
-		return true;
-	}
-	image.style.color = 'rgb(255, 255, 255)';
-	image.style.color = color;
-	return image.style.color !== 'rgb(255, 255, 255)';
-}
+// OBJECT
 
-const cssMatches = (leftSel, ...rules) => leftSel.split(', ').map(
-	val => val + rules.join(', ' + val)
-).join(', ');
-
-// OTHER UTILS
-
-const $hasProp = (obj, i) => Object.prototype.hasOwnProperty.call(obj, i);
-
-const pad2 = i => (i < 10 ? '0' : '') + i;
-
-const arrTags = (arr, start, end) => start + arr.join(end + start) + end;
-
-const fixBrd = b => `/${ b }${ b ? '/' : '' }`;
-
-const getAbsLink = url => (
-	url[1] === '/' ? aib.prot :
-	url[0] === '/' ? aib.prot + '//' + aib.host : '') + url;
-
-const getFileName = url => url.substring(url.lastIndexOf('/') + 1);
-
-const getFileExt = url => url.substring(url.lastIndexOf('.') + 1);
-
-const cutFileExt = fileName => fileName.substring(0, fileName.lastIndexOf('.'));
-
-const prettifySize = val =>
-	val > 512 * 1024 * 1024 ? (val / (1024 ** 3)).toFixed(2) + Lng.sizeGByte[lang] :
-	val > 512 * 1024 ? (val / (1024 ** 2)).toFixed(2) + Lng.sizeMByte[lang] :
-	val > 512 ? (val / 1024).toFixed(2) + Lng.sizeKByte[lang] :
-	val.toFixed(2) + Lng.sizeByte[lang];
-
-// Prepares a string to be used as a new RegExp argument
-const quoteReg = str => (str + '').replace(/([.?*+^$[\]\\(){}|-])/g, '\\$1');
-
-// Converts a string to a regular expression
-function toRegExp(str, noG) {
-	const l = str.lastIndexOf('/');
-	const flags = str.substr(l + 1);
-	return new RegExp(str.substr(1, l - 1), noG ? flags.replace('g', '') : flags);
-}
-
-function toggleAttr(el, name, value, isAdd) {
-	if(isAdd) {
-		el.setAttribute(name, value);
-	} else {
-		el.removeAttribute(name);
-	}
-}
-
-function $pd(e) {
-	e.preventDefault();
+function $hasProp(obj, i) {
+	return Object.prototype.hasOwnProperty.call(obj, i);
 }
 
 function $isEmpty(obj) {
@@ -1922,24 +1860,133 @@ function $isEmpty(obj) {
 	return true;
 }
 
-function insertText(el, txt) {
-	const scrtop = el.scrollTop;
-	const start = el.selectionStart;
-	el.value = el.value.substr(0, start) + txt + el.value.substr(el.selectionEnd);
-	el.setSelectionRange(start + txt.length, start + txt.length);
-	el.focus();
-	el.scrollTop = scrtop;
+// REGEXP
+
+// Prepares a string to be used as a new RegExp argument
+function escapeRegExp(str) {
+	return (str + '').replace(/([.?*+^$[\]\\(){}|-])/g, '\\$1');
 }
 
-// XXX: SVG events hack for Opera Presto
-function fixEventEl(el) {
-	if(el && nav.isPresto) {
-		const svg = el.correspondingUseElement;
-		if(svg) {
-			el = svg.ownerSVGElement;
-		}
+// Converts a string into regular expression
+function strToRegExp(str, notGlobal) {
+	const l = str.lastIndexOf('/');
+	const flags = str.substr(l + 1);
+	return new RegExp(str.substr(1, l - 1), notGlobal ? flags.replace('g', '') : flags);
+}
+
+// OTHER UTILS
+
+function pad2(i) {
+	return i < 10 ? '0' + i : i;
+}
+
+function arrTags(arr, start, end) {
+	return start + arr.join(end + start) + end;
+}
+
+function fixBoardName(board) {
+	return `/${ board ? board + '/' : '' }`;
+}
+
+function getFileName(url) {
+	return url.substring(url.lastIndexOf('/') + 1);
+}
+
+function getFileExt(url) {
+	return url.substring(url.lastIndexOf('.') + 1);
+}
+
+function cutFileExt(fileName) {
+	return fileName.substring(0, fileName.lastIndexOf('.'));
+}
+
+// Converts bytes into KB/MB/GB
+function prettifySize(val) {
+	return val > 512 * 1024 * 1024 ? (val / (1024 ** 3)).toFixed(2) + Lng.sizeGByte[lang] :
+		val > 512 * 1024 ? (val / (1024 ** 2)).toFixed(2) + Lng.sizeMByte[lang] :
+		val > 512 ? (val / 1024).toFixed(2) + Lng.sizeKByte[lang] :
+		val.toFixed(2) + Lng.sizeByte[lang];
+}
+
+// Inserts the text at the cursor into an input field
+function insertText(el, txt) {
+	const { scrollTop, selectionStart: start, value } = el;
+	el.value = value.substr(0, start) + txt + value.substr(el.selectionEnd);
+	el.setSelectionRange(start + txt.length, start + txt.length);
+	el.focus();
+	el.scrollTop = scrollTop;
+}
+
+// Gets the error stack trace
+function getErrorMessage(err) {
+	if(err instanceof AjaxError) {
+		return err.toString();
 	}
-	return el;
+	if(typeof err === 'string') {
+		return err;
+	}
+	const { stack, name, message } = err;
+	return Lng.internalError[lang] + (
+		!stack ? `${ name }: ${ message }` :
+		nav.isWebkit ? stack : `${ name }: ${ message }\n${ !nav.isFirefox ? stack : stack.replace(
+			/^([^@]*).*\/(.+)$/gm,
+			(str, fName, line) => `    at ${ fName ? `${ fName } (${ line })` : line }`
+		) }`
+	);
+}
+
+// Read cookies
+function getCookies() {
+	const obj = {};
+	const cookies = doc.cookie.split(';');
+	for(let i = 0, len = cookies.length; i < len; ++i) {
+		const parts = cookies[i].split('=');
+		obj[parts.shift().trim()] = decodeURI(parts.join('='));
+	}
+	return obj;
+}
+
+// Reads File into data
+async function readFile(file, asText) {
+	return new Promise(resolve => {
+		const fr = new FileReader();
+		fr.onload = e => resolve({ data: e.target.result });
+		if(asText) {
+			fr.readAsText(file);
+		} else {
+			fr.readAsArrayBuffer(file);
+		}
+	});
+}
+
+// Gets mime type depending on file name
+function getFileMime(url) {
+	const dotIdx = url.lastIndexOf('.') + 1;
+	switch(dotIdx && url.substr(dotIdx).toLowerCase()) {
+	case 'gif': return 'image/gif';
+	case 'jfif':
+	case 'jpeg':
+	case 'jpg': return 'image/jpeg';
+	case 'mov': return 'video/quicktime';
+	case 'mp4':
+	case 'm4v': return 'video/mp4';
+	case 'ogv': return 'video/ogv';
+	case 'png': return 'image/png';
+	case 'webm': return 'video/webm';
+	case 'webp': return 'image/webp';
+	default: return '';
+	}
+}
+
+// Downloads files stored in a Blob
+function downloadBlob(blob, name) {
+	const url = nav.isMsEdge ? navigator.msSaveOrOpenBlob(blob, name) : deWindow.URL.createObjectURL(blob);
+	const link = $bEnd(doc.body, `<a href="${ url }" download="${ name }"></a>`);
+	link.click();
+	setTimeout(() => {
+		deWindow.URL.revokeObjectURL(url);
+		link.remove();
+	}, 2e5);
 }
 
 // Allows to record the duration of code execution
@@ -1951,7 +1998,8 @@ const Logger = {
 	getLogData(isFull) {
 		const marks = this._marks;
 		const timeLog = [];
-		let duration, i = 1;
+		let duration;
+		let i = 1;
 		let lastExtra = 0;
 		for(let len = marks.length - 1; i < len; ++i) {
 			duration = marks[i][1] - marks[i - 1][1] + lastExtra;
@@ -2048,7 +2096,7 @@ class Maybe {
 
 class TemporaryContent {
 	constructor(key) {
-		const oClass = /* new.target */this.constructor; // https://github.com/babel/babel/issues/1088
+		const oClass = /* new.target */ this.constructor; // https://github.com/babel/babel/issues/1088
 		if(oClass.purgeTO) {
 			clearTimeout(oClass.purgeTO);
 		}
@@ -2077,9 +2125,7 @@ class TemporaryContent {
 		this.data = null;
 	}
 	static removeTempData(key) {
-		if(this.data) {
-			this.data.delete(key);
-		}
+		this.data?.delete(key);
 	}
 }
 TemporaryContent.purgeSecs = 6e4;
@@ -2096,7 +2142,7 @@ class TasksPool {
 	}
 	completeTasks() {
 		if(!this.stopped) {
-			if(this.array.length === 0 && this.running === 0) {
+			if(!this.array.length && this.running === 0) {
 				this.endFn();
 			} else {
 				this.completed = true;
@@ -2124,13 +2170,13 @@ class TasksPool {
 	_continueTasks() {
 		if(!this.stopped) {
 			this.paused = false;
-			if(this.array.length === 0) {
+			if(!this.array.length) {
 				if(this.completed) {
 					this.endFn();
 				}
 				return;
 			}
-			while(this.array.length !== 0 && this.running !== this.max) {
+			while(this.array.length && this.running !== this.max) {
 				this._runTask(this.array.shift());
 				this.running++;
 			}
@@ -2138,7 +2184,7 @@ class TasksPool {
 	}
 	_endTask() {
 		if(!this.stopped) {
-			if(!this.paused && this.array.length !== 0) {
+			if(!this.paused && this.array.length) {
 				this._runTask(this.array.shift());
 				return;
 			}
@@ -2222,7 +2268,8 @@ class TarBuilder {
 		this._data = [];
 	}
 	addFile(filepath, input) {
-		let i, checksum = 0;
+		let i;
+		let checksum = 0;
 		const fileSize = input.length;
 		const header = new Uint8Array(512);
 		const nameLen = Math.min(filepath.length, 100);
@@ -2416,7 +2463,6 @@ function getFileType(url) {
 	case 'm4v': return 'video/mp4';
 	case 'ogv': return 'video/ogv';
 	case 'png': return 'image/png';
-	case 'web':
 	case 'webm': return 'video/webm';
 	case 'webp': return 'image/webp';
 	default: return '';
@@ -2459,8 +2505,7 @@ function showDonateMsg() {
 // Gets data from the global storage
 async function getStored(id) {
 	if(nav.hasNewGM) {
-		const value = await GM.getValue(id);
-		return value;
+		return await GM.getValue(id);
 	} else if(nav.hasOldGM) {
 		return GM_getValue(id);
 	} else if(nav.hasWebStorage) {
@@ -2486,22 +2531,26 @@ function setStored(id, value) {
 	} else if(nav.hasOldGM) {
 		GM_setValue(id, value);
 	} else if(nav.hasWebStorage) {
-		const obj = {};
-		obj[id] = value;
-		chrome.storage.sync.set(obj, () => {
-			if(chrome.runtime.lastError) {
-				// Store into storage.local if the storage.sync limit is exceeded
-				chrome.storage.local.set(obj, emptyFn);
-				chrome.storage.sync.remove(id, emptyFn);
-			} else {
-				chrome.storage.local.remove(id, emptyFn);
-			}
+		return new Promise(resolve => {
+			const obj = {};
+			obj[id] = value;
+			chrome.storage.sync.set(obj, () => {
+				if(chrome.runtime.lastError) {
+					// Store into storage.local if the storage.sync limit is exceeded
+					chrome.storage.local.set(obj, Function.prototype);
+					chrome.storage.sync.remove(id, Function.prototype);
+				} else {
+					chrome.storage.local.remove(id, Function.prototype);
+				}
+				resolve();
+			});
 		});
 	} else if(nav.hasPrestoStorage) {
 		prestoStorage.setItem(id, value);
 	} else {
 		locStorage[id] = value;
 	}
+	return null;
 }
 
 // Removes data from the global storage
@@ -2512,7 +2561,7 @@ function delStored(id) {
 	} else if(nav.hasOldGM) {
 		GM_deleteValue(id);
 	} else if(nav.hasWebStorage) {
-		chrome.storage.sync.remove(id, emptyFn);
+		chrome.storage.sync.remove(id, Function.prototype);
 	} else if(nav.hasPrestoStorage) {
 		prestoStorage.removeItem(id);
 	} else {
@@ -2525,40 +2574,82 @@ async function getStoredObj(id) {
 	return JSON.parse(await getStored(id) || '{}') || {};
 }
 
-// Replaces the domain config with an object. Removes the domain config, if there is no object.
-function saveCfgObj(dm, obj) {
-	getStoredObj('DESU_Config').then(val => {
-		if(obj) {
-			val[dm] = obj;
-		} else {
-			delete val[dm];
-		}
-		setStored('DESU_Config', JSON.stringify(val));
-	});
-}
+// == CONFIG DATA ============================================================================================
 
-// Saves the value for a particular config option
-function saveCfg(id, val) {
-	if(Cfg[id] !== val) {
-		Cfg[id] = val;
-		saveCfgObj(aib.dm, Cfg);
-	}
-}
+// Asynchronous saving of config. Fixes a race condition when saving from different browser tabs.
+const CfgSaver = {
+	// Saves enumerated options and values
+	async save(...args) {
+		let isChanged = false;
+		for(let i = 0; i < args.length; i += 2) {
+			const id = args[i];
+			const val = args[i + 1];
+			if(Cfg[id] !== val) {
+				Cfg[id] = val;
+				isChanged = true;
+			}
+		}
+		if(isChanged) {
+			await this.saveObj(aib.domain, loadedCfg => {
+				for(let i = 0; i < args.length; i += 2) {
+					loadedCfg[args[i]] = args[i + 1];
+				}
+				return loadedCfg;
+			});
+		}
+	},
+	// Saves all domain options as an object
+	async saveObj(domain, fn) {
+		if(this._isBusy) {
+			await new Promise((resolve, reject) => {
+				this._queue.push([domain, fn, resolve, reject]);
+			});
+			return;
+		}
+		this._isBusy = true;
+		await this.saveObjHelper(domain, fn);
+		if(this._queue.length > 0) {
+			while(this._queue.length > 0) {
+				const [[qDomain, qFn, resolve, reject]] = this._queue.splice(0, 1);
+				try {
+					await this.saveObjHelper(qDomain, qFn);
+					resolve();
+				} catch(err) {
+					reject(err);
+				}
+			}
+		}
+		this._isBusy = false;
+	},
+	async saveObjHelper(domain, fn) {
+		const val = await getStoredObj('DESU_Config');
+		const res = fn(val[domain]);
+		if(res) {
+			val[domain] = res;
+		} else {
+			delete val[domain];
+		}
+		const rv = setStored('DESU_Config', JSON.stringify(val));
+		// Violentmonkey bug: GM.setValue promise is not fulfilled.
+		if(rv && !nav.isViolentmonkey) {
+			await rv;
+		}
+	},
+
+	_isBusy : false,
+	_queue  : []
+};
 
 // Toggles a particular config option (1|0)
-function toggleCfg(id) {
-	saveCfg(id, +!Cfg[id]);
-}
-
-function readData() {
-	return Promise.all([readFavorites(), readCfg()]);
+async function toggleCfg(id) {
+	await CfgSaver.save(id, +!Cfg[id]);
 }
 
 // Config initialization, checking for Dollchan update.
 async function readCfg() {
 	let obj;
 	const val = await getStoredObj('DESU_Config');
-	if(!(aib.dm in val) || $isEmpty(obj = val[aib.dm])) {
+	if(!(aib.domain in val) || $isEmpty(obj = val[aib.domain])) {
 		const isGlobal = nav.hasGlobalStorage && !!val.global;
 		obj = isGlobal ? val.global : {};
 		if(isGlobal) {
@@ -2567,19 +2658,17 @@ async function readCfg() {
 		}
 	}
 	defaultCfg.captchaLang = aib.captchaLang;
-	defaultCfg.language = +!String(navigator.language).toLowerCase().startsWith('ru');
+	const browserLang = String(navigator.language).toLowerCase();
+	defaultCfg.language =
+		browserLang.startsWith('ru') ? 0 :
+		browserLang.startsWith('en') ? 1 :
+		browserLang.startsWith('uk') ? 2 : defaultCfg.language;
 	Cfg = Object.assign(Object.create(defaultCfg), obj);
 	if(!Cfg.timeOffset) {
 		Cfg.timeOffset = '+0';
 	}
 	if(!Cfg.timePattern) {
 		Cfg.timePattern = aib.timePattern;
-	}
-	if(aib.prot !== 'http:') { // Vocaroo doesn't support https
-		Cfg.addVocaroo = 0;
-	}
-	if(aib.dobrochan && !Cfg.useDobrAPI) {
-		aib.JsonBuilder = null;
 	}
 	if(!('FormData' in deWindow)) {
 		Cfg.ajaxPosting = 0;
@@ -2613,11 +2702,8 @@ async function readCfg() {
 	if(!Cfg.stats) {
 		Cfg.stats = { view: 0, op: 0, reply: 0 };
 	}
-	if(Cfg.addYouTube !== undefined) {
-		Cfg.embedYTube = Cfg.addYouTube === 0 ? 0 : Cfg.addYouTube === 1 ? 2 : 1;
-		delete Cfg.addYouTube;
-	}
 	lang = Cfg.language;
+	val[aib.domain] = Cfg;
 	if(val.commit !== commit && !localData) {
 		if(doc.readyState === 'loading') {
 			doc.addEventListener('DOMContentLoaded', () => setTimeout(showDonateMsg, 1e3));
@@ -2634,22 +2720,24 @@ async function readCfg() {
 			} else {
 				$popup('updavail', html);
 			}
-		}, emptyFn);
+		}, Function.prototype);
 	}
 }
 
-// Initialize of hidden and favorites. Run spells.
+// == POSTS DATA =============================================================================================
+
+// Initialization of hidden and favorites. Run spells.
 function readPostsData(firstPost, favObj) {
 	let sVis = null;
 	try {
-		// Get hidden posts and threads that cached in current session
+		// Get hidden posts and threads from current session
 		const str = aib.t ? sesStorage['de-hidden-' + aib.b + aib.t] : null;
 		if(str) {
 			const json = JSON.parse(str);
 			if(json.hash === (Cfg.hideBySpell ? Spells.hash : 0) &&
 				pByNum.has(json.lastNum) && pByNum.get(json.lastNum).count === json.lastCount
 			) {
-				sVis = json.data && json.data[0] instanceof Array ? json.data : null;
+				sVis = json.data?.[0] instanceof Array ? json.data : null;
 			}
 		}
 	} catch(err) {
@@ -2658,38 +2746,58 @@ function readPostsData(firstPost, favObj) {
 	if(!firstPost) {
 		return;
 	}
-	let updateFav = null;
-	const favBrd = (aib.host in favObj) && (aib.b in favObj[aib.host]) ? favObj[aib.host][aib.b] : {};
+
+	let updatedFav = null;
+	const favBoardObj = favObj[aib.host]?.[aib.b] || {};
 	const spellsHide = Cfg.hideBySpell;
 	const maybeSpells = new Maybe(SpellsRunner);
-
-	// Search existed posts in stored data
 	for(let post = firstPost; post; post = post.next) {
 		const { num } = post;
 		// Mark favorite threads, update favorites data
-		if(post.isOp && (num in favBrd)) {
-			const f = favBrd[num];
-			const { thr } = post;
+		if(post.isOp && (num in favBoardObj)) {
+			let newCount = 0;
+			let youCount = 0;
 			post.toggleFavBtn(true);
-			post.thr.isFav = true;
-			if(aib.t) {
-				f.cnt = thr.pcount;
-				f.new = f.you = 0;
-				if(Cfg.markNewPosts && f.last) {
-					let lastPost = pByNum.get(+f.last.match(/\d+/));
-					if(lastPost) {
-						// Mark all new posts after last viewed post
-						while((lastPost = lastPost.next)) {
-							Post.addMark(lastPost.el, true);
+			const { thr } = post;
+			thr.isFav = true;
+			const isThrActive = aib.t && !doc.hidden;
+			const entry = favBoardObj[num];
+			let _post = pByNum.get(+entry.last.match(/\d+/));
+			if(_post) {
+				while((_post = _post.nextInThread)) {
+					if(Cfg.markNewPosts) {
+						Post.addMark(_post.el, true);
+					}
+					if(!isThrActive) {
+						newCount++;
+						if(isPostRefToYou(_post.el)) {
+							youCount++;
 						}
 					}
 				}
-				f.last = aib.anchor + thr.last.num;
-			} else {
-				f.new = thr.pcount - f.cnt;
+			} else if(!aib.t) {
+				newCount = entry.new + thr.postsCount - entry.cnt;
+				_post = post;
+				while((_post = _post.nextInThread)) {
+					if(Cfg.markNewPosts) {
+						Post.addMark(_post.el, true);
+					}
+					if(isPostRefToYou(_post.el)) {
+						youCount++;
+					}
+				}
 			}
-			updateFav = [aib.host, aib.b, aib.t, [thr.pcount, thr.last.num], 'update'];
+			if(isThrActive) {
+				entry.last = aib.anchor + thr.last.num;
+			}
+			updatedFav = [aib.host, aib.b, aib.t, [
+				entry.cnt = thr.postsCount,
+				entry.new = newCount,
+				entry.you = youCount,
+				thr.last.num
+			], 'update'];
 		}
+		// Search existed posts in hidden posts data and apply spells
 		if(HiddenPosts.has(num)) {
 			HiddenPosts.hideHidden(post, num);
 			continue;
@@ -2699,15 +2807,15 @@ function readPostsData(firstPost, favObj) {
 			if(HiddenThreads.has(num)) {
 				hideData = [true, null];
 			} else if(spellsHide) {
-				hideData = sVis && sVis[post.count];
+				hideData = sVis?.[post.count];
 			}
 		} else if(spellsHide) {
-			hideData = sVis && sVis[post.count];
+			hideData = sVis?.[post.count];
 		} else {
 			continue;
 		}
 		if(!hideData) {
-			maybeSpells.value.runSpells(post); // Apply spells if posts not hidden
+			maybeSpells.value.runSpells(post);
 		} else if(hideData[0]) {
 			if(post.isHidden) {
 				post.spellHidden = true;
@@ -2720,12 +2828,14 @@ function readPostsData(firstPost, favObj) {
 		maybeSpells.value.endSpells();
 	}
 	if(aib.t && Cfg.panelCounter === 2) {
-		$id('de-panel-info-pcount').textContent = Thread.first.pcount - Thread.first.hidCounter;
+		$id('de-panel-info-posts').textContent = Thread.first.postsCount - Thread.first.hiddenCount;
 	}
-	if(updateFav) {
+	if(updatedFav) {
 		saveFavorites(favObj);
-		sendStorageEvent('__de-favorites', updateFav);
+		// Updating Favorites: page is loaded
+		sendStorageEvent('__de-favorites', updatedFav);
 	}
+
 	// After following a link from Favorites, we need to open Favorites again.
 	const hasFavWinKey = sesStorage['de-fav-win'] === '1';
 	if(hasFavWinKey || Cfg.favWinOn) {
@@ -2735,7 +2845,7 @@ function readPostsData(firstPost, favObj) {
 		}
 	}
 	let data = sesStorage['de-fav-newthr'];
-	if(data) { // Detecting the created new thread and adding it to Favorites.
+	if(data) { // Detecting the new created thread and adding it to Favorites.
 		data = JSON.parse(data);
 		const isTimeOut = !data.num && (Date.now() - data.date > 2e4);
 		if(data.num === firstPost.num || !firstPost.next && !isTimeOut) {
@@ -2746,8 +2856,7 @@ function readPostsData(firstPost, favObj) {
 		}
 	}
 	if(Cfg.nextPageThr && DelForm.first === DelForm.last) {
-		const hidThrEls = $Q('.de-thr-hid', firstPost.thr.form.el);
-		const hidThrLen = hidThrEls.length;
+		const hidThrLen = $Q('.de-thr-hid', firstPost.thr.form.el).length;
 		if(hidThrLen) {
 			Pages.addPage(hidThrLen);
 		}
@@ -2779,14 +2888,14 @@ function readViewedPosts() {
 	}
 }
 
-// HIDDEN AND MY POSTS STORAGE
-
 class PostsStorage {
 	constructor() {
 		this.storageName = '';
 		this.__cachedTime = null;
 		this._cachedStorage = null;
 		this._cacheTO = null;
+		this._onReadNew = null;
+		this._onAfterSave = null;
 	}
 	get(num) {
 		const storage = this._readStorage()[aib.b];
@@ -2804,7 +2913,7 @@ class PostsStorage {
 		this._cacheTO = this.__cachedTime = this._cachedStorage = null;
 	}
 	removeStorage(num, board = aib.b) {
-		const storage = this._readStorage();
+		const storage = this._readStorage(true);
 		const bStorage = storage[board];
 		if(bStorage && $hasProp(bStorage, num)) {
 			delete bStorage[num];
@@ -2815,12 +2924,18 @@ class PostsStorage {
 		}
 	}
 	set(num, thrNum, data = true) {
-		const storage = this._readStorage();
+		const storage = this._readStorage(true);
+		this._removeOldItems(storage);
+		(storage[aib.b] || (storage[aib.b] = {}))[num] = [this._cachedTime, thrNum, data];
+		this._saveStorage();
+	}
+
+	_removeOldItems(storage) {
 		if(storage && storage.$count > 5e3) {
 			const minDate = Date.now() - 5 * 24 * 3600 * 1e3;
-			for(const b in storage) {
-				if($hasProp(storage, b)) {
-					const data = storage[b];
+			for(const board in storage) {
+				if($hasProp(storage, board)) {
+					const data = storage[board];
 					for(const key in data) {
 						if($hasProp(data, key) && data[key][0] < minDate) {
 							delete data[key];
@@ -2829,30 +2944,26 @@ class PostsStorage {
 				}
 			}
 		}
-		(storage[aib.b] || (storage[aib.b] = {}))[num] = [this._cachedTime, thrNum, data];
-		this._saveStorage();
-	}
-
-	static _migrateOld(newName, oldName) {
-		if($hasProp(locStorage, oldName)) {
-			locStorage[newName] = locStorage[oldName];
-			locStorage.removeItem(oldName);
-		}
 	}
 	get _cachedTime() {
 		return this.__cachedTime || (this.__cachedTime = Date.now());
 	}
-	_readStorage() {
-		if(this._cachedStorage) {
+	_readStorage(ignoreCache = false) {
+		if(!ignoreCache && this._cachedStorage) {
 			return this._cachedStorage;
 		}
 		const data = locStorage[this.storageName];
+		let rv = {};
 		if(data) {
 			try {
-				return (this._cachedStorage = JSON.parse(data));
+				rv = this._cachedStorage = JSON.parse(data);
 			} catch(err) {}
 		}
-		return (this._cachedStorage = {});
+		this._cachedStorage = rv;
+		if(this._onReadNew) {
+			this._onReadNew(rv);
+		}
+		return rv;
 	}
 	_saveStorage() {
 		if(this._cacheTO === null) {
@@ -2861,6 +2972,7 @@ class PostsStorage {
 					locStorage[this.storageName] = JSON.stringify(this._cachedStorage);
 				}
 				this.purge();
+				this._onAfterSave?.();
 			}, 0);
 		}
 	}
@@ -2879,11 +2991,6 @@ const HiddenPosts = new class HiddenPostsClass extends PostsStorage {
 			post.setUserVisib(!!uHideData, false);
 		}
 	}
-
-	_readStorage() {
-		PostsStorage._migrateOld(this.storageName, 'de-threads-new'); // Old storage has wrong name
-		return super._readStorage();
-	}
 }();
 
 const HiddenThreads = new class HiddenThreadsClass extends PostsStorage {
@@ -2894,8 +3001,10 @@ const HiddenThreads = new class HiddenThreadsClass extends PostsStorage {
 	getCount() {
 		const storage = this._readStorage();
 		let rv = 0;
-		for(const b in storage) {
-			rv += Object.keys(storage[b]).length;
+		for(const board in storage) {
+			if($hasProp(storage, board)) {
+				rv += Object.keys(storage[board]).length;
+			}
 		}
 		return rv;
 	}
@@ -2906,11 +3015,6 @@ const HiddenThreads = new class HiddenThreadsClass extends PostsStorage {
 		locStorage[this.storageName] = JSON.stringify(data);
 		this.purge();
 	}
-
-	_readStorage() {
-		PostsStorage._migrateOld(this.storageName, ''); // Old storage has wrong name
-		return super._readStorage();
-	}
 }();
 
 const MyPosts = new class MyPostsClass extends PostsStorage {
@@ -2918,9 +3022,20 @@ const MyPosts = new class MyPostsClass extends PostsStorage {
 		super();
 		this.storageName = 'de-myposts';
 		this._cachedData = null;
+		this._onReadNew = newStorage => {
+			this._cachedData = newStorage[aib.b] ?
+				new Set(Object.keys(newStorage[aib.b]).map(val => +val)) : new Set();
+		};
+		this._onAfterSave = () => sendStorageEvent('__de-mypost', 1);
 	}
 	has(num) {
 		return this._cachedData.has(num);
+	}
+	update() {
+		this.purge();
+		for(const num of this._cachedData) {
+			pByNum[num]?.changeMyMark(true);
+		}
 	}
 	purge() {
 		super.purge();
@@ -2933,17 +3048,6 @@ const MyPosts = new class MyPostsClass extends PostsStorage {
 	set(num, thrNum) {
 		super.set(num, thrNum);
 		this._cachedData.add(+num);
-		sendStorageEvent('__de-mypost', 1);
-	}
-
-	_readStorage() {
-		if(this._cachedData && this._cachedStorage) {
-			return this._cachedStorage;
-		}
-		PostsStorage._migrateOld(this.storageName, 'de-myposts-new');
-		const rv = super._readStorage();
-		this._cachedData = rv[aib.b] ? new Set(Object.keys(rv[aib.b]).map(val => +val)) : new Set();
-		return rv;
 	}
 }();
 
@@ -2973,7 +3077,8 @@ function sendStorageEvent(name, value) {
 
 function initStorageEvent() {
 	doc.defaultView.addEventListener('storage', e => {
-		let data, temp, val = e.newValue;
+		let data, temp;
+		let val = e.newValue;
 		if(!val) {
 			return;
 		}
@@ -2984,11 +3089,11 @@ function initStorageEvent() {
 			} catch(err) {
 				return;
 			}
+			// Updating Favorites: keep in sync with other tab
 			updateFavWindow(...data);
 			return;
 		}
 		case '__de-mypost': MyPosts.purge(); return;
-		case '__de-highlighted': HighlightedPosts.purge(); return;
 		case '__de-webmvolume':
 			val = +val || 0;
 			Cfg.webmVolume = val;
@@ -3022,7 +3127,7 @@ function initStorageEvent() {
 			Thread.first.updateHidden(HiddenThreads.getRawData()[aib.b]);
 			toggleWindow('hid', true);
 			return;
-		case '__de-spells': (() => {
+		case '__de-spells': (async () => {
 			try {
 				data = JSON.parse(val);
 			} catch(err) {
@@ -3033,9 +3138,9 @@ function initStorageEvent() {
 			if(temp) {
 				temp.checked = data.hide;
 			}
-			$hide(docBody);
+			$hide(doc.body);
 			if(data.data) {
-				Spells.setSpells(data.data, false);
+				await Spells.setSpells(data.data, false);
 				Cfg.spells = JSON.stringify(data.data);
 				temp = $id('de-spell-txt');
 				if(temp) {
@@ -3043,16 +3148,16 @@ function initStorageEvent() {
 				}
 			} else {
 				SpellsRunner.unhideAll();
-				Spells.disableSpells();
+				await Spells.disableSpells();
 				temp = $id('de-spell-txt');
 				if(temp) {
 					temp.value = '';
 				}
 			}
-			$show(docBody);
+			$show(doc.body);
 		})();
 		}
-	});
+	}, false);
 }
 
 /* ==[ Panel.js ]=============================================================================================
@@ -3062,12 +3167,12 @@ function initStorageEvent() {
 const Panel = Object.create({
 	isVidEnabled: false,
 	initPanel(formEl) {
-		const imgLen = $Q(aib.qPostImg, formEl).length;
+		const filesCount = $Q(aib.qPostImg, formEl).length;
 		const isThr = aib.t;
-		(pr && pr.pArea[0] || formEl).insertAdjacentHTML('beforebegin', `<div id="de-main">
+		(postform?.pArea[0] || formEl).insertAdjacentHTML('beforebegin', `<div id="de-main">
 			<div id="de-panel">
 				<div id="de-panel-logo" title="${ Lng.panelBtn.attach[lang] }">
-					<svg class="de-panel-logo-svg">
+					<svg id="de-panel-logo-svg">
 						<use xlink:href="#de-symbol-panel-logo"/>
 					</svg>
 				</div>
@@ -3082,9 +3187,9 @@ const Panel = Object.create({
 						(!isThr && aib.page !== aib.lastPage ? this._getButton('gonext') : '') : '') +
 					this._getButton('goup') +
 					this._getButton('godown') +
-					(imgLen ? this._getButton('expimg') + this._getButton('maskimg') : '') +
+					(filesCount ? this._getButton('expimg') + this._getButton('maskimg') : '') +
 					(!localData && !nav.isPresto ?
-						(imgLen && !Cfg.preLoadImgs ? this._getButton('preimg') : '') +
+						(filesCount && !Cfg.preLoadImgs ? this._getButton('preimg') : '') +
 						(isThr ? this._getButton('savethr') : '') : '') +
 					(!localData && isThr ?
 						this._getButton(Cfg.ajaxUpdThr && !aib.isArchived ? 'upd-on' : 'upd-off') +
@@ -3092,12 +3197,13 @@ const Panel = Object.create({
 					(aib.hasCatalog ? this._getButton('catalog') : '') +
 					this._getButton('enable') +
 					(isThr && Thread.first ? `<span id="de-panel-info">
-						<span id="de-panel-info-pcount" title="` +
-							`${ Lng.panelBtn[Cfg.panelCounter !== 2 ? 'pcount' : 'pcountNotHid'][lang] }">` +
-							`${ Thread.first.pcount }</span>
-						<span id="de-panel-info-icount" title="${ Lng.panelBtn.imglen[lang] }">${
-							imgLen }</span>
-						<span id="de-panel-info-acount" title="${ Lng.panelBtn.posters[lang] }"></span>
+						<span id="de-panel-info-posts" title="${
+						Lng.panelBtn[Cfg.panelCounter !== 2 ? 'postsCount' : 'postsNotHid'][lang]
+						}">${ Thread.first.postsCount }</span>
+						<span id="de-panel-info-files" title="${ Lng.panelBtn.filesCount[lang] }">${
+							filesCount }</span>
+						<span id="de-panel-info-posters" title="${ Lng.panelBtn.postersCount[lang] }">${
+							aib.postersCount }</span>
 					</span>` : '') }
 				</span>
 			</div>
@@ -3105,53 +3211,68 @@ const Panel = Object.create({
 		</div>`);
 		this._el = $id('de-panel');
 		this._el.addEventListener('click', this, true);
-		this._el.addEventListener('mouseover', this);
-		this._el.addEventListener('mouseout', this);
+		if(!nav.isMobile) {
+			['mouseover', 'mouseout'].forEach(e => this._el.addEventListener(e, this));
+		}
 		this._buttons = $id('de-panel-buttons');
-		this.isNew = true;
 	},
 	removeMain() {
 		this._el.removeEventListener('click', this, true);
-		this._el.removeEventListener('mouseover', this);
-		this._el.removeEventListener('mouseout', this);
-		delete this._pcountEl;
-		delete this._icountEl;
-		delete this._acountEl;
+		if(!nav.isMobile) {
+			['mouseover', 'mouseout'].forEach(e => this._el.removeEventListener(e, this));
+		}
+		delete this._postsCountEl;
+		delete this._filesCountEl;
+		delete this._postersCountEl;
 		$id('de-main').remove();
 	},
-	handleEvent(e) {
+	async handleEvent(e) {
 		if('isTrusted' in e && !e.isTrusted) {
 			return;
 		}
-		let el = fixEventEl(e.target);
+		let el = nav.fixEventEl(e.target);
 		el = el.tagName.toLowerCase() === 'svg' ? el.parentNode : el;
 		switch(e.type) {
 		case 'click':
+			if(el.tagName.toLowerCase() === 'a') {
+				return;
+			}
+			e.preventDefault();
 			switch(el.id) {
 			case 'de-panel-logo':
-				if(Cfg.expandPanel && !$q('.de-win-active')) {
-					$hide(this._buttons);
+				if(Cfg.expandPanel) {
+					if(!$q('.de-win-active')) {
+						$hide(this._buttons);
+					}
+				} else {
+					$show(this._buttons);
 				}
-				toggleCfg('expandPanel');
+				await toggleCfg('expandPanel');
 				return;
-			case 'de-panel-cfg': toggleWindow('cfg', false); break;
-			case 'de-panel-hid': toggleWindow('hid', false); break;
-			case 'de-panel-fav': toggleWindow('fav', false); break;
+			case 'de-panel-cfg': toggleWindow('cfg', false); return;
+			case 'de-panel-hid': toggleWindow('hid', false); return;
+			case 'de-panel-fav': toggleWindow('fav', false); return;
 			case 'de-panel-vid':
 				this.isVidEnabled = !this.isVidEnabled;
 				toggleWindow('vid', false);
-				break;
-			case 'de-panel-refresh': deWindow.location.reload(); break;
-			case 'de-panel-goup': scrollTo(0, 0); break;
-			case 'de-panel-godown': scrollTo(0, docBody.scrollHeight || docBody.offsetHeight); break;
+				return;
+			case 'de-panel-refresh':
+				if(nav.isMobile && !aib.t) {
+					this._menuToggleClickBtn(el);
+				} else {
+					deWindow.location.reload();
+				}
+				return;
+			case 'de-panel-goup': scrollTo(0, 0); return;
+			case 'de-panel-godown': scrollTo(0, doc.body.scrollHeight || doc.body.offsetHeight); return;
 			case 'de-panel-expimg':
 				el.classList.toggle('de-panel-button-active');
 				isExpImg = !isExpImg;
-				$del($q('.de-fullimg-center'));
+				$q('.de-fullimg-center')?.remove();
 				for(let post = Thread.first.op; post; post = post.next) {
 					post.toggleImages(isExpImg, false);
 				}
-				break;
+				return;
 			case 'de-panel-preimg':
 				el.classList.toggle('de-panel-button-active');
 				isPreImg = !isPreImg;
@@ -3160,36 +3281,51 @@ const Panel = Object.create({
 						ContentLoader.preloadImages(el);
 					}
 				}
-				break;
+				return;
 			case 'de-panel-maskimg':
 				el.classList.toggle('de-panel-button-active');
-				toggleCfg('maskImgs');
+				await toggleCfg('maskImgs');
 				updateCSS();
-				break;
+				return;
 			case 'de-panel-upd-on':
 			case 'de-panel-upd-warn':
 			case 'de-panel-upd-off':
 				updater.toggle();
-				break;
+				return;
 			case 'de-panel-audio-on':
-			case 'de-panel-audio-off':
-				if(updater.toggleAudio(0)) {
+				if(nav.isMobile) {
+					updater.toggleAudio(0);
+					el.id = 'de-panel-audio-off';
+					return;
+				}
+				/* falls through */
+			case 'de-panel-audio-off': {
+				if(nav.isMobile) {
+					this._menuToggleClickBtn(el);
+					return;
+				} else if(updater.toggleAudio(0)) {
 					updater.enableUpdater();
 					el.id = 'de-panel-audio-on';
 				} else {
 					el.id = 'de-panel-audio-off';
 				}
-				$del($q('.de-menu'));
-				break;
-			case 'de-panel-savethr': break;
+				if(this._menu) {
+					this._menu.removeMenu();
+					this._menu = null;
+				}
+				return;
+			}
+			case 'de-panel-savethr':
+				if(nav.isMobile) {
+					this._menuToggleClickBtn(el);
+				}
+				return;
 			case 'de-panel-enable':
-				toggleCfg('disabled');
+				await toggleCfg('disabled');
 				deWindow.location.reload();
-				break;
+				return;
 			default: return;
 			}
-			$pd(e);
-			return;
 		case 'mouseover':
 			if(!Cfg.expandPanel) {
 				clearTimeout(this._hideTO);
@@ -3209,59 +3345,67 @@ const Panel = Object.create({
 				}
 				/* falls through */
 			case 'de-panel-savethr':
-			case 'de-panel-audio-off':
-				if(this._menu && this._menu.parentEl === el) {
+			case 'de-panel-audio-off': {
+				if(this._menu?.parentEl === el) {
 					return;
 				}
 				this._menuTO = setTimeout(() => {
-					this._menu = addMenu(el);
+					this._menu = Menu.addMenu(el);
 					this._menu.onover = () => clearTimeout(this._hideTO);
-					this._menu.onout = () => this._prepareToHide(null);
+					this._menu.onout = () => this._setHideTimeout(null);
 					this._menu.onremove = () => (this._menu = null);
 				}, Cfg.linksOver);
 			}
+			}
 			return;
 		default: // mouseout
-			this._prepareToHide(fixEventEl(e.relatedTarget));
+			this._setHideTimeout(nav.fixEventEl(e.relatedTarget));
 			switch(el.id) {
 			case 'de-panel-refresh':
 			case 'de-panel-savethr':
-			case 'de-panel-audio-off':
-				clearTimeout(this._menuTO);
-				this._menuTO = 0;
+			case 'de-panel-audio-off': clearTimeout(this._menuTO);
 			}
 		}
 	},
-	updateCounter(postCount, imgsCount, postersCount) {
-		this._pcountEl.textContent = postCount;
-		this._icountEl.textContent = imgsCount;
-		this._acountEl.textContent = postersCount;
-		this.isNew = false;
+	updateCounter(postCount, filesCount, postersCount) {
+		this._postsCountEl.textContent = postCount;
+		this._filesCountEl.textContent = filesCount;
+		this._postersCountEl.textContent = postersCount;
+		if(aib.makaba) {
+			$Q('.tn__item > span[title="Всего постов в треде"]').forEach(
+				el => el.innerHTML = el.innerHTML.replace(/\d+$/, postCount));
+			$Q('.tn__item > span[title="Всего файлов в треде"]').forEach(
+				el => el.innerHTML = el.innerHTML.replace(/\d+$/, filesCount));
+			$Q('.tn__item > span[title="Постеры"]').forEach(
+				el => el.innerHTML = el.innerHTML.replace(/\d+$/, postersCount));
+		}
 	},
 
 	_el     : null,
-	_hideTO : 0,
+	_hideTO : null,
 	_menu   : null,
-	_menuTO : 0,
-	get _acountEl() {
-		const value = $id('de-panel-info-acount');
-		Object.defineProperty(this, '_acountEl', { value, configurable: true });
+	_menuTO : null,
+	get _filesCountEl() {
+		const value = $id('de-panel-info-files');
+		Object.defineProperty(this, '_filesCountEl', { value, configurable: true });
 		return value;
 	},
-	get _icountEl() {
-		const value = $id('de-panel-info-icount');
-		Object.defineProperty(this, '_icountEl', { value, configurable: true });
+	get _postersCountEl() {
+		const value = $id('de-panel-info-posters');
+		Object.defineProperty(this, '_postersCountEl', { value, configurable: true });
 		return value;
 	},
-	get _pcountEl() {
-		const value = $id('de-panel-info-pcount');
-		Object.defineProperty(this, '_pcountEl', { value, configurable: true });
+	get _postsCountEl() {
+		const value = $id('de-panel-info-posts');
+		Object.defineProperty(this, '_postsCountEl', { value, configurable: true });
 		return value;
 	},
 	_getButton(id) {
 		let page, href, title, useId;
+		let tag = 'button';
 		switch(id) {
 		case 'goback':
+			tag = 'a';
 			page = Math.max(aib.page - 1, 0);
 			href = aib.getPageUrl(aib.b, page);
 			if(!aib.t) {
@@ -3270,6 +3414,7 @@ const Panel = Object.create({
 			useId = 'arrow';
 			break;
 		case 'gonext':
+			tag = 'a';
 			page = aib.page + 1;
 			href = aib.getPageUrl(aib.b, page);
 			title = Lng.panelBtn.gonext[lang].replace('%s', page);
@@ -3283,23 +3428,29 @@ const Panel = Object.create({
 			useId = 'upd';
 			break;
 		case 'catalog':
+			tag = 'a';
 			href = aib.catalogUrl;
 		}
-		// XXX Opera Presto: keep in sync with updMachine._setUpdateStatus
-		return `<a id="de-panel-${ id }" class="de-abtn de-panel-button" title="${
-			title || Lng.panelBtn[id][lang] }" href="${ href || '#' }">
+		return `<${ tag } id="de-panel-${ id }" class="de-abtn de-panel-button"
+			title="${ title || Lng.panelBtn[id][lang] }" ${ href ? 'href="' + href + '"': '' }>
 			<svg class="de-panel-svg">
 			${ id !== 'audio-off' ? `
 				<use xlink:href="#de-symbol-panel-${ useId || id }"/>` : `
 				<use class="de-use-audio-off" xlink:href="#de-symbol-panel-audio-off"/>
 				<use class="de-use-audio-on" xlink:href="#de-symbol-panel-audio-on"/>` }
 			</svg>
-		</a>`;
+		</${ tag }>`;
 	},
-	_prepareToHide(rt) {
-		if(!Cfg.expandPanel && !$q('.de-win-active') &&
-			(!rt || !this._el.contains(rt.farthestViewportElement || rt))
-		) {
+	_menuToggleClickBtn(buttonEl) {
+		if(this._menu?.el && this._menu.parentEl === buttonEl) {
+			this._menu.removeMenu();
+			this._menu = null;
+			return;
+		}
+		this._menu = Menu.addMenu(buttonEl);
+	},
+	_setHideTimeout(targetEl) {
+		if(!Cfg.expandPanel && !$q('.de-win-active') && !$contains(this._el, targetEl)) {
 			this._hideTO = setTimeout(() => $hide(this._buttons), 500);
 		}
 	}
@@ -3309,22 +3460,23 @@ const Panel = Object.create({
                                                 WINDOW: UTILS
 =========================================================================================================== */
 
-function updateWinZ(style) {
+function updateWinZ(winEl) {
+	const { style } = winEl;
 	if(style.zIndex < topWinZ) {
 		style.zIndex = ++topWinZ;
 	}
 }
 
-function makeDraggable(name, win, head) {
-	head.addEventListener('mousedown', {
+function makeDraggable(name, winEl, headEl) {
+	headEl.addEventListener('mousedown', {
 		_oldX   : 0,
 		_oldY   : 0,
-		_win    : win,
-		_wStyle : win.style,
+		_win    : winEl,
+		_wStyle : winEl.style,
 		_X      : 0,
 		_Y      : 0,
 		_Z      : 0,
-		handleEvent(e) {
+		async handleEvent(e) {
 			if(!Cfg[name + 'WinDrag']) {
 				return;
 			}
@@ -3338,10 +3490,8 @@ function makeDraggable(name, win, head) {
 				if(this._Z < topWinZ) {
 					this._Z = this._wStyle.zIndex = ++topWinZ;
 				}
-				docBody.addEventListener('mouseleave', this);
-				docBody.addEventListener('mousemove', this);
-				docBody.addEventListener('mouseup', this);
-				$pd(e);
+				['mouseleave', 'mousemove', 'mouseup'].forEach(e => doc.body.addEventListener(e, this));
+				e.preventDefault();
 				return;
 			case 'mousemove': {
 				const maxX = Post.sizing.wWidth - this._win.offsetWidth;
@@ -3364,100 +3514,97 @@ function makeDraggable(name, win, head) {
 			}
 			case 'mouseleave':
 			case 'mouseup':
-				docBody.removeEventListener('mouseleave', this);
-				docBody.removeEventListener('mousemove', this);
-				docBody.removeEventListener('mouseup', this);
-				saveCfg(name + 'WinX', this._X);
-				saveCfg(name + 'WinY', this._Y);
+				['mouseleave', 'mousemove', 'mouseup'].forEach(e => doc.body.removeEventListener(e, this));
+				await CfgSaver.save(name + 'WinX', this._X, name + 'WinY', this._Y);
 			}
 		}
 	});
 }
 
 class WinResizer {
-	constructor(name, dir, cfgName, win, target) {
+	constructor(name, direction, cfgName, winEl, targetEl) {
 		this.name = name;
-		this.dir = dir;
+		this.direction = direction;
 		this.cfgName = cfgName;
-		this.vertical = dir === 'top' || dir === 'bottom';
-		this.win = win;
-		this.wStyle = this.win.style;
-		this.tStyle = target.style;
-		$q('.de-resizer-' + dir, win).addEventListener('mousedown', this);
+		this.vertical = direction === 'top' || direction === 'bottom';
+		this.winEl = winEl;
+		this.wStyle = this.winEl.style;
+		this.tStyle = targetEl.style;
+		$q('.de-resizer-' + direction, winEl).addEventListener('mousedown', this);
 	}
-	handleEvent(e) {
+	async handleEvent(e) {
 		let val, x, y;
 		const { wWidth: maxX, wHeight: maxY } = Post.sizing;
 		const { width } = this.wStyle;
-		const cr = this.win.getBoundingClientRect();
+		const cr = this.winEl.getBoundingClientRect();
 		const z = `; z-index: ${ this.wStyle.zIndex }${ width ? '; width:' + width : '' }`;
 		switch(e.type) {
 		case 'mousedown':
-			if(this.win.classList.contains('de-win-fixed')) {
+			if(this.winEl.classList.contains('de-win-fixed')) {
 				x = 'right: 0';
 				y = 'bottom: 25px';
 			} else {
 				x = Cfg[this.name + 'WinX'];
 				y = Cfg[this.name + 'WinY'];
 			}
-			switch(this.dir) {
+			switch(this.direction) {
 			case 'top': val = `${ x }; bottom: ${ maxY - cr.bottom }px${ z }`; break;
 			case 'bottom': val = `${ x }; top: ${ cr.top }px${ z }`; break;
 			case 'left': val = `right: ${ maxX - cr.right }px; ${ y + z }`; break;
 			case 'right': val = `left: ${ cr.left }px; ${ y + z }`;
 			}
-			this.win.setAttribute('style', val);
-			docBody.addEventListener('mousemove', this);
-			docBody.addEventListener('mouseup', this);
-			$pd(e);
+			this.winEl.setAttribute('style', val);
+			['mousemove', 'mouseup'].forEach(e => doc.body.addEventListener(e, this));
+			e.preventDefault();
 			return;
 		case 'mousemove':
 			if(this.vertical) {
 				val = e.clientY;
 				this.tStyle.setProperty('height', Math.max(parseInt(this.tStyle.height, 10) + (
-					this.dir === 'top' ? cr.top - (val < 20 ? 0 : val) :
+					this.direction === 'top' ? cr.top - (val < 20 ? 0 : val) :
 					(val > maxY - 45 ? maxY - 25 : val) - cr.bottom
 				), 90) + 'px', 'important');
 			} else {
 				val = e.clientX;
 				this.tStyle.setProperty('width', Math.max(parseInt(this.tStyle.width, 10) + (
-					this.dir === 'left' ? cr.left - (val < 20 ? 0 : val) :
+					this.direction === 'left' ? cr.left - (val < 20 ? 0 : val) :
 					(val > maxX - 20 ? maxX : val) - cr.right
 				), this.name === 'reply' ? 275 : 400) + 'px', 'important');
 			}
 			return;
 		default: // mouseup
-			docBody.removeEventListener('mousemove', this);
-			docBody.removeEventListener('mouseup', this);
-			saveCfg(this.cfgName, parseInt(this.vertical ? this.tStyle.height : this.tStyle.width, 10));
-			if(this.win.classList.contains('de-win-fixed')) {
-				this.win.setAttribute('style', 'right: 0; bottom: 25px' + z);
+			['mousemove', 'mouseup'].forEach(e => doc.body.removeEventListener(e, this));
+			await CfgSaver.save(this.cfgName,
+				parseInt(this.vertical ? this.tStyle.height : this.tStyle.width, 10));
+			if(this.winEl.classList.contains('de-win-fixed')) {
+				this.winEl.setAttribute('style', 'right: 0; bottom: 25px' + z);
 				return;
 			}
 			if(this.vertical) {
-				saveCfg(this.name + 'WinY', cr.top < 1 ? 'top: 0' :
+				await CfgSaver.save(this.name + 'WinY', cr.top < 1 ? 'top: 0' :
 					cr.bottom > maxY - 26 ? 'bottom: 25px' : `top: ${ cr.top }px`);
 			} else {
-				saveCfg(this.name + 'WinX', cr.left < 1 ? 'left: 0' :
+				await CfgSaver.save(this.name + 'WinX', cr.left < 1 ? 'left: 0' :
 					cr.right > maxX - 1 ? 'right: 0' : `left: ${ cr.left }px`);
 			}
-			this.win.setAttribute('style', Cfg[this.name + 'WinX'] + '; ' + Cfg[this.name + 'WinY'] + z);
+			this.winEl.setAttribute('style', Cfg[this.name + 'WinX'] + '; ' + Cfg[this.name + 'WinY'] + z);
 		}
 	}
 }
 
 function toggleWindow(name, isUpdate, data, noAnim) {
-	let el, win = $id('de-win-' + name);
-	const isActive = win && win.classList.contains('de-win-active');
+	let el;
+	let winEl = $id('de-win-' + name);
+	const isActive = winEl?.classList.contains('de-win-active');
 	if(isUpdate && !isActive) {
 		return;
 	}
-	if(!win) {
+	if(!winEl) {
 		const winAttr = (Cfg[name + 'WinDrag'] ?
 			`de-win" style="${ Cfg[name + 'WinX'] }; ${ Cfg[name + 'WinY'] }` :
 			'de-win-fixed" style="right: 0; bottom: 25px'
 		) + (name !== 'fav' ? '' : `; width: ${ Cfg.favWinWidth }px; `);
-		win = $aBegin($id('de-main'), `<div id="de-win-${ name }" class="${ winAttr }; display: none;">
+		winEl = $aBegin($id('de-main'), `<div id="de-win-${ name }" class="${ winAttr }; display: none;">
 			<div class="de-win-head">
 				<span class="de-win-title">
 					${ name === 'cfg' ? 'Dollchan Extension Tools' : Lng.panelBtn[name][lang] }
@@ -3472,22 +3619,22 @@ function toggleWindow(name, isUpdate, data, noAnim) {
 				<div class="de-resizer de-resizer-left"></div>
 				<div class="de-resizer de-resizer-right"></div>` }
 		</div>`);
-		const winBody = $q('.de-win-body', win);
+		const winBody = $q('.de-win-body', winEl);
 		if(name === 'cfg') {
 			winBody.className = 'de-win-body ' + aib.cReply;
 		} else {
 			setTimeout(() => {
-				const backColor = getComputedStyle(docBody).getPropertyValue('background-color');
+				const backColor = getComputedStyle(doc.body).getPropertyValue('background-color');
 				winBody.style.backgroundColor = backColor !== 'transparent' ? backColor : '#EEE';
 			}, 100);
 		}
 		if(name === 'fav') {
-			new WinResizer('fav', 'left', 'favWinWidth', win, win);
-			new WinResizer('fav', 'right', 'favWinWidth', win, win);
+			new WinResizer('fav', 'left', 'favWinWidth', winEl, winEl);
+			new WinResizer('fav', 'right', 'favWinWidth', winEl, winEl);
 		}
-		el = $q('.de-win-buttons', win);
+		el = $q('.de-win-buttons', winEl);
 		el.onmouseover = e => {
-			const el = fixEventEl(e.target);
+			const el = nav.fixEventEl(e.target);
 			const parent = el.parentNode;
 			switch(el.classList[0]) {
 			case 'de-win-btn-close': parent.title = Lng.closeWindow[lang]; break;
@@ -3496,52 +3643,52 @@ function toggleWindow(name, isUpdate, data, noAnim) {
 			}
 		};
 		el.lastElementChild.onclick = () => toggleWindow(name, false);
-		$q('.de-win-btn-toggle', el).onclick = () => {
-			toggleCfg(name + 'WinDrag');
+		$q('.de-win-btn-toggle', el).onclick = async () => {
+			await toggleCfg(name + 'WinDrag');
 			const isDrag = Cfg[name + 'WinDrag'];
 			if(!isDrag) {
-				const temp = $q('.de-win-active.de-win-fixed', win.parentNode);
+				const temp = $q('.de-win-active.de-win-fixed', winEl.parentNode);
 				if(temp) {
 					toggleWindow(temp.id.substr(7), false);
 				}
 			}
-			win.classList.toggle('de-win', isDrag);
-			win.classList.toggle('de-win-fixed', !isDrag);
-			const { width } = win.style;
-			win.style.cssText = `${ isDrag ? `${ Cfg[name + 'WinX'] }; ${ Cfg[name + 'WinY'] }` :
+			winEl.classList.toggle('de-win', isDrag);
+			winEl.classList.toggle('de-win-fixed', !isDrag);
+			const { width } = winEl.style;
+			winEl.style.cssText = `${ isDrag ? `${ Cfg[name + 'WinX'] }; ${ Cfg[name + 'WinY'] }` :
 				'right: 0; bottom: 25px' }${ width ? '; width: ' + width : '' }`;
-			updateWinZ(win.style);
+			updateWinZ(winEl);
 		};
-		makeDraggable(name, win, $q('.de-win-head', win));
+		makeDraggable(name, winEl, $q('.de-win-head', winEl));
 	}
-	updateWinZ(win.style);
+	updateWinZ(winEl);
 	let isRemove = !isUpdate && isActive;
-	if(!isRemove && !win.classList.contains('de-win') &&
-		(el = $q(`.de-win-active.de-win-fixed:not(#de-win-${ name })`, win.parentNode))
+	if(!isRemove && !winEl.classList.contains('de-win') &&
+		(el = $q(`.de-win-active.de-win-fixed:not(#de-win-${ name })`, winEl.parentNode))
 	) {
 		toggleWindow(el.id.substr(7), false);
 	}
 	const isAnim = !noAnim && !isUpdate && Cfg.animation;
-	let body = $q('.de-win-body', win);
-	if(isAnim && body.hasChildNodes()) {
-		win.addEventListener('animationend', function aEvent(e) {
+	let winBody = $q('.de-win-body', winEl);
+	if(isAnim && winBody.hasChildNodes()) {
+		winEl.addEventListener('animationend', function aEvent(e) {
 			e.target.removeEventListener('animationend', aEvent);
-			showWindow(win, body, name, isRemove, data, Cfg.animation);
-			win = body = name = isRemove = data = null;
+			showWindow(winEl, winBody, name, isRemove, data, Cfg.animation);
+			winEl = winBody = name = isRemove = data = null;
 		});
-		win.classList.remove('de-win-open');
-		win.classList.add('de-win-close');
+		winEl.classList.remove('de-win-open');
+		winEl.classList.add('de-win-close');
 	} else {
-		showWindow(win, body, name, isRemove, data, isAnim);
+		showWindow(winEl, winBody, name, isRemove, data, isAnim);
 	}
 }
 
-function showWindow(win, body, name, isRemove, data, isAnim) {
-	body.innerHTML = '';
-	win.classList.toggle('de-win-active', !isRemove);
+function showWindow(winEl, winBody, name, isRemove, data, isAnim) {
+	winBody.innerHTML = '';
+	winEl.classList.toggle('de-win-active', !isRemove);
 	if(isRemove) {
-		win.classList.remove('de-win-close');
-		$hide(win);
+		winEl.classList.remove('de-win-close');
+		$hide(winEl);
 		if(!Cfg.expandPanel && !$q('.de-win-active')) {
 			$hide($id('de-panel-buttons'));
 		}
@@ -3553,24 +3700,24 @@ function showWindow(win, body, name, isRemove, data, isAnim) {
 	switch(name) {
 	case 'fav':
 		if(data) {
-			showFavoritesWindow(body, data);
+			showFavoritesWindow(winBody, data);
 			break;
 		}
 		readFavorites().then(favObj => {
-			showFavoritesWindow(body, favObj);
-			$show(win);
+			showFavoritesWindow(winBody, favObj);
+			$show(winEl);
 			if(isAnim) {
-				win.classList.add('de-win-open');
+				winEl.classList.add('de-win-open');
 			}
 		});
 		return;
-	case 'cfg': CfgWindow.initCfgWindow(body); break;
-	case 'hid': showHiddenWindow(body); break;
-	case 'vid': showVideosWindow(body);
+	case 'cfg': CfgWindow.initCfgWindow(winBody); break;
+	case 'hid': showHiddenWindow(winBody); break;
+	case 'vid': showVideosWindow(winBody);
 	}
-	$show(win);
+	$show(winEl);
 	if(isAnim) {
-		win.classList.add('de-win-open');
+		winEl.classList.add('de-win-open');
 	}
 }
 
@@ -3578,22 +3725,23 @@ function showWindow(win, body, name, isRemove, data, isAnim) {
                                         WINDOW: VIDEOS, HIDDEN THREADS
 =========================================================================================================== */
 
-function showVideosWindow(body) {
+function showVideosWindow(winBody) {
 	const els = $Q('.de-video-link');
 	if(!els.length) {
-		body.innerHTML = `<b>${ Lng.noVideoLinks[lang] }</b>`;
+		winBody.innerHTML = `<b>${ Lng.noVideoLinks[lang] }</b>`;
 		return;
 	}
-	// EXCLUDED FROM FIREFOX EXTENSION - START
+	// <EXCLUDED_FROM_EXTENSION>
 	if(!$id('de-ytube-api')) {
-		// YouTube APT script. We can't insert scripts directly as html.
+		// YouTube APT script. We canʼt insert scripts directly as html.
 		const script = doc.createElement('script');
 		script.type = 'text/javascript';
-		script.src = aib.prot + '//www.youtube.com/player_api';
-		doc.head.appendChild(script).id = 'de-ytube-api';
+		script.src = aib.protocol + '//www.youtube.com/player_api';
+		script.id = 'de-ytube-api';
+		doc.head.append(script);
 	}
-	// EXCLUDED FROM FIREFOX EXTENSION - END
-	body.innerHTML = `<div de-disableautoplay class="de-video-obj"></div>
+	// </EXCLUDED_FROM_EXTENSION>
+	winBody.innerHTML = `<div de-disableautoplay class="de-video-obj"></div>
 	<div id="de-video-buttons">
 		<a class="de-abtn" id="de-video-btn-prev" href="#" title="${ Lng.prevVideo[lang] }">&#x25C0;</a>
 		<a class="de-abtn" id="de-video-btn-resize" href="#" title="${ Lng.expandVideo[lang] }"></a>
@@ -3604,7 +3752,7 @@ function showVideosWindow(body) {
 		+Cfg.YTubeWidth + 40 }px; max-height: ${
 		nav.viewportHeight() * 0.92 - +Cfg.YTubeHeigh - 82 }px;"></div>`);
 
-	// EXCLUDED FROM FIREFOX EXTENSION - START
+	// <EXCLUDED_FROM_EXTENSION>
 	// A script to detect the end of current video playback, and auto play next. Uses YouTube API.
 	// The first video should not start automatically!
 	const script = doc.createElement('script');
@@ -3642,15 +3790,15 @@ function showVideosWindow(body) {
 			document.getElementById("de-video-btn-next").click();
 		}
 	})();`;
-	body.appendChild(script);
-	// EXCLUDED FROM FIREFOX EXTENSION - END
+	winBody.append(script);
+	// </EXCLUDED_FROM_EXTENSION>
 
 	// Events for control buttons
-	body.addEventListener('click', {
+	winBody.addEventListener('click', {
 		linkList,
 		currentLink : null,
 		listHidden  : false,
-		player      : body.firstElementChild,
+		player      : winBody.firstElementChild,
 		playerInfo  : null,
 		handleEvent(e) {
 			const el = e.target;
@@ -3681,7 +3829,7 @@ function showVideosWindow(body) {
 						(exp ? 562 : +Cfg.YTubeHeigh + 82) }px`;
 				}
 				}
-				$pd(e);
+				e.preventDefault();
 				return;
 			} else if(!el.classList.contains('de-video-link')) { // Clicking on ">" before link
 				// Go to post that contains this link
@@ -3698,7 +3846,7 @@ function showVideosWindow(body) {
 				el.classList.add('de-current');
 				Videos.addPlayer(this, info, el.classList.contains('de-ytube'), true);
 			}
-			$pd(e);
+			e.preventDefault();
 		}
 	}, true);
 
@@ -3706,142 +3854,161 @@ function showVideosWindow(body) {
 	for(let i = 0, len = els.length; i < len; ++i) {
 		updateVideoList(linkList, els[i], aib.getPostOfEl(els[i]).num);
 	}
-	body.appendChild(linkList);
+	winBody.append(linkList);
 	$q('.de-video-link', linkList).click();
 }
 
 function updateVideoList(parent, link, num) {
 	const el = link.cloneNode(true);
 	el.videoInfo = link.videoInfo;
+	el.classList.remove('de-current');
+	el.setAttribute('onclick', 'window.de_addVideoEvents && window.de_addVideoEvents();');
 	$bEnd(parent, `<div class="de-entry ${ aib.cReply }">
 		<a class="de-video-refpost" title=">>${ num }" de-num="${ num }">&gt;&gt;</a>
-	</div>`).appendChild(el).classList.remove('de-current');
-	el.setAttribute('onclick', 'window.de_addVideoEvents && window.de_addVideoEvents();');
+	</div>`).append(el);
 }
 
 // HIDDEN THREADS WINDOW
-function showHiddenWindow(body) {
-	const hThr = HiddenThreads.getRawData();
-	const hasThreads = !$isEmpty(hThr);
+function showHiddenWindow(winBody) {
+	const boards = HiddenThreads.getRawData();
+	const hasThreads = !$isEmpty(boards);
 	if(hasThreads) {
 		// Generate DOM for the list of hidden threads
-		for(const b in hThr) {
-			if($isEmpty(hThr[b])) {
+		for(const board in boards) {
+			if(!$hasProp(boards, board)) {
 				continue;
 			}
-			const block = $bEnd(body,
-				`<div class="de-fold-block"><input type="checkbox"><b>/${ b }</b></div>`);
+			const threads = boards[board];
+			if($isEmpty(threads)) {
+				continue;
+			}
+			const block = $bEnd(winBody,
+				`<div class="de-fold-block"><input type="checkbox"><b>/${ board }</b></div>`);
 			block.firstChild.onclick =
-				e => $each($Q('.de-entry > input', block), el => (el.checked = e.target.checked));
-			for(const tNum in hThr[b]) {
-				$bEnd(block, `<div class="de-entry ${ aib.cReply }" info="${ b };${ tNum }">
-					<input type="checkbox">
-					<a href="${ aib.getThrUrl(b, tNum) }" target="_blank">${ tNum }</a>
-					<div class="de-entry-title">- ${ hThr[b][tNum][2] }</div>
-				</div>`);
+				e => $Q('.de-entry > input', block).forEach(el => (el.checked = e.target.checked));
+			for(const tNum in threads) {
+				if($hasProp(threads, tNum)) {
+					block.insertAdjacentHTML('beforeend',
+						`<div class="de-entry ${ aib.cReply }" info="${ board };${ tNum }">
+							<input type="checkbox">
+							<a href="${ aib.getThrUrl(board, tNum) }" target="_blank">${ tNum }</a>
+							<div class="de-entry-title">- ${ threads[tNum][2] }</div>
+						</div>`);
+				}
 			}
 		}
 	}
-	const btns = $bEnd(body, (!hasThreads ? `<center><b>${ Lng.noHidThr[lang] }</b></center>` : '') +
-		'<div id="de-hid-buttons"></div>');
-
-	// "Edit" button. Calls a popup with editor to edit Hidden in JSON.
-	btns.appendChild(getEditButton('hidden', fn => fn(HiddenThreads.getRawData(), true, data => {
-		HiddenThreads.saveRawData(data);
-		Thread.first.updateHidden(data[aib.b]);
-		toggleWindow('hid', true);
-	})));
-
-	// "Clear" button. Allows to clear 404'd threads.
-	btns.appendChild($btn(Lng.clear[lang], Lng.clrDeleted[lang], async e => {
-		// Sequentially load threads, and remove inaccessible
-		const els = $Q('.de-entry[info]', e.target.parentNode.parentNode);
-		for(let i = 0, len = els.length; i < len; ++i) {
-			const [b, tNum] = els[i].getAttribute('info').split(';');
-			await $ajax(aib.getThrUrl(b, tNum)).catch(err => {
-				if(err.code === 404) {
-					HiddenThreads.removeStorage(tNum, b);
-					HiddenPosts.removeStorage(tNum, b);
+	$bEnd(winBody, (!hasThreads ? `<center><b>${ Lng.noHidThr[lang] }</b></center>` : '') +
+		'<div id="de-hid-buttons"></div>'
+	).append(
+		// "Edit" button. Calls a popup with editor to edit Hidden in JSON.
+		getEditButton('hidden', fn => fn(HiddenThreads.getRawData(), true, data => {
+			HiddenThreads.saveRawData(data);
+			Thread.first.updateHidden(data[aib.b]);
+			toggleWindow('hid', true);
+		})),
+		// "Clear" button. Allows to clear 404'd threads.
+		$button(Lng.clear[lang], Lng.clear404[lang], async e => {
+			// Sequentially load threads, and remove inaccessible
+			const els = $Q('.de-entry[info]', e.target.parentNode.parentNode);
+			for(let i = 0, len = els.length; i < len; ++i) {
+				const [board, tNum] = els[i].getAttribute('info').split(';');
+				await $ajax(aib.getThrUrl(board, tNum)).catch(err => {
+					if(err.code === 404) {
+						HiddenThreads.removeStorage(tNum, board);
+						HiddenPosts.removeStorage(tNum, board);
+					}
+				});
+			}
+			toggleWindow('hid', true);
+		}),
+		// "Delete" button. Allows to delete selected threads
+		$button(Lng.remove[lang], Lng.delEntries[lang], () => {
+			$Q('.de-entry[info]', winBody).forEach(el => {
+				if(!$q('input', el).checked) {
+					return;
 				}
+				const [board, tNum] = el.getAttribute('info').split(';');
+				const num = +tNum;
+				if(pByNum.has(num)) {
+					pByNum.get(num).setUserVisib(false);
+				} else {
+					sendStorageEvent('__de-post', { brd: board, num, hide: false, thrNum: num });
+				}
+				HiddenThreads.removeStorage(num, board);
+				HiddenPosts.set(num, num, false); // Actually unhide thread by its oppost
 			});
-		}
-		toggleWindow('hid', true);
-	}));
-
-	// "Delete" button. Allows to delete selected threads
-	btns.appendChild($btn(Lng.remove[lang], Lng.delEntries[lang], () => {
-		$each($Q('.de-entry[info]', body), el => {
-			if(!$q('input', el).checked) {
-				return;
-			}
-			const [brd, tNum] = el.getAttribute('info').split(';');
-			const num = +tNum;
-			if(pByNum.has(num)) {
-				pByNum.get(num).setUserVisib(false);
-			} else {
-				sendStorageEvent('__de-post', { brd, num, hide: false, thrNum: num });
-			}
-			HiddenThreads.removeStorage(num, brd);
-			HiddenPosts.set(num, num, false); // Actually unhide thread by its oppost
-		});
-		toggleWindow('hid', true);
-	}));
+			toggleWindow('hid', true);
+		})
+	);
 }
 
 /* ==[ WindowFavorites.js ]===================================================================================
                                               WINDOW: FAVORITES
 =========================================================================================================== */
 
+// Saving favorites and renewing the Favorites window if it is open
 function saveRenewFavorites(favObj) {
 	saveFavorites(favObj);
 	toggleWindow('fav', true, favObj);
 }
 
-function removeFavEntry(favObj, h, b, num) {
-	let f;
-	if((h in favObj) && (b in favObj[h]) && (num in (f = favObj[h][b]))) {
-		delete f[num];
-		if(!(Object.keys(f).length - +$hasProp(f, 'url') - +$hasProp(f, 'hide'))) {
-			delete favObj[h][b];
-			if($isEmpty(favObj[h])) {
-				delete favObj[h];
+// Removing an entry from hte favorites object
+function removeFavEntry(favObj, host, board, num) {
+	const entry = favObj[host]?.[board];
+	if(entry?.[num]) {
+		delete entry[num];
+		if(!(Object.keys(entry).length - +$hasProp(entry, 'url') - +$hasProp(entry, 'hide'))) {
+			delete favObj[host][board];
+			if($isEmpty(favObj[host])) {
+				delete favObj[host];
 			}
 		}
 	}
 }
 
-function toggleThrFavBtn(h, b, num, isEnable) {
-	if(h === aib.host && b === aib.b && pByNum.has(num)) {
+// Toggling a favorites button in thread if it is available on page
+function toggleThrFavBtn(host, board, num, isEnable) {
+	if(host === aib.host && board === aib.b && pByNum.has(num)) {
 		const post = pByNum.get(num);
 		post.toggleFavBtn(isEnable);
 		post.thr.isFav = isEnable;
 	}
 }
 
+// Updating Favorites on successed/failed thread loading, or on visiting a previously inactive page
 function updateFavorites(num, value, mode) {
 	readFavorites().then(favObj => {
-		let isUpdate = false;
-		let f = favObj[aib.host];
-		if(!f || !f[aib.b] || !(f = f[aib.b][num])) {
+		const entry = favObj[aib.host]?.[aib.b]?.[num];
+		if(!entry) {
 			return;
 		}
+		let isUpdate = false;
 		switch(mode) {
+		case 'closed':
 		case 'error':
-			if(f.err !== value) {
+			if(entry.err !== value) {
+				entry.err = value;
 				isUpdate = true;
 			}
-			f.err = value;
 			break;
 		case 'update':
-			if(f.cnt !== value[0]) {
+			if(entry.last !== aib.anchor + value[3]) {
+				if(doc.hidden) {
+					value[1] += entry.new;
+				} else {
+					value[1] = value[2] = 0;
+					entry.last = aib.anchor + value[3];
+				}
+				if(entry.err) {
+					delete entry.err;
+				}
+				[entry.cnt, entry.new, entry.you] = value;
 				isUpdate = true;
 			}
-			f.cnt = value[0];
-			f.new = f.you = 0;
-			f.last = aib.anchor + value[1];
 		}
-		const data = [aib.host, aib.b, num, value, mode];
 		if(isUpdate) {
+			const data = [aib.host, aib.b, num, value, mode];
 			updateFavWindow(...data);
 			saveFavorites(favObj);
 			sendStorageEvent('__de-favorites', data);
@@ -3849,96 +4016,265 @@ function updateFavorites(num, value, mode) {
 	});
 }
 
-function updateFavWindow(h, b, num, value, mode) {
+// Updating the Favorites window if it is open
+function updateFavWindow(host, board, num, value, mode) {
 	if(mode === 'add' || mode === 'delete') {
-		toggleThrFavBtn(h, b, num, mode === 'add');
+		toggleThrFavBtn(host, board, num, mode === 'add');
 		toggleWindow('fav', true, value);
 		return;
 	}
 	const winEl = $q('#de-win-fav > .de-win-body');
-	if(!winEl || !winEl.hasChildNodes()) {
+	if(!winEl?.hasChildNodes()) {
 		return;
 	}
-	const el = $q(`.de-entry[de-host="${ h }"][de-board="${ b }"][de-num="${ num }"] > .de-fav-inf`, winEl);
+	const el = $q(`.de-entry[de-host="${
+		host }"][de-board="${ board }"][de-num="${ num }"] > .de-fav-inf`, winEl);
 	if(!el) {
 		return;
 	}
 	const [iconEl, youEl, newEl, oldEl] = [...el.children];
-	$hide(youEl);
-	$hide(newEl);
-	if(mode === 'error') {
-		iconEl.firstElementChild.setAttribute('class', 'de-fav-inf-icon de-fav-unavail');
+	if(Array.isArray(value)) {
+		$toggle(newEl, value[1]);
+		$toggle(youEl, value[2]);
+		oldEl.textContent = value[0];
+		newEl.textContent = value[1];
+		youEl.textContent = value[2];
+	}
+	if(mode === 'error' || mode === 'closed') {
+		iconEl.firstElementChild.setAttribute('class', 'de-fav-inf-icon ' +
+			(mode === 'closed' ? 'de-fav-closed' : 'de-fav-unavail'));
 		iconEl.title = value;
 		return;
+	} else if(mode === 'update') {
+		iconEl.firstElementChild.setAttribute('class', 'de-fav-inf-icon');
+		iconEl.removeAttribute('title');
 	}
-	youEl.textContent = 0;
-	newEl.textContent = 0;
-	oldEl.textContent = value[0];
 }
 
-// Delete previously marked entries from Favorites
-function cleanFavorites() {
+// Removing previously marked entries from Favorites
+async function remove404Favorites(favObj) {
 	const els = $Q('.de-entry[de-removed]');
 	const len = els.length;
 	if(!len) {
 		return;
 	}
-	readFavorites().then(favObj => {
-		for(let i = 0; i < len; ++i) {
-			const el = els[i];
-			const h = el.getAttribute('de-host');
-			const b = el.getAttribute('de-board');
-			const num = +el.getAttribute('de-num');
-			removeFavEntry(favObj, h, b, num);
-			toggleThrFavBtn(h, b, num, false);
-		}
-		saveRenewFavorites(favObj);
-	});
+	if(!favObj) {
+		favObj = await readFavorites();
+	}
+	for(let i = 0; i < len; ++i) {
+		const el = els[i];
+		const host = el.getAttribute('de-host');
+		const board = el.getAttribute('de-board');
+		const num = +el.getAttribute('de-num');
+		removeFavEntry(favObj, host, board, num);
+		toggleThrFavBtn(host, board, num, false);
+		Thread.removeSavedData(board, num); // Not working yet
+	}
+	saveRenewFavorites(favObj);
 }
 
-function showFavoritesWindow(body, favObj) {
+// Checking if post contains reply links to my posts
+function isPostRefToYou(post, myPosts) {
+	if(Cfg.markMyPosts && (myPosts || MyPosts)) {
+		const isMatch = myPosts ? num => myPosts[num] : num => MyPosts.has(num);
+		const links = $Q(aib.qPostMsg.split(', ').join(' a, ') + ' a', post);
+		for(let a = 0, linksLen = links.length; a < linksLen; ++a) {
+			const tc = links[a].textContent;
+			if(tc[0] === '>' && tc[1] === '>' && isMatch(parseInt(tc.substr(2), 10))) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+// Checking threads for availability and new posts
+async function refreshFavorites(needClear404) {
+	let isUpdate = false;
+	const favObj = await readFavorites();
+	const myPosts = JSON.parse(locStorage['de-myposts'] || '{}');
+	const parentEl = $q('.de-fav-table');
+	const entryEls = $Q('.de-entry');
+	for(let i = 0, len = entryEls.length; i < len; ++i) {
+		const entryEl = entryEls[i];
+		const [titleEl, youEl, newEl, totalEl] = [...entryEl.lastElementChild.children];
+		const iconEl = titleEl.firstElementChild;
+		const host = entryEl.getAttribute('de-host');
+		const board = entryEl.getAttribute('de-board');
+		const num = entryEl.getAttribute('de-num');
+		const url = entryEl.getAttribute('de-url');
+		const entry = favObj[host][board][num];
+		if(entry.err === 'Archived') {
+			continue;
+		}
+		if(host !== aib.host || entry.err === 'Closed') {
+			if(needClear404) {
+				parentEl.classList.add('de-fav-table-unfold');
+				const oldClassName = iconEl.getAttribute('class');
+				const oldTitle = titleEl.title;
+				// setAttribute for class is used for correct SVG work in old browsers
+				iconEl.setAttribute('class', 'de-fav-inf-icon de-fav-wait');
+				titleEl.title = Lng.updating[lang];
+				try {
+					await $ajax(url, null, true);
+					iconEl.setAttribute('class', oldClassName);
+					if(oldTitle) {
+						titleEl.title = oldTitle;
+					} else {
+						titleEl.removeAttribute('title');
+					}
+					if(entry.err && entry.err !== 'Closed') {
+						delete entry.err;
+						isUpdate = true;
+					}
+				} catch(err) {
+					if(!(err instanceof AjaxError) || err.code === 0) {
+						$popup('fav-refresh', Lng.noConnect[lang]);
+					} else if(err.code === 404) {
+						entryEl.setAttribute('de-removed', ''); // Mark an entry as deleted
+					}
+					iconEl.setAttribute('class', 'de-fav-inf-icon de-fav-unavail');
+					titleEl.title = entry.err = getErrorMessage(err);
+					isUpdate = true;
+				}
+			}
+			continue;
+		}
+		let formEl, isArchived;
+		iconEl.setAttribute('class', 'de-fav-inf-icon de-fav-wait');
+		titleEl.title = Lng.updating[lang];
+		try {
+			if(aib.hasArchive) {
+				[formEl, isArchived] = await ajaxLoad(url, true, false, true);
+			} else {
+				formEl = await ajaxLoad(url);
+			}
+		} catch(err) {
+			if(!(err instanceof AjaxError) || err.code === 0) {
+				$popup('fav-refresh', Lng.noConnect[lang]);
+			} else if(err.code === 404) {
+				entryEl.setAttribute('de-removed', '');
+			}
+			$hide(newEl);
+			$hide(youEl);
+			iconEl.setAttribute('class', 'de-fav-inf-icon de-fav-unavail');
+			titleEl.title = entry.err = getErrorMessage(err);
+			isUpdate = true;
+			continue;
+		}
+		if(aib.qClosed && $q(aib.qClosed, formEl)) {
+			// Thread is closed
+			iconEl.setAttribute('class', 'de-fav-inf-icon de-fav-closed');
+			titleEl.title = Lng.thrClosed[lang];
+			entry.err = 'Closed';
+			isUpdate = true;
+		} else if(isArchived) {
+			// Thread is archived
+			iconEl.setAttribute('class', 'de-fav-inf-icon de-fav-closed');
+			titleEl.title = Lng.thrArchived[lang];
+			entry.err = 'Archived';
+			isUpdate = true;
+		} else {
+			// Thread is available and not closed
+			iconEl.setAttribute('class', 'de-fav-inf-icon');
+			titleEl.removeAttribute('title');
+			if(entry.err) { // Cancel error status if existed
+				delete entry.err;
+				isUpdate = true;
+			}
+		}
+		// Updating the posts counters
+		let newCount = 0;
+		let youCount = 0;
+		const lastNum = entry.last.match(/\d+$/)?.[0] || 0;
+		const posts = $Q(aib.qPost, formEl);
+		const postsLen = posts.length;
+		for(let j = 0; j < postsLen; ++j) {
+			const post = posts[j];
+			if(lastNum >= aib.getPNum(post)) {
+				continue;
+			}
+			newCount++;
+			if(isPostRefToYou(post, myPosts[board])) {
+				youCount++;
+			}
+		}
+		if(newCount !== entry.new || entry.cnt !== postsLen + 1) {
+			isUpdate = true;
+		}
+		totalEl.textContent = entry.cnt = postsLen + 1;
+		if(newCount) {
+			newEl.textContent = entry.new = newCount;
+			$show(newEl);
+			if(youCount) {
+				youEl.textContent = entry.you = youCount;
+				$show(youEl);
+			}
+		} else {
+			$hide(newEl);
+			$hide(youEl);
+		}
+	}
+	AjaxCache.clearCache();
+	if(needClear404) {
+		if(isUpdate) {
+			remove404Favorites(favObj);
+		}
+		parentEl.classList.remove('de-fav-table-unfold');
+	} else if(isUpdate) {
+		saveFavorites(favObj);
+	}
+}
+
+function showFavoritesWindow(winBody, favObj) {
 	let html = '';
 	// Create the list of favorite threads
-	for(const h in favObj) {
-		for(const b in favObj[h]) {
-			const f = favObj[h][b];
-			const hb = `de-host="${ h }" de-board="${ b }"`;
+	for(const host in favObj) {
+		if(!$hasProp(favObj, host)) {
+			continue;
+		}
+		const boards = favObj[host];
+		for(const board in boards) {
+			if(!$hasProp(boards, board)) {
+				continue;
+			}
+			const threads = boards[board];
+			const hb = `de-host="${ host }" de-board="${ board }"`;
 			const delBtn = `<span class="de-fav-del-btn">
 				<svg><use xlink:href="#de-symbol-win-close"></use></svg>
 			</span>`;
-			let fArr, innerHtml = '';
+			let tNums;
+			const tArr = Object.entries(threads);
 			switch(Cfg.favThrOrder) {
-			case 0: fArr = Object.entries(f); break;
-			case 1: fArr = Object.entries(f).reverse(); break;
-			case 2: fArr = Object.entries(f).sort((a, b) => (a[1].time || 0) - (b[1].time || 0)); break;
-			case 3: fArr = Object.entries(f).sort((a, b) => (b[1].time || 0) - (a[1].time || 0));
+			case 0: tNums = tArr; break;
+			case 1: tNums = tArr.reverse(); break;
+			case 2: tNums = tArr.sort((a, b) => (a[1].time || 0) - (b[1].time || 0)); break;
+			case 3: tNums = tArr.sort((a, b) => (b[1].time || 0) - (a[1].time || 0));
 			}
-			for(let i = 0, len = fArr.length; i < len; ++i) {
-				const tNum = fArr[i][0];
+			let innerHtml = '';
+			for(let i = 0, len = tNums.length; i < len; ++i) {
+				const tNum = tNums[i][0];
 				if(tNum === 'url' || tNum === 'hide') {
 					continue;
 				}
-				const t = f[tNum];
-				if(!t.url.startsWith('http')) { // XXX: compatibility with older versions
-					t.url = (h === aib.host ? aib.prot + '//' : 'http://') + h + t.url;
-				}
+				const entry = threads[tNum];
 				// Generate DOM for separate entry
-				const favLinkHref = t.url + (
-					!t.last ? '' :
-					t.last.startsWith('#') ? t.last :
-					h === aib.host ? aib.anchor + t.last : '');
-				const favInfIwrapTitle = !t.err ? '' :
-					t.err === 'Closed' ? `title="${ Lng.thrClosed[lang] }"` : `title="${ t.err }"`;
-				const favInfIconClass = !t.err ? '' :
-					t.err === 'Closed' || t.err === 'Archived' ? 'de-fav-closed' : 'de-fav-unavail';
-				const favInfYouDisp = t.you ? '' : ' style="display: none;"';
-				const favInfNewDisp = t.new ? '' : ' style="display: none;"';
+				const favLinkHref = entry.url + (
+					!entry.last ? '' :
+					entry.last.startsWith('#') ? entry.last :
+					host === aib.host ? aib.anchor + entry.last : '');
+				const favInfIwrapTitle = !entry.err ? '' :
+					entry.err === 'Closed' ? `title="${ Lng.thrClosed[lang] }"` : `title="${ entry.err }"`;
+				const favInfIconClass = !entry.err ? '' :
+					entry.err === 'Closed' || entry.err === 'Archived' ? 'de-fav-closed' : 'de-fav-unavail';
+				const favInfYouDisp = entry.you ? '' : ' style="display: none;"';
+				const favInfNewDisp = entry.new ? '' : ' style="display: none;"';
 				innerHtml += `<div class="de-entry ${ aib.cReply }" ${
-					hb } de-num="${ tNum }" de-url="${ t.url }">
+					hb } de-num="${ tNum }" de-url="${ entry.url }">
 					${ delBtn }
-					<a class="de-fav-link" title="${ Lng.goToThread[lang] }"` +
+					<a class="de-fav-link" title="${ Lng.goToThread[lang] }" ${ hb }` +
 						` href="${ favLinkHref }" rel="noreferrer">${ tNum }</a>
-					<div class="de-entry-title">- ${ t.txt }</div>
+					<div class="de-entry-title">- ${ entry.txt }</div>
 					<div class="de-fav-inf">
 						<span class="de-fav-inf-iwrap" ${ favInfIwrapTitle }>
 							<svg class="de-fav-inf-icon ${ favInfIconClass }">
@@ -3948,10 +4284,10 @@ function showFavoritesWindow(body, favObj) {
 							</svg>
 						</span>
 						<span class="de-fav-inf-you" title="${ Lng.myPostsRep[lang] }"${ favInfYouDisp }>
-							${ t.you || 0 }</span>
+							${ entry.you || 0 }</span>
 						<span class="de-fav-inf-new" title="${ Lng.newPosts[lang] }"${ favInfNewDisp }>
-							${ t.new || 0 }</span>
-						<span class="de-fav-inf-old" title="${ Lng.oldPosts[lang] }">${ t.cnt }</span>
+							${ entry.new || 0 }</span>
+						<span class="de-fav-inf-total" title="${ Lng.totalPosts[lang] }">${ entry.cnt }</span>
 						<span class="de-fav-inf-page" title="${ Lng.thrPage[lang] }"></span>
 					</div>
 				</div>`;
@@ -3959,13 +4295,14 @@ function showFavoritesWindow(body, favObj) {
 			if(!innerHtml) {
 				continue;
 			}
-			const isHide = f.hide === undefined ? h !== aib.host : f.hide;
+			const isHide = threads.hide === undefined ? host !== aib.host : threads.hide;
 			// Building a foldable block for specific board
-			html += `<div class="de-fold-block${ h === aib.host && b === aib.b ? ' de-fav-current' : '' }">
+			html += `<div class="de-fold-block${
+				host === aib.host && board === aib.b ? ' de-fav-current' : '' }">
 				<div class="de-fav-header">
 					${ delBtn }
 					<a class="de-fav-header-link" title="${ Lng.goToBoard[lang] }"` +
-						` href="${ f.url }" rel="noreferrer">${ h }/${ b }</a>
+						` href="${ threads.url }" rel="noreferrer">${ host }/${ board }</a>
 					<a class="de-abtn de-fav-header-btn" title="${ Lng.toggleEntries[lang] }"` +
 						` href="#">${ isHide ? '&#x25BC;' : '&#x25B2;' }</a>
 				</div>
@@ -3978,8 +4315,8 @@ function showFavoritesWindow(body, favObj) {
 
 	// Appending DOM and events
 	if(html) {
-		$bEnd(body, `<div class="de-fav-table">${ html }</div>`).addEventListener('click', e => {
-			let el = fixEventEl(e.target);
+		$bEnd(winBody, `<div class="de-fav-table">${ html }</div>`).addEventListener('click', e => {
+			let el = nav.fixEventEl(e.target);
 			let parentEl = el.parentNode;
 			if(el.tagName.toLowerCase() === 'svg') {
 				el = parentEl;
@@ -3994,18 +4331,18 @@ function showFavoritesWindow(body, favObj) {
 					parentEl.getAttribute('de-board') + (parentEl.getAttribute('de-num') || ''));
 				break;
 			case 'de-fav-del-btn': {
-				const wasChecked = el.getAttribute('de-checked') === '';
-				const toggleFn = btnEl => toggleAttr(btnEl, 'de-checked', '', !wasChecked);
+				const wasChecked = el.hasAttribute('de-checked');
+				const toggleFn = btnEl => btnEl.toggleAttribute('de-checked', !wasChecked);
 				toggleFn(el);
 				if(parentEl.className === 'de-fav-header') {
 					// Select/unselect all checkboxes in board block
 					const entriesEl = parentEl.nextElementSibling;
-					$each($Q('.de-fav-del-btn', entriesEl), toggleFn);
+					$Q('.de-fav-del-btn', entriesEl).forEach(toggleFn);
 					if(!wasChecked && entriesEl.classList.contains('de-fav-entries-hide')) {
 						entriesEl.classList.remove('de-fav-entries-hide');
 					}
 				}
-				const isShowDelBtns = !!$q('.de-entry > .de-fav-del-btn[de-checked]', body);
+				const isShowDelBtns = !!$q('.de-entry > .de-fav-del-btn[de-checked]', winBody);
 				$toggle($id('de-fav-buttons'), !isShowDelBtns);
 				$toggle($id('de-fav-del-confirm'), isShowDelBtns);
 				break;
@@ -4016,257 +4353,116 @@ function showFavoritesWindow(body, favObj) {
 				el.innerHTML = isHide ? '&#x25BC' : '&#x25B2';
 				favObj[entriesEl.getAttribute('de-host')][entriesEl.getAttribute('de-board')].hide = isHide;
 				saveFavorites(favObj);
-				$pd(e);
+				e.preventDefault();
 				entriesEl.classList.toggle('de-fav-entries-hide');
 			}
 			}
 		});
 	} else {
-		$bEnd(body, `<center><b>${ Lng.noFavThr[lang] }</b></center>`);
+		winBody.insertAdjacentHTML('beforeend', `<center><b>${ Lng.noFavThr[lang] }</b></center>`);
 	}
-	const btns = $bEnd(body, '<div id="de-fav-buttons"></div>');
 
-	// "Edit" button. Calls a popup with editor to edit Favorites in JSON.
-	btns.appendChild(getEditButton('favor',
-		fn => readFavorites().then(favObj => fn(favObj, true, saveRenewFavorites))));
+	const btns = $bEnd(winBody, '<div id="de-fav-buttons"></div>');
+	btns.append(
+		// "Edit" button. Calls a popup with editor to edit Favorites in JSON.
+		getEditButton('favor', fn => readFavorites().then(favObj => fn(favObj, true, saveRenewFavorites))),
 
-	// "Refresh" button. Updates counters of new posts for each thread entry.
-	btns.appendChild($btn(Lng.refresh[lang], Lng.infoCount[lang], async () => {
-		const favObj = await readFavorites();
-		if(!favObj[aib.host]) {
-			return;
-		}
-		let isUpdate = false;
-		let last404 = false;
-		const myposts = JSON.parse(locStorage['de-myposts'] || '{}');
-		const els = $Q('.de-entry');
-		for(let i = 0, len = els.length; i < len; ++i) {
-			const el = els[i];
-			const host = el.getAttribute('de-host');
-			const b = el.getAttribute('de-board');
-			const num = el.getAttribute('de-num');
-			const f = favObj[host][b][num];
-			// Updating doesn't works for other domains because of different posts structure
-			// Updating is not needed in closed threads
-			if(host !== aib.host || f.err === 'Closed' || f.err === 'Archived') {
-				continue;
+		// "Refresh" button. Updates counters of new posts for each thread entry.
+		$button(Lng.refresh[lang], Lng.refreshCounters[lang], () => refreshFavorites(false)),
+
+		// "Clear" button. Updates counters of new posts and clears 404 threads.
+		$button(Lng.clear[lang], Lng.refreshClear404[lang], () => refreshFavorites(true)),
+
+		// "Page" button. Shows on which page every thread is existed.
+		$button(Lng.page[lang], Lng.infoPage[lang], async () => {
+			const els = $Q('.de-fav-current > .de-fav-entries > .de-entry');
+			const len = els.length;
+			if(!len) { // Cancel if no existed entries
+				return;
 			}
-			const [titleEl, youEl, countEl] = [...el.lastElementChild.children];
-			const iconEl = titleEl.firstElementChild;
-			// setAttribute for class is used because of SVG (for correct work in some browsers)
-			iconEl.setAttribute('class', 'de-fav-inf-icon de-fav-wait');
-			titleEl.title = Lng.updating[lang];
-			let form, isArchived;
-			try {
-				if(!aib.hasArchive) {
-					form = await ajaxLoad(aib.getThrUrl(b, num));
+			$popup('load-pages', Lng.loading[lang], true);
+			// Create indexed array of entries and "waiting" SVG icon for each entry
+			const thrInfo = [];
+			for(let i = 0; i < len; ++i) {
+				const el = els[i];
+				const iconEl = $q('.de-fav-inf-icon', el);
+				const titleEl = iconEl.parentNode;
+				thrInfo.push({
+					found     : false,
+					num       : +el.getAttribute('de-num'),
+					pageEl    : $q('.de-fav-inf-page', el),
+					iconClass : iconEl.getAttribute('class'),
+					iconEl,
+					iconTitle : titleEl.getAttribute('title'),
+					titleEl
+				});
+				iconEl.setAttribute('class', 'de-fav-inf-icon de-fav-wait');
+				titleEl.title = Lng.updating[lang];
+			}
+			// Sequentially load pages and search for favorites threads
+			// We cannot know a count of pages while in the thread
+			const endPage = (aib.lastPage || 10) + 1; // Check up to 10 page, if we donʼt know
+			let infoLoaded = 0;
+			const updateInf = (inf, page) => {
+				inf.iconEl.setAttribute('class', inf.iconClass);
+				if(inf.iconTitle) {
+					inf.titleEl.title = inf.iconTitle;
 				} else {
-					[form, isArchived] = await ajaxLoad(aib.getThrUrl(b, num), true, false, true);
+					inf.titleEl.removeAttribute('title');
 				}
-				last404 = false;
-			} catch(err) {
-				if((err instanceof AjaxError) && err.code === 404) { // Check for 404 error twice
-					if(last404) {
-						Thread.removeSavedData(b, num); // Not working yet
-					} else {
-						last404 = true;
-						--i; // Repeat this cycle again
-						continue;
+				inf.pageEl.textContent = '@' + page;
+			};
+			for(let page = 0; page < endPage; ++page) {
+				const tNums = new Set();
+				try {
+					const form = await ajaxLoad(aib.getPageUrl(aib.b, page));
+					const els = DelForm.getThreads(form);
+					for(let i = 0, len = els.length; i < len; ++i) {
+						tNums.add(aib.getTNum(els[i]));
+					}
+				} catch(err) {
+					continue;
+				}
+				// Search for threads on current page
+				for(let i = 0; i < len; ++i) {
+					const inf = thrInfo[i];
+					if(tNums.has(inf.num)) {
+						updateInf(inf, page);
+						inf.found = true;
+						infoLoaded++;
 					}
 				}
-				last404 = false;
-				$hide(countEl);
-				$hide(youEl);
-				iconEl.setAttribute('class', 'de-fav-inf-icon de-fav-unavail');
-				f.err = titleEl.title = getErrorMessage(err);
-				isUpdate = true;
-				continue;
-			}
-			if(aib.qClosed && $q(aib.qClosed, form)) { // Check for closed thread
-				iconEl.setAttribute('class', 'de-fav-inf-icon de-fav-closed');
-				titleEl.title = Lng.thrClosed[lang];
-				f.err = 'Closed';
-				isUpdate = true;
-			} else if(isArchived) {
-				iconEl.setAttribute('class', 'de-fav-inf-icon de-fav-closed');
-				titleEl.title = Lng.thrArchived[lang];
-				f.err = 'Archived';
-				isUpdate = true;
-			} else {
-				// Thread is available and not closed
-				iconEl.setAttribute('class', 'de-fav-inf-icon');
-				titleEl.removeAttribute('title');
-				if(f.err) { // Cancel error status if existed
-					delete f.err;
-					isUpdate = true;
+				if(infoLoaded === len) { // Stop pages loading when all favorite threads checked
+					break;
 				}
 			}
-			// Updating a counter of new posts
-			const posts = $Q(aib.qRPost, form);
-			const cnt = posts.length + 1 - f.cnt;
-			countEl.textContent = cnt;
-			if(cnt === 0) {
-				$hide(countEl); // Hide counter if no new posts
-				$hide(youEl);
-			} else {
-				$show(countEl);
-				f.new = cnt;
-				isUpdate = true;
-				// Check for replies to my posts
-				if(myposts && myposts[b]) {
-					f.you = 0;
-					for(let j = 0; j < cnt; ++j) {
-						const links = $Q(aib.qPostMsg.split(', ').join(' a, ') + ' a',
-							posts[posts.length - 1 - j]);
-						for(let a = 0, len = links.length; a < len; ++a) {
-							const tc = links[a].textContent;
-							if(tc[0] === '>' && tc[1] === '>' && myposts[b][tc.substr(2)]) {
-								f.you++;
-							}
-						}
-					}
-					if(f.you) {
-						youEl.textContent = f.you;
-						$show(youEl);
-					}
-				}
-			}
-		}
-		AjaxCache.clearCache();
-		if(isUpdate) {
-			saveFavorites(favObj);
-		}
-	}));
-
-	// "Page" button. Shows on which page every thread is existed.
-	btns.appendChild($btn(Lng.page[lang], Lng.infoPage[lang], async () => {
-		const els = $Q('.de-fav-current > .de-fav-entries > .de-entry');
-		const len = els.length;
-		if(!len) { // Cancel if no existed entries
-			return;
-		}
-		$popup('load-pages', Lng.loading[lang], true);
-		// Create indexed array of entries and "waiting" SVG icon for each entry
-		const thrInfo = [];
-		for(let i = 0; i < len; ++i) {
-			const el = els[i];
-			const iconEl = $q('.de-fav-inf-icon', el);
-			const titleEl = iconEl.parentNode;
-			thrInfo.push({
-				found     : false,
-				num       : +el.getAttribute('de-num'),
-				pageEl    : $q('.de-fav-inf-page', el),
-				iconClass : iconEl.getAttribute('class'),
-				iconEl,
-				iconTitle : titleEl.getAttribute('title'),
-				titleEl
-			});
-			iconEl.setAttribute('class', 'de-fav-inf-icon de-fav-wait');
-			titleEl.title = Lng.updating[lang];
-		}
-		// Sequentially load pages and search for favorites threads
-		// We cannot know a count of pages while in the thread
-		const endPage = (aib.lastPage || 10) + 1; // Check up to 10 page, if we don't know
-		let infoLoaded = 0;
-		const updateInf = (inf, page) => {
-			inf.iconEl.setAttribute('class', inf.iconClass);
-			toggleAttr(inf.titleEl, 'title', inf.iconTitle, inf.iconTitle);
-			inf.pageEl.textContent = '@' + page;
-		};
-		for(let page = 0; page < endPage; ++page) {
-			const tNums = new Set();
-			try {
-				const form = await ajaxLoad(aib.getPageUrl(aib.b, page));
-				const els = DelForm.getThreads(form);
-				for(let i = 0, len = els.length; i < len; ++i) {
-					tNums.add(aib.getTNum(els[i]));
-				}
-			} catch(err) {
-				continue;
-			}
-			// Search for threads on current page
+			// Process missed threads that not found
 			for(let i = 0; i < len; ++i) {
 				const inf = thrInfo[i];
-				if(tNums.has(inf.num)) {
-					updateInf(inf, page);
-					inf.found = true;
-					infoLoaded++;
+				if(!inf.found) {
+					updateInf(inf, '?');
 				}
 			}
-			if(infoLoaded === len) { // Stop pages loading when all favorite threads checked
-				break;
-			}
-		}
-		// Process missed threads that not found
-		for(let i = 0; i < len; ++i) {
-			const inf = thrInfo[i];
-			if(!inf.found) {
-				updateInf(inf, '?');
-			}
-		}
-		closePopup('load-pages');
-	}));
+			closePopup('load-pages');
+		})
+	);
 
-	// "Clear" button. Allows to clear 404'd threads.
-	btns.appendChild($btn(Lng.clear[lang], Lng.clrDeleted[lang], async () => {
-		// Sequentially load threads, and remove inaccessible
-		let last404 = false;
-		const els = $Q('.de-entry');
-		const parent = $q('.de-fav-table');
-		parent.classList.add('de-fav-table-unfold');
-		for(let i = 0, len = els.length; i < len; ++i) {
-			const el = els[i];
-			const iconEl = $q('.de-fav-inf-icon', el);
-			const titleEl = iconEl.parentNode;
-			iconEl.setAttribute('class', 'de-fav-inf-icon de-fav-wait');
-			titleEl.title = Lng.updating[lang];
-			await $ajax(el.getAttribute('de-url'), null, true).then(xhr => {
-				switch(el.getAttribute('de-host')) { // Makaba doesn't return 404
-				case '2ch.hk':
-				case '2ch.pm': {
-					const dc = $DOM(xhr.responseText);
-					if(dc && $q('.message-title', dc)) {
-						throw new AjaxError(404, 'Error');
-					}
-				}
-				}
-				iconEl.setAttribute('class', 'de-fav-inf-icon');
-				titleEl.removeAttribute('title');
-				last404 = false;
-			}).catch(err => {
-				if(err.code === 404) { // Check for 404 error twice
-					if(!last404) {
-						last404 = true;
-						--i; // Repeat this cycle again
-						return;
-					}
-					Thread.removeSavedData(el.getAttribute('de-board'), // Not working yet
-						+el.getAttribute('de-num'));
-					el.setAttribute('de-removed', ''); // Mark an entry as deleted
-				}
-				iconEl.setAttribute('class', 'de-fav-inf-icon de-fav-unavail');
-				titleEl.title = getErrorMessage(err);
-				last404 = false;
-			});
-		}
-		cleanFavorites(); // Delete marked entries
-		parent.classList.remove('de-fav-table-unfold');
-	}));
-
-	// Deletion confirm/cancel buttons
-	const delBtns = $bEnd(body, '<div id="de-fav-del-confirm" style="display: none;"></div>');
-	delBtns.appendChild($btn(Lng.remove[lang], Lng.delEntries[lang], () => {
-		$each($Q('.de-entry > .de-fav-del-btn[de-checked]', body),
-			el => el.parentNode.setAttribute('de-removed', ''));
-		cleanFavorites(); // Delete marked entries
-		$show(btns);
-		$hide(delBtns);
-	}));
-	delBtns.appendChild($btn(Lng.cancel[lang], '', () => {
-		$each($Q('.de-fav-del-btn', body), el => el.removeAttribute('de-checked'));
-		$show(btns);
-		$hide(delBtns);
-	}));
+	// Deletion of confirm/cancel buttons
+	const delBtns = $bEnd(winBody, '<div id="de-fav-del-confirm" style="display: none;"></div>');
+	delBtns.append(
+		$button(Lng.remove[lang], Lng.delEntries[lang], () => {
+			$Q('.de-entry > .de-fav-del-btn[de-checked]', winBody).forEach(
+				el => el.parentNode.setAttribute('de-removed', ''));
+			remove404Favorites();
+			$show(btns);
+			$hide(delBtns);
+		}),
+		$button(Lng.cancel[lang], '', () => {
+			$Q('.de-fav-del-btn', winBody).forEach(el => el.removeAttribute('de-checked'));
+			$show(btns);
+			$hide(delBtns);
+		})
+	);
 }
 
 /* ==[ WindowSettings.js ]====================================================================================
@@ -4274,22 +4470,17 @@ function showFavoritesWindow(body, favObj) {
 =========================================================================================================== */
 
 const CfgWindow = {
-	initCfgWindow(body) {
-		body.addEventListener('click', this);
-		body.addEventListener('mouseover', this);
-		body.addEventListener('mouseout', this);
-		body.addEventListener('change', this);
-		body.addEventListener('keyup', this);
-		body.addEventListener('keydown', this);
-		body.addEventListener('scroll', this);
+	initCfgWindow(winBody) {
+		['click', 'mouseover', 'mouseout', 'change', 'keyup', 'keydown', 'scroll'].forEach(
+			e => winBody.addEventListener(e, this));
 
 		// Create tab bar and bottom buttons
-		let div = $bEnd(body, `<div id="de-cfg-bar">${
+		let div = $bEnd(winBody, `<div id="de-cfg-bar">${
 			this._getTab('filters') +
 			this._getTab('posts') +
 			this._getTab('images') +
 			this._getTab('links') +
-			(pr.form || pr.oeForm ? this._getTab('form') : '') +
+			(postform.form || postform.oeForm ? this._getTab('form') : '') +
 			this._getTab('common') +
 			this._getTab('info')
 		}</div><div id="de-cfg-buttons">${ this._getSel('language') }</div>`);
@@ -4297,218 +4488,227 @@ const CfgWindow = {
 		// Open default or current tab
 		this._clickTab(Cfg.cfgTab);
 
-		// "Edit" button. Calls a popup with editor to edit Settings in JSON.
-		div.appendChild(getEditButton('cfg', fn => fn(Cfg, true, data => {
-			saveCfgObj(aib.dm, data);
-			deWindow.location.reload();
-		})));
+		div.append(
+			// "Edit" button. Calls a popup with editor to edit Settings in JSON.
+			getEditButton('cfg', fn => fn(Cfg, true, async data => {
+				await CfgSaver.saveObj(aib.domain, () => data);
+				deWindow.location.reload();
+			})),
 
-		// "Global" button. Allows to save/load global settings.
-		nav.hasGlobalStorage && div.appendChild($btn(Lng.global[lang], Lng.globalCfg[lang], () => {
-			const el = $popup('cfg-global', `<b>${ Lng.globalCfg[lang] }:</b>`);
-			// "Load" button. Applies global settings for current domain.
-			$bEnd(el, `<div id="de-list"><input type="button" value="${
-				Lng.load[lang] }"> ${ Lng.loadGlobal[lang] }</div>`
-			).firstElementChild.onclick = () => getStoredObj('DESU_Config').then(data => {
-				if(data && ('global' in data) && !$isEmpty(data.global)) {
-					saveCfgObj(aib.dm, data.global);
-					deWindow.location.reload();
-				} else {
-					$popup('err-noglobalcfg', Lng.noGlobalCfg[lang]);
-				}
-			});
-			// "Save" button. Copies the domain settings into global.
-			div = $bEnd(el, `<div id="de-list"><input type="button" value="${
-				Lng.save[lang] }"> ${ Lng.saveGlobal[lang] }</div>`
-			).firstElementChild.onclick = () => getStoredObj('DESU_Config').then(data => {
-				const obj = {};
-				const com = data[aib.dm];
-				for(const i in com) {
-					if(i !== 'correctTime' && i !== 'timePattern' && i !== 'userCSS' &&
-						i !== 'userCSSTxt' && i !== 'stats' && com[i] !== defaultCfg[i]
-					) {
-						obj[i] = com[i];
-					}
-				}
-				data.global = obj;
-				saveCfgObj('global', data.global);
-				toggleWindow('cfg', true);
-			});
-			el.insertAdjacentHTML('beforeend', `<hr><small>${ Lng.descrGlobal[lang] }</small>`);
-		}));
-
-		// "File" button. Allows to save and load settings/favorites/hidden/etc from file.
-		!nav.isPresto && div.appendChild($btn(Lng.file[lang], Lng.fileImpExp[lang], () => {
-			const list = this._getList([
-				Lng.panelBtn.cfg[lang] + ' ' + Lng.allDomains[lang],
-				Lng.panelBtn.fav[lang],
-				Lng.hidPostThr[lang] + ` (${ aib.dm })`,
-				Lng.myPosts[lang] + ` (${ aib.dm })`
-			]);
-			// Create popup with controls
-			$popup('cfg-file', `<b>${ Lng.fileImpExp[lang] }:</b><hr><!--
-				--><div class="de-list">${ Lng.fileToData[lang] }:<div class="de-depend"><!--
-					--><input type="file" accept=".json" id="de-import-file"></div></div><hr><!--
-				--><div class="de-list"><a id="de-export-file" href="#">${ Lng.dataToFile[lang] }:<!--
-				--><div class="de-depend">${ list }</div></div>`);
-			// Import data from a file to the storage
-			$id('de-import-file').onchange = e => {
-				const file = e.target.files[0];
-				if(!file) {
-					return;
-				}
-				readFile(file, true).then(({ data }) => {
-					let obj;
-					try {
-						obj = JSON.parse(data);
-					} catch(err) {
-						$popup('err-invaliddata', Lng.invalidData[lang]);
-						return;
-					}
-					const cfgObj = obj.settings;
-					const favObj = obj.favorites;
-					const dmObj = obj[aib.dm];
-					const isOldCfg = !cfgObj && !favObj && !dmObj;
-					if(isOldCfg) {
-						setStored('DESU_Config', data);
-					}
-					if(cfgObj) {
-						try {
-							setStored('DESU_Config', JSON.stringify(cfgObj));
-							setStored('DESU_keys', JSON.stringify(obj.hotkeys));
-						} catch(err) {}
-					}
-					if(favObj) {
-						saveRenewFavorites(favObj);
-					}
-					if(dmObj) {
-						if(dmObj.posts) {
-							locStorage['de-posts'] = JSON.stringify(dmObj.posts);
-						}
-						if(dmObj.threads) {
-							locStorage['de-threads'] = JSON.stringify(dmObj.threads);
-						}
-						if(dmObj.myposts) {
-							locStorage['de-myposts'] = JSON.stringify(dmObj.myposts);
-						}
-					}
-					if(cfgObj || dmObj || isOldCfg) {
-						$popup('cfg-file', Lng.updating[lang], true);
+			// "Global" button. Allows to save/load global settings.
+			nav.hasGlobalStorage ? $button(Lng.global[lang], Lng.globalCfg[lang], () => {
+				const el = $popup('cfg-global', `<b>${ Lng.globalCfg[lang] }:</b>`);
+				// "Load" button. Applies global settings for current domain.
+				$bEnd(el, `<div id="de-list"><input type="button" value="${
+					Lng.load[lang] }"> ${ Lng.loadGlobal[lang] }</div>`
+				).firstElementChild.onclick = async () => {
+					const data = await getStoredObj('DESU_Config');
+					if(data && ('global' in data) && !$isEmpty(data.global)) {
+						await CfgSaver.saveObj(aib.domain, () => data.global);
 						deWindow.location.reload();
+					} else {
+						$popup('err-noglobalcfg', Lng.noGlobalCfg[lang]);
+					}
+				};
+				// "Save" button. Copies the domain settings into global.
+				div = $bEnd(el, `<div id="de-list"><input type="button" value="${
+					Lng.save[lang] }"> ${ Lng.saveGlobal[lang] }</div>`
+				).firstElementChild.onclick = async () => {
+					const data = await getStoredObj('DESU_Config');
+					const obj = {};
+					const com = data[aib.domain];
+					for(const i in com) {
+						if(i !== 'correctTime' && i !== 'timePattern' && i !== 'userCSS' &&
+							i !== 'userCSSTxt' && i !== 'stats' && com[i] !== defaultCfg[i]
+						) {
+							obj[i] = com[i];
+						}
+					}
+					data.global = obj;
+					await CfgSaver.saveObj('global', () => data.global);
+					toggleWindow('cfg', true);
+				};
+				el.insertAdjacentHTML('beforeend', `<hr><small>${ Lng.descrGlobal[lang] }</small>`);
+			}) : '',
+
+			// "File" button. Allows to save and load settings/favorites/hidden/etc from file.
+			!nav.isPresto ? $button(Lng.file[lang], Lng.fileImpExp[lang], () => {
+				const list = this._getList([
+					Lng.panelBtn.cfg[lang] + ' ' + Lng.allDomains[lang],
+					Lng.panelBtn.fav[lang],
+					Lng.hidPostThr[lang] + ` (${ aib.domain })`,
+					Lng.myPosts[lang] + ` (${ aib.domain })`
+				]);
+				// Create popup with controls
+				$popup('cfg-file', `<b>${ Lng.fileImpExp[lang] }:</b><hr><!--
+					--><div class="de-list">${ Lng.fileToData[lang] }:<div class="de-depend"><!--
+						--><input type="file" accept=".json" id="de-import-file"></div></div><hr><!--
+					--><div class="de-list"><a id="de-export-file" href="#">${ Lng.dataToFile[lang] }:<!--
+					--><div class="de-depend">${ list }</div></div>`);
+				// Import data from a file to the storage
+				$id('de-import-file').onchange = e => {
+					const file = e.target.files[0];
+					if(!file) {
 						return;
 					}
-					closePopup('cfg-file');
-				});
-			};
+					readFile(file, true).then(({ data }) => {
+						let obj;
+						try {
+							obj = JSON.parse(data);
+						} catch(err) {
+							$popup('err-invaliddata', Lng.invalidData[lang]);
+							return;
+						}
+						const { settings: cfgObj, favorites: favObj, [aib.domain]: domainObj } = obj;
+						const isOldCfg = !cfgObj && !favObj && !domainObj;
+						if(isOldCfg) {
+							setStored('DESU_Config', data);
+						}
+						if(cfgObj) {
+							try {
+								setStored('DESU_Config', JSON.stringify(cfgObj));
+								setStored('DESU_keys', JSON.stringify(obj.hotkeys));
+							} catch(err) {}
+						}
+						if(favObj) {
+							saveRenewFavorites(favObj);
+						}
+						if(domainObj) {
+							if(domainObj.posts) {
+								locStorage['de-posts'] = JSON.stringify(domainObj.posts);
+							}
+							if(domainObj.threads) {
+								locStorage['de-threads'] = JSON.stringify(domainObj.threads);
+							}
+							if(domainObj.myposts) {
+								locStorage['de-myposts'] = JSON.stringify(domainObj.myposts);
+							}
+						}
+						if(cfgObj || domainObj || isOldCfg) {
+							$popup('cfg-file', Lng.updating[lang], true);
+							deWindow.location.reload();
+							return;
+						}
+						closePopup('cfg-file');
+					});
+				};
 
-			// Export data from a storage to the file. The file will be named by date and type of storage.
-			// For example, like "DE_20160727_1540_Cfg+Fav+domain.com(Hid+You).json".
-			const expFile = $id('de-export-file');
-			const els = $Q('input', expFile.nextElementSibling);
-			els[0].checked = true;
-			expFile.addEventListener('click', async e => {
-				const name = [], nameDm = [], d = new Date();
-				let val = [], valDm = [];
-				for(let i = 0, len = els.length; i < len; ++i) {
+				// Export data from a storage to the file. The file will be named by date and type of storage.
+				// For example, like "DE_20160727_1540_Cfg+Fav+domain.com(Hid+You).json".
+				const expFile = $id('de-export-file');
+				const els = $Q('input', expFile.nextElementSibling);
+				els[0].checked = true;
+				expFile.addEventListener('click', async e => {
+					const name = [];
+					const nameDomain = [];
+					const d = new Date();
+					let val = [];
+					let valDomain = [];
+					for(let i = 0, len = els.length; i < len; ++i) {
+						if(!els[i].checked) {
+							continue;
+						}
+						switch(i) {
+						case 0: name.push('Cfg'); {
+							const cfgData = await Promise.all(
+								[getStored('DESU_Config'), getStored('DESU_keys')]);
+							val.push(`"settings":${ cfgData[0] }`, `"hotkeys":${ cfgData[1] || '""' }`);
+							break;
+						}
+						case 1: name.push('Fav');
+							val.push(`"favorites":${ await getStored('DESU_Favorites') || '{}' }`);
+							break;
+						case 2: nameDomain.push('Hid');
+							valDomain.push(`"posts":${ locStorage['de-posts'] || '{}' }`,
+								`"threads":${ locStorage['de-threads'] || '{}' }`);
+							break;
+						case 3: nameDomain.push('You');
+							valDomain.push(`"myposts":${ locStorage['de-myposts'] || '{}' }`);
+						}
+					}
+					if((valDomain = valDomain.join(','))) {
+						val.push(`"${ aib.domain }":{${ valDomain }}`);
+						name.push(`${ aib.domain } (${ nameDomain.join('+') })`);
+					}
+					if((val = val.join(','))) {
+						downloadBlob(new Blob([`{${ val }}`], { type: 'application/json' }),
+							`DE_${ d.getFullYear() }${ pad2(d.getMonth() + 1) }${ pad2(d.getDate()) }_${
+								pad2(d.getHours()) }${ pad2(d.getMinutes()) }_${ name.join('+') }.json`);
+					}
+					e.preventDefault();
+				}, true);
+			}) : '',
+
+			// "Clear" button. Allows to clear settings/favorites/hidden/etc optionally.
+			$button(Lng.reset[lang] + '…', Lng.resetCfg[lang], () => $popup(
+				'cfg-reset',
+				`<b>${ Lng.resetData[lang] }:</b><hr>` +
+				`<div class="de-list"><b>${ aib.domain }:</b>${
+					this._getList([Lng.panelBtn.cfg[lang], Lng.hidPostThr[lang], Lng.myPosts[lang]])
+				}</div><hr>` +
+				`<div class="de-list"><b>${ Lng.allDomains[lang] }:</b>${
+					this._getList([Lng.panelBtn.cfg[lang], Lng.panelBtn.fav[lang]])
+				}</div><hr>`
+			).append($button(Lng.clear[lang], '', e => {
+				const els = $Q('input[type="checkbox"]', e.target.parentNode);
+				for(let i = 1, len = els.length; i < len; ++i) {
 					if(!els[i].checked) {
 						continue;
 					}
 					switch(i) {
-					case 0: name.push('Cfg'); {
-						const cfgData = await Promise.all([getStored('DESU_Config'), getStored('DESU_keys')]);
-						val.push(`"settings":${ cfgData[0] }`, `"hotkeys":${ cfgData[1] || '""' }`);
+					case 1:
+						locStorage.removeItem('de-posts');
+						locStorage.removeItem('de-threads');
 						break;
-					}
-					case 1: name.push('Fav');
-						val.push(`"favorites":${ await getStored('DESU_Favorites') || '{}' }`);
-						break;
-					case 2: nameDm.push('Hid');
-						valDm.push(`"posts":${ locStorage['de-posts'] || '{}' }`,
-							`"threads":${ locStorage['de-threads'] || '{}' }`);
-						break;
-					case 3: nameDm.push('You');
-						valDm.push(`"myposts":${ locStorage['de-myposts'] || '{}' }`);
+					case 2: locStorage.removeItem('de-myposts'); break;
+					case 4: delStored('DESU_Favorites');
 					}
 				}
-				if((valDm = valDm.join(','))) {
-					val.push(`"${ aib.dm }":{${ valDm }}`);
-					name.push(`${ aib.dm } (${ nameDm.join('+') })`);
+				if(els[3].checked) {
+					delStored('DESU_Config');
+					delStored('DESU_keys');
+				} else if(els[0].checked) {
+					getStoredObj('DESU_Config').then(data => {
+						delete data[aib.domain];
+						setStored('DESU_Config', JSON.stringify(data));
+						$popup('cfg-reset', Lng.updating[lang], true);
+						deWindow.location.reload();
+					});
+					return;
 				}
-				if((val = val.join(','))) {
-					downloadBlob(new Blob([`{${ val }}`], { type: 'application/json' }),
-						`DE_${ d.getFullYear() }${ pad2(d.getMonth() + 1) }${ pad2(d.getDate()) }_${
-							pad2(d.getHours()) }${ pad2(d.getMinutes()) }_${ name.join('+') }.json`);
-				}
-				$pd(e);
-			}, true);
-		}));
-
-		// "Clear" button. Allows to clear settings/favorites/hidden/etc optionally.
-		div.appendChild($btn(Lng.reset[lang] + '…', Lng.resetCfg[lang], () => $popup(
-			'cfg-reset',
-			`<b>${ Lng.resetData[lang] }:</b><hr>` +
-			`<div class="de-list"><b>${ aib.dm }:</b>${
-				this._getList([Lng.panelBtn.cfg[lang], Lng.hidPostThr[lang], Lng.myPosts[lang]])
-			}</div><hr>` +
-			`<div class="de-list"><b>${ Lng.allDomains[lang] }:</b>${
-				this._getList([Lng.panelBtn.cfg[lang], Lng.panelBtn.fav[lang]])
-			}</div><hr>`
-		).appendChild($btn(Lng.clear[lang], '', e => {
-			const els = $Q('input[type="checkbox"]', e.target.parentNode);
-			for(let i = 1, len = els.length; i < len; ++i) {
-				if(!els[i].checked) {
-					continue;
-				}
-				switch(i) {
-				case 1:
-					locStorage.removeItem('de-posts');
-					locStorage.removeItem('de-threads');
-					break;
-				case 2: locStorage.removeItem('de-myposts'); break;
-				case 4: delStored('DESU_Favorites');
-				}
-			}
-			if(els[3].checked) {
-				delStored('DESU_Config');
-				delStored('DESU_keys');
-			} else if(els[0].checked) {
-				getStoredObj('DESU_Config').then(data => {
-					delete data[aib.dm];
-					setStored('DESU_Config', JSON.stringify(data));
-					$popup('cfg-reset', Lng.updating[lang], true);
-					deWindow.location.reload();
-				});
-				return;
-			}
-			$popup('cfg-reset', Lng.updating[lang], true);
-			deWindow.location.reload();
-		}))));
+				$popup('cfg-reset', Lng.updating[lang], true);
+				deWindow.location.reload();
+			})))
+		);
 	},
 
 	// Event handler for Setting window and its controls.
-	handleEvent(e) {
+	async handleEvent(e) {
 		const { type, target: el } = e;
-		const tag = el.tagName;
-		if(type === 'click' && tag === 'DIV' && el.classList.contains('de-cfg-tab')) {
+		const tag = el.tagName.toLowerCase();
+		const { classList } = el;
+		if(type === 'mouseover' && classList.contains('de-cfg-needreload') && !el.title) {
+			el.title = Lng.cfgNeedReload[lang];
+		}
+		if(type === 'click' && tag === 'div' && classList.contains('de-cfg-tab')) {
 			const info = el.getAttribute('info');
 			this._clickTab(info);
-			saveCfg('cfgTab', info);
+			await CfgSaver.save('cfgTab', info);
 		}
-		if(type === 'change' && tag === 'SELECT') {
+		if(type === 'change' && tag === 'select') {
 			const info = el.getAttribute('info');
-			saveCfg(info, el.selectedIndex);
+			await CfgSaver.save(info, el.selectedIndex);
 			this._updateDependant();
 			switch(info) {
 			case 'language':
 				lang = el.selectedIndex;
 				Panel.removeMain();
-				if(pr.form) {
-					pr.addMarkupPanel();
-					pr.setPlaceholders();
-					pr.updateLanguage();
-					aib.updateSubmitBtn(pr.subm);
-					if(pr.files) {
-						$each($Q('.de-file-img, .de-file-txt-input', pr.form),
+				if(postform.form) {
+					postform.addMarkupPanel();
+					postform.setPlaceholders();
+					aib.updateSubmitBtn(postform.subm);
+					if(postform.files) {
+						$Q('.de-file-img, .de-file-txt-input', postform.form).forEach(
 							el => (el.title = Lng.youCanDrag[lang]));
 					}
 				}
@@ -4546,35 +4746,35 @@ const CfgWindow = {
 						processImgInfoLinks(el, 0, Cfg.imgNames);
 					}
 				} else {
-					$each($Q('.de-img-name'), el => (el.textContent = el.getAttribute('de-img-name-old')));
+					$Q('.de-img-name').forEach(el => (el.textContent = el.getAttribute('de-img-name-old')));
 				}
 				updateCSS();
 				break;
 			case 'fileInputs':
-				pr.files.changeMode();
-				pr.setPlaceholders();
+				postform.files.changeMode();
+				postform.setPlaceholders();
 				updateCSS();
 				break;
 			case 'addPostForm':
-				pr.isBottom = Cfg.addPostForm === 1;
-				pr.setReply(false, !aib.t || Cfg.addPostForm > 1);
+				postform.isBottom = Cfg.addPostForm === 1;
+				postform.setReply(false, !aib.t || Cfg.addPostForm > 1);
 				break;
-			case 'addTextBtns': pr.addMarkupPanel();
+			case 'addTextBtns': postform.addMarkupPanel();
 				/* falls through */
 			case 'scriptStyle':
 			case 'panelCounter': this._updateCSS(); break;
 			case 'favThrOrder':
 				readFavorites().then(favObj => {
-					const body = $q('#de-win-fav > .de-win-body');
-					body.innerHTML = '';
-					showFavoritesWindow(body, favObj);
+					const winBody = $q('#de-win-fav > .de-win-body');
+					winBody.innerHTML = '';
+					showFavoritesWindow(winBody, favObj);
 				});
 			}
 			return;
 		}
-		if(type === 'click' && tag === 'INPUT' && el.type === 'checkbox') {
+		if(type === 'click' && tag === 'input' && el.type === 'checkbox') {
 			const info = el.getAttribute('info');
-			toggleCfg(info);
+			await toggleCfg(info);
 			this._updateDependant();
 			switch(info) {
 			case 'expandTrunc':
@@ -4586,11 +4786,12 @@ const CfgWindow = {
 			case 'strikeHidd':
 			case 'removeHidd':
 			case 'noBoardRule':
+			case 'favFolders':
 			case 'userCSS': updateCSS(); break;
-			case 'hideBySpell': Spells.toggle(); break;
+			case 'hideBySpell': await Spells.toggle(); break;
 			case 'sortSpells':
 				if(Cfg.sortSpells) {
-					Spells.toggle();
+					await Spells.toggle();
 				}
 				break;
 			case 'hideRefPsts':
@@ -4618,7 +4819,6 @@ const CfgWindow = {
 				}
 				break;
 			case 'markNewPosts': Post.clearMarks(); break;
-			case 'useDobrAPI': aib.JsonBuilder = Cfg.useDobrAPI ? DobrochanPostsBuilder : null; break;
 			case 'markMyPosts':
 			case 'markMyLinks':
 				if(!Cfg.markMyPosts && !Cfg.markMyLinks) {
@@ -4627,7 +4827,7 @@ const CfgWindow = {
 				}
 				updateCSS();
 				break;
-			case 'correctTime': DateTime.toggleSettings(el); break;
+			case 'correctTime': await DateTime.toggleSettings(el); break;
 			case 'imgInfoLink': {
 				const img = $q('.de-fullimg-wrap');
 				if(img) {
@@ -4640,7 +4840,7 @@ const CfgWindow = {
 				if(Cfg.imgSrcBtns) {
 					for(const { el } of DelForm) {
 						processImgInfoLinks(el, 1, 0);
-						$each($Q('.de-img-embed'),
+						$Q('.de-img-embed').forEach(
 							el => addImgButtons(el.parentNode.nextSibling.nextSibling));
 					}
 				} else {
@@ -4648,21 +4848,21 @@ const CfgWindow = {
 				}
 				break;
 			case 'addSageBtn':
-				PostForm.hideField($parent(pr.mail, 'LABEL') || pr.mail);
-				setTimeout(() => pr.toggleSage(), 0);
+				PostForm.hideField(postform.mail.closest('label') || postform.mail);
+				setTimeout(() => postform.toggleSage(), 0);
 				updateCSS();
 				break;
-			case 'altCaptcha': pr.cap.initCapPromise(); break;
+			case 'altCaptcha': postform.cap.initCapPromise(); break;
 			case 'txtBtnsLoc':
-				pr.addMarkupPanel();
+				postform.addMarkupPanel();
 				updateCSS();
 				break;
-			case 'userPassw': PostForm.setUserPassw(); break;
-			case 'userName': PostForm.setUserName(); break;
-			case 'noPassword': $toggle($qParent(pr.passw, aib.qFormTr)); break;
-			case 'noName': PostForm.hideField(pr.name); break;
-			case 'noSubj': PostForm.hideField(pr.subj); break;
-			case 'inftyScroll': toggleInfinityScroll(); break;
+			case 'userPassw': await PostForm.setUserPassw(); break;
+			case 'userName': await PostForm.setUserName(); break;
+			case 'noPassword': $toggle(postform.passw.closest(aib.qFormTr)); break;
+			case 'noName': PostForm.hideField(postform.name); break;
+			case 'noSubj': PostForm.hideField(postform.subj); break;
+			case 'inftyScroll': Pages.toggleInfinityScroll(); break;
 			case 'hotKeys':
 				if(Cfg.hotKeys) {
 					HotKeys.enableHotKeys();
@@ -4672,14 +4872,14 @@ const CfgWindow = {
 			}
 			return;
 		}
-		if(type === 'click' && tag === 'INPUT' && el.type === 'button') {
+		if(type === 'click' && tag === 'input' && el.type === 'button') {
 			switch(el.id) {
 			case 'de-cfg-button-pass':
 				$q('input[info="passwValue"]').value = Math.round(Math.random() * 1e12).toString(32);
-				PostForm.setUserPassw();
+				await PostForm.setUserPassw();
 				break;
 			case 'de-cfg-button-keys':
-				$pd(e);
+				e.preventDefault();
 				if($id('de-popup-edit-hotkeys')) {
 					return;
 				}
@@ -4687,18 +4887,15 @@ const CfgWindow = {
 					const temp = KeyEditListener.getEditMarkup(keys);
 					const el = $popup('edit-hotkeys', temp[1]);
 					const fn = new KeyEditListener(el, keys, temp[0]);
-					el.addEventListener('focus', fn, true);
-					el.addEventListener('blur', fn, true);
-					el.addEventListener('click', fn, true);
-					el.addEventListener('keydown', fn, true);
-					el.addEventListener('keyup', fn, true);
+					['focus', 'blur', 'click', 'keydown', 'keyup'].forEach(
+						e => el.addEventListener(e, fn, true));
 				});
 				break;
 			case 'de-cfg-button-updnow':
 				$popup('updavail', Lng.loading[lang], true);
 				getStoredObj('DESU_Config')
 					.then(data => checkForUpdates(true, data.lastUpd))
-					.then(html => $popup('updavail', html), emptyFn);
+					.then(html => $popup('updavail', html), Function.prototype);
 				break;
 			case 'de-cfg-button-donate': showDonateMsg(); break;
 			case 'de-cfg-button-debug': {
@@ -4707,8 +4904,9 @@ const CfgWindow = {
 				for(let i = 0, len = arr.length; i < len; ++i) {
 					perf[arr[i][0]] = arr[i][1];
 				}
-				$popup('cfg-debug', Lng.infoDebug[lang] + ':<textarea readonly class="de-editor"></textarea>'
-				).firstElementChild.value = JSON.stringify({
+				$popup('cfg-debug',
+					Lng.infoDebug[lang] + ':<textarea readonly class="de-editor"></textarea>'
+				).lastChild.value = JSON.stringify({
 					version  : version + '.' + commit,
 					location : String(deWindow.location),
 					nav,
@@ -4728,73 +4926,94 @@ const CfgWindow = {
 			}
 			}
 		}
-		if(type === 'keyup' && tag === 'INPUT' && el.type === 'text') {
+		if(type === 'keyup' && tag === 'input' && el.type === 'text') {
 			const info = el.getAttribute('info');
 			switch(info) {
 			case 'postBtnsBack': {
-				const isCheck = checkCSSColor(el.value);
-				el.classList.toggle('de-input-error', !isCheck);
-				if(isCheck) {
-					saveCfg('postBtnsBack', el.value);
+				let isValidColor = false;
+				const color = el.value;
+				if(color === 'transparent') {
+					isValidColor = true;
+				} else if(color && color !== 'inherit' && color !== 'currentColor') {
+					const image = doc.createElement('img');
+					image.style.color = 'rgb(0, 0, 0)';
+					image.style.color = color;
+					if(image.style.color !== 'rgb(0, 0, 0)') {
+						isValidColor = true;
+					}
+					image.style.color = 'rgb(255, 255, 255)';
+					image.style.color = color;
+					isValidColor = image.style.color !== 'rgb(255, 255, 255)';
+				}
+				classList.toggle('de-input-error', !isValidColor);
+				if(isValidColor) {
+					await CfgSaver.save('postBtnsBack', el.value);
 					updateCSS();
 				}
 				break;
 			}
 			case 'limitPostMsg':
-				saveCfg('limitPostMsg', Math.max(+el.value || 0, 50));
+				await CfgSaver.save('limitPostMsg', Math.max(+el.value || 0, 50));
 				updateCSS();
 				break;
-			case 'minImgSize': saveCfg('minImgSize', Math.max(+el.value, 1)); break;
-			case 'zoomFactor': saveCfg('zoomFactor', Math.min(Math.max(+el.value, 1), 100)); break;
+			case 'minImgSize':
+				await CfgSaver.save('minImgSize', Math.min(Math.max(+el.value, 1)), Cfg.maxImgSize);
+				break;
+			case 'maxImgSize': await CfgSaver.save('maxImgSize', Math.max(+el.value, Cfg.minImgSize)); break;
+			case 'zoomFactor':
+				await CfgSaver.save('zoomFactor', Math.min(Math.max(+el.value, 1), 100));
+				break;
 			case 'webmVolume': {
 				const val = Math.min(+el.value || 0, 100);
-				saveCfg('webmVolume', val);
+				await CfgSaver.save('webmVolume', val);
 				sendStorageEvent('__de-webmvolume', val);
 				break;
 			}
-			case 'minWebmWidth': saveCfg('minWebmWidth', Math.max(+el.value, Cfg.minImgSize)); break;
+			case 'minWebmWidth':
+				await CfgSaver.save('minWebmWidth', Math.max(+el.value, Cfg.minImgSize));
+				break;
 			case 'maskVisib':
-				saveCfg('maskVisib', Math.min(+el.value || 0, 100));
+				await CfgSaver.save('maskVisib', Math.min(+el.value || 0, 100));
 				updateCSS();
 				break;
-			case 'linksOver': saveCfg('linksOver', +el.value | 0); break;
-			case 'linksOut': saveCfg('linksOut', +el.value | 0); break;
-			case 'ytApiKey': saveCfg('ytApiKey', el.value.trim()); break;
-			case 'passwValue': PostForm.setUserPassw(); break;
-			case 'nameValue': PostForm.setUserName(); break;
-			default: saveCfg(info, el.value);
+			case 'linksOver': await CfgSaver.save('linksOver', +el.value | 0); break;
+			case 'linksOut': await CfgSaver.save('linksOut', +el.value | 0); break;
+			case 'ytApiKey': await CfgSaver.save('ytApiKey', el.value.trim()); break;
+			case 'passwValue': await PostForm.setUserPassw(); break;
+			case 'nameValue': await PostForm.setUserName(); break;
+			default: await CfgSaver.save(info, el.value);
 			}
 			return;
 		}
-		if(tag === 'A') {
+		if(tag === 'a') {
 			if(el.id === 'de-btn-spell-add') {
 				switch(e.type) {
-				case 'click': $pd(e); break;
-				case 'mouseover': el.odelay = setTimeout(() => addMenu(el), Cfg.linksOver); break;
-				case 'mouseout': clearTimeout(el.odelay);
+				case 'click': e.preventDefault(); break;
+				case 'mouseover': el._menuTO = setTimeout(() => Menu.addMenu(el), Cfg.linksOver); break;
+				case 'mouseout': clearTimeout(el._menuTO);
 				}
 				return;
 			}
 			if(type === 'click') {
 				switch(el.id) {
 				case 'de-btn-spell-apply':
-					$pd(e);
-					saveCfg('hideBySpell', 1);
+					e.preventDefault();
+					await CfgSaver.save('hideBySpell', 1);
 					$q('input[info="hideBySpell"]').checked = true;
-					Spells.toggle();
+					await Spells.toggle();
 					break;
 				case 'de-btn-spell-clear':
-					$pd(e);
+					e.preventDefault();
 					if(!confirm(Lng.clear[lang] + '?')) {
 						return;
 					}
 					$id('de-spell-txt').value = '';
-					Spells.toggle();
+					await Spells.toggle();
 				}
 			}
 			return;
 		}
-		if(tag === 'TEXTAREA' && el.id === 'de-spell-txt' && (type === 'keydown' || type === 'scroll')) {
+		if(tag === 'textarea' && el.id === 'de-spell-txt' && (type === 'keydown' || type === 'scroll')) {
 			this._updateRowMeter(el);
 		}
 	},
@@ -4827,10 +5046,10 @@ const CfgWindow = {
 			}
 			if(id === 'common') {
 				// XXX: remove and make insertion in this._getCfgCommon()
-				$after($q('input[info="userCSS"]').parentNode, getEditButton(
+				$q('input[info="userCSS"]').parentNode.after(getEditButton(
 					'css',
-					fn => fn(Cfg.userCSSTxt, false, function() {
-						saveCfg('userCSSTxt', this.value);
+					fn => fn(Cfg.userCSSTxt, false, async inputEl => {
+						await CfgSaver.save('userCSSTxt', inputEl.value);
 						updateCSS();
 						toggleWindow('cfg', true);
 					}),
@@ -4849,7 +5068,7 @@ const CfgWindow = {
 		for(let i = 0, len = els.length; i < len; ++i) {
 			const el = els[i];
 			const info = el.getAttribute('info');
-			if(el.tagName === 'INPUT') {
+			if(el.tagName.toLowerCase() === 'input') {
 				if(el.type === 'checkbox') {
 					el.checked = !!Cfg[info];
 				} else {
@@ -4892,11 +5111,10 @@ const CfgWindow = {
 					${ this._getBox('updCount') }<br>
 					${ this._getBox('favIcoBlink') }<br>
 					${ 'Notification' in deWindow ? this._getBox('desktNotif') + '<br>' : '' }
-					${ this._getBox('markNewPosts') }<br>
-					${ aib.dobrochan ? this._getBox('useDobrAPI') : '' }
+					${ this._getBox('markNewPosts') }
 				</div>` }
 			${ this._getBox('markMyPosts') }<br>
-			${ !localData ? `${ this._getBox('expandTrunc') }<br>` : '' }
+			${ !localData ? `${ this._getBox('expandTrunc', true) }<br>` : '' }
 			${ this._getBox('widePosts') }<br>
 			${ this._getInp('limitPostMsg', true, 5) }<br>
 			${ this._getSel('showHideBtn') }<br>
@@ -4906,7 +5124,7 @@ const CfgWindow = {
 			${ !localData ? this._getSel('thrBtns') : '' }<br>
 			${ this._getSel('noSpoilers') }<br>
 			${ this._getBox('noPostNames') }<br>
-			${ this._getBox('correctTime') }
+			${ this._getBox('correctTime', true) }
 			${ this._getInp('timeOffset', true, 1) }
 			<a class="de-abtn" target="_blank" href="${ gitWiki }Settings-time-` +
 				`${ lang ? 'en' : 'ru' }">[?]</a>
@@ -4926,18 +5144,18 @@ const CfgWindow = {
 				${ this._getBox('imgInfoLink') }<br>
 				${ this._getSel('resizeImgs') }<br>
 				${ Post.sizing.dPxRatio > 1 ? this._getBox('resizeDPI') + '<br>' : '' }
-				${ this._getInp('minImgSize') }<br>
-				${ this._getInp('zoomFactor') }<br>
+				${ this._getInp('minImgSize') }${ this._getInp('maxImgSize') }<br>
+				${ !nav.isMobile ? this._getInp('zoomFactor') : '' }<br>
 				${ this._getBox('webmControl') }<br>
 				${ this._getBox('webmTitles') }<br>
 				${ this._getInp('webmVolume') }<br>
 				${ this._getInp('minWebmWidth') }
 			</div>
-			${ nav.isPresto ? '' : this._getSel('preLoadImgs') + '<br>' }
+			${ nav.isPresto ? '' : this._getSel('preLoadImgs', true) + '<br>' }
 			${ nav.isPresto || aib._4chan ? '' : `<div class="de-depend">
-				${ this._getBox('findImgFile') }
+				${ this._getBox('findImgFile', true) }
 			</div>` }
-			${ this._getSel('openImgs') }<br>
+			${ this._getSel('openImgs', true) }<br>
 			${ this._getBox('imgSrcBtns') }<br>
 			${ this._getSel('imgNames') }<br>
 			${ this._getInp('maskVisib') }
@@ -4947,7 +5165,7 @@ const CfgWindow = {
 	// "Links" tab
 	_getCfgLinks() {
 		return `<div id="de-cfg-links" class="de-cfg-unvis">
-			${ this._getBox('linksNavig') }
+			${ this._getBox('linksNavig', true) }
 			<div class="de-depend">
 				${ this._getInp('linksOver') }
 				${ this._getInp('linksOut') }<br>
@@ -4957,22 +5175,22 @@ const CfgWindow = {
 				${ this._getBox('noNavigHidd') }
 			</div>
 			${ this._getBox('markMyLinks') }<br>
-			${ this._getBox('crossLinks') }<br>
-			${ this._getBox('decodeLinks') }<br>
+			${ this._getBox('crossLinks', true) }<br>
+			${ this._getBox('decodeLinks', true) }<br>
 			${ this._getBox('insertNum') }<br>
 			${ !localData ? `${ this._getBox('addOPLink') }<br>
-				${ this._getBox('addImgs') }<br>` : '' }
+				${ this._getBox('addImgs', true) }<br>` : '' }
 			<div>
-				${ this._getBox('addMP3') }
-				${ aib.prot === 'http:' ? this._getBox('addVocaroo') : '' }
+				${ this._getBox('addMP3', true) }
+				${ this._getBox('addVocaroo', true) }
 			</div>
-			${ this._getSel('embedYTube') }
+			${ this._getSel('embedYTube', true) }
 			<div class="de-depend">
 				${ this._getInp('YTubeWidth', false) }\u00D7
 				${ this._getInp('YTubeHeigh', false) }(px)<br>
-				${ this._getBox('YTubeTitles') }<br>
+				${ this._getBox('YTubeTitles', true) }<br>
 				${ this._getInp('ytApiKey', true, 25) }<br>
-				${ this._getBox('addVimeo') }
+				${ this._getBox('addVimeo', true) }
 			</div>
 		</div>`;
 	},
@@ -4980,36 +5198,36 @@ const CfgWindow = {
 	// "Form" tab
 	_getCfgForm() {
 		return `<div id="de-cfg-form" class="de-cfg-unvis">
-			${ this._getBox('ajaxPosting') }<br>
-			${ pr.form ? `<div class="de-depend">
+			${ this._getBox('ajaxPosting', true) }<br>
+			${ postform.form ? `<div class="de-depend">
 				${ this._getBox('postSameImg') }<br>
 				${ this._getBox('removeEXIF') }<br>
 				${ this._getSel('removeFName') }<br>
 				${ this._getBox('sendErrNotif') }<br>
 				${ this._getBox('scrAfterRep') }<br>
-				${ pr.files && !nav.isPresto ? this._getSel('fileInputs') : '' }
+				${ postform.files && !nav.isPresto ? this._getSel('fileInputs') : '' }
 			</div>` : '' }
-			${ pr.form ? this._getSel('addPostForm') + '<br>' : '' }
-			${ pr.txta ? this._getBox('spacedQuote') + '<br>' : '' }
+			${ postform.form ? this._getSel('addPostForm') + '<br>' : '' }
+			${ postform.txta ? this._getBox('spacedQuote') + '<br>' : '' }
 			${ this._getBox('favOnReply') }<br>
-			${ pr.subj ? this._getBox('warnSubjTrip') + '<br>' : '' }
-			${ pr.mail ? `${ this._getBox('addSageBtn') }
+			${ postform.subj ? this._getBox('warnSubjTrip') + '<br>' : '' }
+			${ postform.mail ? `${ this._getBox('addSageBtn') }
 				${ this._getBox('saveSage') }<br>` : '' }
-			${ pr.cap ? `${ aib.hasAltCaptcha ? `${ this._getBox('altCaptcha') }<br>` : '' }
-				${ this._getInp('capUpdTime') }<br>
+			${ postform.cap ? `${ aib.hasAltCaptcha ? `${ this._getBox('altCaptcha') }<br>` : '' }
+				${ !aib.makaba ? `${ this._getInp('capUpdTime') }<br>` : '' }
 				${ this._getSel('captchaLang') }<br>` : '' }
-			${ pr.txta ? `${ this._getSel('addTextBtns') }
+			${ postform.txta ? `${ this._getSel('addTextBtns') }
 				${ !aib._4chan ? this._getBox('txtBtnsLoc') : '' }<br>` : '' }
-			${ pr.passw ? `${ this._getInp('passwValue', false, 9) }
+			${ postform.passw ? `${ this._getInp('passwValue', false, 9) }
 				${ this._getBox('userPassw') }<input type="button"` +
 				` id="de-cfg-button-pass" class="de-cfg-button" value="${ Lng.change[lang] }"><br>` : '' }
-			${ pr.name ? `${ this._getInp('nameValue', false, 9) }
+			${ postform.name ? `${ this._getInp('nameValue', false, 9) }
 				${ this._getBox('userName') }<br>` : '' }
-			${ pr.rules || pr.passw || pr.name ? Lng.hide[lang] +
-				(pr.rules ? this._getBox('noBoardRule') : '') +
-				(pr.passw ? this._getBox('noPassword') : '') +
-				(pr.name ? this._getBox('noName') : '') +
-				(pr.subj ? this._getBox('noSubj') : '') : '' }
+			${ postform.rules || postform.passw || postform.name ? Lng.hide[lang] +
+				(postform.rules ? this._getBox('noBoardRule') : '') +
+				(postform.passw ? this._getBox('noPassword') : '') +
+				(postform.name ? this._getBox('noName') : '') +
+				(postform.subj ? this._getBox('noSubj') : '') : '' }
 		</div>`;
 	},
 
@@ -5019,16 +5237,17 @@ const CfgWindow = {
 			${ this._getSel('scriptStyle') }<br>
 			${ this._getBox('userCSS') }
 			<a href="${ gitWiki }css-tricks" class="de-abtn" target="_blank">[?]</a><br>
-			${ 'animation' in docBody.style ? this._getBox('animation') + '<br>' : '' }
+			${ 'animation' in doc.body.style ? this._getBox('animation') + '<br>' : '' }
 			${ this._getBox('hotKeys') }
 			<input type="button" id="de-cfg-button-keys" class="de-cfg-button" value="${ Lng.edit[lang] }">
 			<div class="de-depend">${ this._getInp('loadPages') }</div>
 			${ this._getSel('panelCounter') }<br>
-			${ this._getBox('rePageTitle') }<br>
+			${ this._getBox('rePageTitle', true) }<br>
 			${ !localData ? `${ this._getBox('inftyScroll') }<br>
-				${ this._getBox('hideReplies') }<br>
+				${ this._getBox('hideReplies', true) }<br>
 				${ this._getBox('scrollToTop') }<br>` : '' }
 			${ this._getBox('saveScroll') }<br>
+			${ this._getBox('favFolders') }<br>
 			${ this._getSel('favThrOrder') }<br>
 			${ this._getBox('favWinOn') }<br>
 			${ this._getBox('closePopups') }
@@ -5047,7 +5266,7 @@ const CfgWindow = {
 			<div style="padding-bottom: 10px;">
 				<a href="${ gitWiki }versions" target="_blank">v${ version }.${ commit }` +
 					`${ nav.isESNext ? '.es6' : '' }</a> |
-				<a href="https://dollchan.net/" target="_blank">Homepage</a> |
+				<a href="https://dollchan.net/extension/" target="_blank">Homepage</a> |
 				<a href="${ gitWiki }${ lang === 1 ? 'home-en/' : '' }" target="_blank">Github</a> |
 				<input type="button" id="de-cfg-button-debug" value="` +
 					`${ Lng.debug[lang] }" title="${ Lng.infoDebug[lang] }">
@@ -5068,7 +5287,7 @@ const CfgWindow = {
 	},
 
 	// Creates a label with checkbox for option switching
-	_getBox: id => `<label class="de-cfg-label">
+	_getBox: (id, needReload) => `<label class="de-cfg-label${ needReload ? ' de-cfg-needreload' : '' }">
 		<input class="de-cfg-chkbox" info="${ id }" type="checkbox"> ${ Lng.cfg[id][lang] }</label>`,
 	// Creates a table for Info tab
 	_getInfoTable: (data, needMs) => data.map(val => `<div class="de-info-row">
@@ -5077,7 +5296,7 @@ const CfgWindow = {
 	// Creates a text input for text option values
 	_getInp(id, addText = true, size = 2) {
 		const el = doc.createElement('div');
-		el.appendChild(doc.createTextNode(Cfg[id])); // Escape HTML
+		el.append(Cfg[id]); // Escape HTML
 		return `<label class="de-cfg-label">
 		<input class="de-cfg-inptxt" info="${ id }" type="text" size="${ size }" value="${
 		el.innerHTML }">${ addText && Lng.cfg[id] ? Lng.cfg[id][lang] : '' }</label>`;
@@ -5085,9 +5304,9 @@ const CfgWindow = {
 	// Creates a menu with a list of checkboxes. Uses for popup window.
 	_getList : arr => arrTags(arr, '<label class="de-block"><input type="checkbox"> ', '</label>'),
 	// Creates a select for multiple option values
-	_getSel  : id => `<label class="de-cfg-label"><select class="de-cfg-select" info="${ id }">${
-		Lng.cfg[id].sel[lang].map((val, i) => `<option value="${ i }">${ val }</option>`).join('')
-	}</select> ${ Lng.cfg[id].txt[lang] } </label>`,
+	_getSel  : (id, needReload) => `<label class="de-cfg-label${ needReload ? ' de-cfg-needreload' : '' }">
+		<select class="de-cfg-select" info="${ id }">${ Lng.cfg[id].sel[lang].map((val, i) =>
+		`<option value="${ i }">${ val }</option>`).join('') }</select> ${ Lng.cfg[id].txt[lang] }</label>`,
 	// Creates a tab for tab bar
 	_getTab: id => `<div class="${ aib.cReply } de-cfg-tab" info="${ id }">${ Lng.cfgTab[id][lang] }</div>`,
 	// Switching the dependent inputs according to their parents
@@ -5114,9 +5333,9 @@ const CfgWindow = {
 		fn(Cfg.postBtnsCSS === 2, ['input[info="postBtnsBack"]']);
 		fn(Cfg.expandImgs, [
 			'input[info="imgNavBtns"]', 'input[info="imgInfoLink"]', 'input[info="resizeDPI"]',
-			'select[info="resizeImgs"]', 'input[info="minImgSize"]', 'input[info="zoomFactor"]',
-			'input[info="webmControl"]', 'input[info="webmTitles"]', 'input[info="webmVolume"]',
-			'input[info="minWebmWidth"]'
+			'select[info="resizeImgs"]', 'input[info="minImgSize"]', 'input[info="maxImgSize"]',
+			'input[info="zoomFactor"]', 'input[info="webmControl"]', 'input[info="webmTitles"]',
+			'input[info="webmVolume"]', 'input[info="minWebmWidth"]'
 		]);
 		fn(Cfg.preLoadImgs, ['input[info="findImgFile"]']);
 		fn(Cfg.linksNavig, [
@@ -5173,20 +5392,19 @@ function closePopup(data) {
 
 function $popup(id, txt, isWait = false) {
 	let el = $id('de-popup-' + id);
-	const buttonHTML = isWait ? '<svg class="de-wait"><use xlink:href="#de-symbol-wait"/></svg>' : '\u2716 ';
+	const html = `<span class="de-popup-btn">${
+		isWait ? '<svg class="de-wait"><use xlink:href="#de-symbol-wait"/></svg>' : '\u2716 '
+	}</span>${ txt.trim() }`;
 	if(el) {
-		$q('div', el).innerHTML = txt.trim();
-		$q('span', el).innerHTML = buttonHTML;
+		el.innerHTML = html;
 		if(!isWait && Cfg.animation) {
 			$animate(el, 'de-blink');
 		}
 	} else {
-		el = $bEnd($id('de-wrapper-popup'), `<div class="${ aib.cReply } de-popup" id="de-popup-${ id }">
-			<span class="de-popup-btn">${ buttonHTML }</span>
-			<div class="de-popup-msg">${ txt.trim() }</div>
-		</div>`);
+		el = $bEnd($id('de-wrapper-popup'),
+			`<div class="${ aib.cReply } de-popup" id="de-popup-${ id }">${ html }</div>`);
 		el.onclick = e => {
-			let el = fixEventEl(e.target);
+			let el = nav.fixEventEl(e.target);
 			el = el.tagName.toLowerCase() === 'svg' ? el.parentNode : el;
 			if(el.className === 'de-popup-btn') {
 				closePopup(el.parentNode);
@@ -5199,22 +5417,22 @@ function $popup(id, txt, isWait = false) {
 	if(Cfg.closePopups && !isWait && !id.includes('edit') && !id.includes('cfg')) {
 		el.closeTimeout = setTimeout(closePopup, 6e3, el);
 	}
-	return el.lastElementChild;
+	return el;
 }
 
 // Adds button that calls a popup with the text editor. Useful to edit settings.
 function getEditButton(name, getDataFn, className = 'de-button') {
-	return $btn(Lng.edit[lang], Lng.editInTxt[lang], () => getDataFn((val, isJSON, saveFn) => {
+	return $button(Lng.edit[lang], Lng.editInTxt[lang], () => getDataFn((val, isJSON, saveFn) => {
 		// Create popup window with textarea.
 		const el = $popup('edit-' + name,
 			`<b>${ Lng.editor[name][lang] }</b><textarea class="de-editor"></textarea>`);
-		const ta = el.lastChild;
-		ta.value = isJSON ? JSON.stringify(val, null, '\t') : val;
+		const inputEl = el.lastChild;
+		inputEl.value = isJSON ? JSON.stringify(val, null, '\t') : val;
 		// "Save" button. If there a JSON data, parses and saves on success.
-		el.appendChild($btn(Lng.save[lang], Lng.saveChanges[lang], !isJSON ? saveFn.bind(ta) : () => {
+		el.append($button(Lng.save[lang], Lng.saveChanges[lang], !isJSON ? () => saveFn(inputEl) : () => {
 			let data;
 			try {
-				data = JSON.parse(ta.value.trim().replace(/[\n\r\t]/g, '') || '{}');
+				data = JSON.parse(inputEl.value.trim().replace(/[\n\r\t]/g, '') || '{}');
 			} catch(err) {}
 			if(!data) {
 				$popup('err-invaliddata', Lng.invalidData[lang]);
@@ -5233,25 +5451,64 @@ class Menu {
 		this.onover = null;
 		this.onremove = null;
 		this._closeTO = 0;
-		const el = $bEnd(docBody, `<div class="${ aib.cReply } de-menu" style="position: ${
+		const el = $bEnd(doc.body, `<div class="${ aib.cReply } de-menu" style="position: ${
 			isFixed ? 'fixed' : 'absolute' }; left: 0px; top: 0px; visibility: hidden;">${ html }</div>`);
 		const cr = parentEl.getBoundingClientRect();
 		const { style, offsetWidth: w, offsetHeight: h } = el;
+		this.el = el;
 		style.left = (isFixed ? 0 : deWindow.pageXOffset) +
-			(cr.left + w < Post.sizing.wWidth ? cr.left : cr.right - w) + 'px';
+			(cr.left + w < Post.sizing.wWidth || w > .8 * Post.sizing.wWidth ? cr.left : cr.right - w) + 'px';
 		style.top = (isFixed ? 0 : deWindow.pageYOffset) +
 			(cr.bottom + h < Post.sizing.wHeight ? cr.bottom - 0.5 : cr.top - h + 0.5) + 'px';
 		style.removeProperty('visibility');
 		this._clickFn = clickFn;
-		this._el = el;
 		this.parentEl = parentEl;
-		el.addEventListener('mouseover', this, true);
-		el.addEventListener('mouseout', this, true);
+		['mouseover', 'mouseout'].forEach(e => el.addEventListener(e, this, true));
 		el.addEventListener('click', this);
 		parentEl.addEventListener('mouseout', this);
 	}
+	static addMenu(el) {
+		const tags = a => arrTags(a, '<span class="de-menu-item">', '</span>');
+		switch(el.id) {
+		case 'de-btn-spell-add':
+			return new Menu(el, `<div style="display: inline-block; border-right: 1px solid grey;">${
+				tags('#words,#exp,#exph,#imgn,#ihash,#subj,#name,#trip,#img,#sage'.split(','))
+			}</div><div style="display: inline-block;">${
+				tags('#op,#tlen,#all,#video,#vauthor,#num,#wipe,#rep,#outrep,<br>'.split(',')) }</div>`,
+			({ textContent: s }) => insertText($id('de-spell-txt'), s +
+				(!aib.t || s === '#op' || s === '#rep' || s === '#outrep' ? '' : `[${ aib.b },${ aib.t }]`) +
+				(Spells.needArg[Spells.names.indexOf(s.substr(1))] ? '(' : '')));
+		case 'de-panel-refresh':
+			return new Menu(el, tags(Lng.selAjaxPages[lang]),
+				el => Pages.loadPages(Array.prototype.indexOf.call(el.parentNode.children, el) + 1));
+		case 'de-panel-savethr':
+			return new Menu(el, tags($q(aib.qPostImg, DelForm.first.el) ?
+				Lng.selSaveThr[lang] : [Lng.selSaveThr[lang][0]]),
+			el => {
+				if($id('de-popup-savethr')) {
+					return;
+				}
+				const imgOnly = !!Array.prototype.indexOf.call(el.parentNode.children, el);
+				if(ContentLoader.isLoading) {
+					$popup('savethr', Lng.loading[lang], true);
+					ContentLoader.afterFn = () => ContentLoader.downloadThread(imgOnly);
+					ContentLoader.popupId = 'savethr';
+				} else {
+					ContentLoader.downloadThread(imgOnly);
+				}
+			});
+		case 'de-panel-audio-off':
+			return new Menu(el, tags(Lng.selAudioNotif[lang]), el => {
+				updater.enableUpdater();
+				updater.toggleAudio(
+					[3e4, 6e4, 12e4, 3e5][Array.prototype.indexOf.call(el.parentNode.children, el)]);
+				$id('de-panel-audio-off').id = 'de-panel-audio-on';
+			});
+		}
+	}
 	static getMenuImg(data, isDlOnly = false) {
-		let p, dlLinks = '';
+		let p;
+		let dlLinks = '';
 		if(typeof data === 'string') {
 			p = encodeURIComponent(data) + '" target="_blank">' + Lng.frameSearch[lang];
 		} else {
@@ -5271,8 +5528,10 @@ class Menu {
 				if(name.length > 20) {
 					nameShort = name.substr(0, 20 - ext.length) + '\u2026' + ext;
 				}
+				const info = aib.domain !== href.match(/^(?:(?:blob:)?https?:\/\/)([^/]+)/)[1] ?
+					' info="img-load"' : '';
 				return `<a class="de-menu-item" href="${ href }" download="${ name }" title="${
-					title }" target="_blank">${ Lng.saveAs[lang] } &quot;${ nameShort }&quot;</a>`;
+					title }"${ info } target="_blank">${ Lng.saveAs[lang] } &quot;${ nameShort }&quot;</a>`;
 			};
 			const name = decodeURIComponent(getFileName(origSrc));
 			const isFullImg = link.classList.contains('de-fullimg-link');
@@ -5282,7 +5541,7 @@ class Menu {
 				dlLinks += getDlLnk(href, realName, Lng.origName[lang], false);
 			}
 			let webmTitle;
-			if(isFullImg && (webmTitle = link.nextElementSibling) && (webmTitle = webmTitle.textContent)) {
+			if(isFullImg && (webmTitle = $q('.de-webm-title', link.parentNode)?.textContent)) {
 				dlLinks += getDlLnk(href, webmTitle, Lng.metaName[lang], true);
 			}
 			dlLinks += getDlLnk(href, name, Lng.boardName[lang], false);
@@ -5292,7 +5551,7 @@ class Menu {
 				.replace('kohlchanvwpfx6hthoti5fvqsjxgcwm3tmddvpduph5fqntv5affzfqd.onion', 'kohlchan.net');
 		}
 		return dlLinks + (isDlOnly ? '' : arrTags([
-			`de-src-google" href="https://www.google.com/searchbyimage?image_url=${ p }Google`,
+			`de-src-google" href="https://lens.google.com/uploadbyurl?url=${ p }Google`,
 			`de-src-yandex" href="https://yandex.com/images/search?rpt=imageview&url=${ p }Yandex`,
 			`de-src-tineye" href="https://tineye.com/search/?url=${ p }TinEye`,
 			`de-src-saucenao" href="https://saucenao.com/search.php?url=${ p }SauceNAO`,
@@ -5306,7 +5565,7 @@ class Menu {
 		case 'click':
 			if(e.target.classList.contains('de-menu-item')) {
 				this.removeMenu();
-				this._clickFn(e.target);
+				this._clickFn(e.target, e);
 				if(!Cfg.expandPanel && !$q('.de-win-active')) {
 					$hide($id('de-panel-buttons'));
 				}
@@ -5316,75 +5575,28 @@ class Menu {
 			/* falls through */
 		case 'mouseout': {
 			clearTimeout(this._closeTO);
-			let rt = fixEventEl(e.relatedTarget);
-			rt = rt && rt.farthestViewportElement || rt;
-			if(!rt || (rt !== this._el && !this._el.contains(rt))) {
+			const targetEl = nav.fixEventEl(e.relatedTarget);
+			if(!$contains(this.el, targetEl)) {
 				if(isOverEvent) {
-					if(this.onover) {
-						this.onover();
-					}
-				} else if(!rt || (rt !== this.parentEl && !this.parentEl.contains(rt))) {
+					this.onover?.();
+				} else if(!$contains(this.parentEl, targetEl)) {
 					this._closeTO = setTimeout(() => this.removeMenu(), 75);
-					if(this.onout) {
-						this.onout();
-					}
+					this.onout?.();
 				}
 			}
 		}
 		}
 	}
 	removeMenu() {
-		if(!this._el) {
+		if(!this.el) {
 			return;
 		}
-		if(this.onremove) {
-			this.onremove();
-		}
-		this._el.removeEventListener('mouseover', this, true);
-		this._el.removeEventListener('mouseout', this, true);
+		this.onremove?.();
+		['mouseover', 'mouseout'].forEach(e => this.el.removeEventListener(e, this, true));
 		this.parentEl.removeEventListener('mouseout', this);
-		this._el.removeEventListener('click', this);
-		this._el.remove();
-		this._el = null;
-	}
-}
-
-function addMenu(el) {
-	const fn = a => arrTags(a, '<span class="de-menu-item">', '</span>');
-	switch(el.id) {
-	case 'de-btn-spell-add':
-		return new Menu(el, `<div style="display: inline-block; border-right: 1px solid grey;">${
-			fn('#words,#exp,#exph,#imgn,#ihash,#subj,#name,#trip,#img,#sage'.split(','))
-		}</div><div style="display: inline-block;">${
-			fn('#op,#tlen,#all,#video,#vauthor,#num,#wipe,#rep,#outrep,<br>'.split(',')) }</div>`,
-		({ textContent: s }) => insertText($id('de-spell-txt'), s +
-			(!aib.t || s === '#op' || s === '#rep' || s === '#outrep' ? '' : `[${ aib.b },${ aib.t }]`) +
-			(Spells.needArg[Spells.names.indexOf(s.substr(1))] ? '(' : '')));
-	case 'de-panel-refresh':
-		return new Menu(el, fn(Lng.selAjaxPages[lang]),
-			el => Pages.loadPages(aProto.indexOf.call(el.parentNode.children, el) + 1));
-	case 'de-panel-savethr':
-		return new Menu(el, fn($q(aib.qPostImg, DelForm.first.el) ?
-			Lng.selSaveThr[lang] : [Lng.selSaveThr[lang][0]]),
-		el => {
-			if($id('de-popup-savethr')) {
-				return;
-			}
-			const imgOnly = !!aProto.indexOf.call(el.parentNode.children, el);
-			if(ContentLoader.isLoading) {
-				$popup('savethr', Lng.loading[lang], true);
-				ContentLoader.afterFn = () => ContentLoader.downloadThread(imgOnly);
-				ContentLoader.popupId = 'savethr';
-			} else {
-				ContentLoader.downloadThread(imgOnly);
-			}
-		});
-	case 'de-panel-audio-off':
-		return new Menu(el, fn(Lng.selAudioNotif[lang]), el => {
-			updater.enableUpdater();
-			updater.toggleAudio([3e4, 6e4, 12e4, 3e5][aProto.indexOf.call(el.parentNode.children, el)]);
-			$id('de-panel-audio-off').id = 'de-panel-audio-on';
-		});
+		this.el.removeEventListener('click', this);
+		this.el.remove();
+		this.el = null;
 	}
 }
 
@@ -5407,9 +5619,7 @@ const HotKeys = {
 	disableHotKeys() {
 		if(this.enabled) {
 			this.enabled = false;
-			if(this.cPost) {
-				this.cPost.unselect();
-			}
+			this.cPost?.unselect();
 			this.clearCPost();
 			this.gKeys = this.ntKeys = this.tKeys = null;
 			doc.removeEventListener('keydown', this, true);
@@ -5463,13 +5673,13 @@ const HotKeys = {
 		let idx;
 		const isThr = aib.t;
 		const el = e.target;
-		const tag = el.tagName;
+		const tag = el.tagName.toLowerCase();
 		const kc = e.keyCode |
 			(e.ctrlKey ? 0x1000 : 0) |
 			(e.shiftKey ? 0x2000 : 0) |
 			(e.altKey ? 0x4000 : 0) |
-			(tag === 'TEXTAREA' ||
-				tag === 'INPUT' && (el.type === 'text' || el.type === 'password') ? 0x8000 : 0);
+			(tag === 'textarea' ||
+				tag === 'input' && (el.type === 'text' || el.type === 'password') ? 0x8000 : 0);
 		if(kc === 0x74 || kc === 0x8074) { // F5
 			if(isThr || $id('de-popup-load-pages')) {
 				return;
@@ -5496,10 +5706,10 @@ const HotKeys = {
 			const globIdx = this.gKeys.indexOf(kc);
 			switch(globIdx) {
 			case 2: // Quick reply
-				if(pr.form) {
+				if(postform.form) {
 					post = this.cPost || this._getFirstVisPost(false, true) || Thread.first.op;
 					this.cPost = post;
-					pr.showQuickReply(post, post.num, true, false);
+					postform.showQuickReply(post, post.num, true, false);
 					post.select();
 				}
 				break;
@@ -5518,10 +5728,10 @@ const HotKeys = {
 				}
 				break;
 			case 5: // Send post (txt)
-				if(el !== pr.txta && el !== pr.cap.textEl) {
+				if(el !== postform.txta && el !== postform.cap.textEl) {
 					return;
 				}
-				pr.subm.click();
+				postform.subm.click();
 				break;
 			case 6: // Open/close "Favorites"
 				toggleWindow('fav', false);
@@ -5533,8 +5743,7 @@ const HotKeys = {
 				$toggle($id('de-panel-buttons'));
 				break;
 			case 9: // Mask/unmask images
-				toggleCfg('maskImgs');
-				updateCSS();
+				toggleCfg('maskImgs').then(() => updateCSS());
 				break;
 			case 10: // Open/close "Settings"
 				toggleWindow('cfg', false);
@@ -5546,31 +5755,31 @@ const HotKeys = {
 				}
 				break;
 			case 12: // Bold text (txt)
-				if(el !== pr.txta) {
+				if(el !== postform.txta) {
 					return;
 				}
 				$id('de-btn-bold').click();
 				break;
 			case 13: // Italic text (txt)
-				if(el !== pr.txta) {
+				if(el !== postform.txta) {
 					return;
 				}
 				$id('de-btn-italic').click();
 				break;
 			case 14: // Strike text (txt)
-				if(el !== pr.txta) {
+				if(el !== postform.txta) {
 					return;
 				}
 				$id('de-btn-strike').click();
 				break;
 			case 15: // Spoiler text (txt)
-				if(el !== pr.txta) {
+				if(el !== postform.txta) {
 					return;
 				}
 				$id('de-btn-spoil').click();
 				break;
 			case 16: // Code text (txt)
-				if(el !== pr.txta) {
+				if(el !== postform.txta) {
 					return;
 				}
 				$id('de-btn-code').click();
@@ -5615,7 +5824,7 @@ const HotKeys = {
 					if(post) {
 						if(post.thr.loadCount !== 0 && post.thr.op.next.count === 1) {
 							const nextThr = post.thr.nextNotHidden;
-							post.thr.loadPosts(visPosts, !!nextThr);
+							post.thr.loadPosts(Thread.visPosts, !!nextThr);
 							post = (nextThr || post.thr).op;
 						} else {
 							post.thr.loadPosts('all');
@@ -5637,7 +5846,7 @@ const HotKeys = {
 			}
 			}
 		}
-		$pd(e);
+		e.preventDefault();
 		e.stopPropagation();
 	},
 	pauseHotKeys() {
@@ -5717,9 +5926,7 @@ const HotKeys = {
 				}
 				post = tPost;
 			}
-			if(this.cPost) {
-				this.cPost.unselect();
-			}
+			this.cPost?.unselect();
 			this.cPost = getThread ? getFull ? post.op : post.op.prev : getFull ? post : post.prev;
 			this.lastPageOffset = deWindow.pageYOffset;
 		}
@@ -5816,7 +6023,8 @@ class KeyEditListener {
 		return value;
 	}
 	handleEvent(e) {
-		let key, el = e.target;
+		let key;
+		let el = e.target;
 		switch(e.type) {
 		case 'blur':
 			if(HotKeys.enabled && this.errCount === 0) {
@@ -5871,7 +6079,7 @@ class KeyEditListener {
 				break;
 			}
 			const keyStr = KeyEditListener.keyCodes[key];
-			if(keyStr === undefined) {
+			if(typeof keyStr === 'undefined') {
 				this.cKey = -1;
 				return;
 			}
@@ -5951,13 +6159,13 @@ class KeyEditListener {
 			}
 		}
 		}
-		$pd(e);
+		e.preventDefault();
 	}
 }
 // Browsers have different codes for these keys (see HotKeys.readKeys):
-//     Firefox - '-' - 173, '=' - 61, ';' - 59
-//     Chrome/Opera: '-' - 189, '=' - 187, ';' - 186
-/* eslint-disable comma-spacing, comma-style, no-sparse-arrays */
+//    Firefox - '-' - 173, '=' - 61, ';' - 59
+//    Chrome/Opera: '-' - 189, '=' - 187, ';' - 186
+/* eslint-disable comma-spacing, no-sparse-arrays */
 KeyEditListener.keyCodes = [
 	'',,,,,,,,'Backspace','Tab',,,,'Enter',,,'Shift','Ctrl','Alt',/* Pause/Break */,/* Caps Lock */,,,,,,,
 	/* Esc */,,,,,'Space',/* PgUp */,/* PgDn */,/* End */,/* Home */,'←','↑','→','↓',,,,,/* Insert */,
@@ -5966,9 +6174,9 @@ KeyEditListener.keyCodes = [
 	/* Select */,,,'Num 0','Num 1','Num 2','Num 3','Num 4','Num 5','Num 6','Num 7','Num 8','Num 9','Num *',
 	'Num +',,'Num -','Num .','Num /',/* F1 */,/* F2 */,/* F3 */,/* F4 */,/* F5 */,/* F6 */,/* F7 */,/* F8 */,
 	/* F9 */,/* F10 */,/* F11 */,/* F12 */,,,,,,,,,,,,,,,,,,,,,/* Num Lock */,/* Scroll Lock */,,,,,,,,,,,,,,,
-	,,,,,,,,,,,,,'-',,,,,,,,,,,,,';','=',',','-','.','/','`',,,,,,,,,,,,,,,,,,,,,,,,,,,'[','\\',']',"'"
+	,,,,,,,,,,,,,'-',,,,,,,,,,,,,';','=',',','-','.','/','`',,,,,,,,,,,,,,,,,,,,,,,,,,,'[','\\',']','\''
 ];
-/* eslint-enable comma-spacing, comma-style, no-sparse-arrays */
+/* eslint-enable comma-spacing, no-sparse-arrays */
 
 /* ==[ ContentLoad.js ]=======================================================================================
                                              CONTENT DOWNLOADING
@@ -5980,15 +6188,17 @@ const ContentLoader = {
 	isLoading : false,
 	popupId   : null,
 	downloadThread(imgOnly) {
-		let progress, counter, current = 1,
-			warnings = '',
-			tar = new TarBuilder();
+		let progress, counter;
+		let current = 1;
+		let warnings = '';
+		let tar = new TarBuilder();
 		const dc = imgOnly ? doc : doc.documentElement.cloneNode(true);
 		let els = [...$Q(aib.qPostImg, $q('[de-form]', dc))];
 		let count = els.length;
-		this._thrPool = new TasksPool(4, (num, data) => this.loadImgData(data[0]).then(imgData => {
+		const delSymbols = (str, r = '') => str.replace(/[\\/:*?"<>|]/g, r);
+		this._thrPool = new TasksPool(4, (num, data) => this.loadFileData(data[0]).then(fileData => {
 			const [url, fName, el, parentLink] = data;
-			let safeName = fName.replace(/[\\/:*?"<>|]/g, '_');
+			let safeName = delSymbols(fName, '_');
 			progress.value = counter.innerHTML = current++;
 			if(parentLink) {
 				let thumbName = safeName.replace(/\.[a-z]+$/, '.png');
@@ -5996,30 +6206,30 @@ const ContentLoader = {
 					thumbName = 'thumb-' + thumbName;
 				} else {
 					thumbName = 'thumbs/' + thumbName;
-					safeName = imgData ? 'images/' + safeName : thumbName;
+					safeName = fileData ? 'images/' + safeName : thumbName;
 					parentLink.href = getImgNameLink(el).href = safeName;
 				}
-				if(imgData) {
-					tar.addFile(safeName, imgData);
+				if(fileData) {
+					tar.addFile(safeName, fileData);
 				} else {
 					warnings += `<br>${ Lng.cantLoad[lang] } <a href="${ url }">${ url }</a>` +
 						`<br>${ Lng.willSavePview[lang] }`;
 					$popup('err-files', Lng.loadErrors[lang] + warnings);
 					if(imgOnly) {
-						return this.getDataFromImg(el).then(data => tar.addFile(thumbName, data), emptyFn);
+						return this.getDataFromImg(el).then(data =>
+							tar.addFile(thumbName, data), Function.prototype);
 					}
 				}
-				return imgOnly ? null : this.getDataFromImg(el).then(data => {
-					el.src = thumbName;
-					tar.addFile(thumbName, data);
-				}, () => (el.src = safeName));
-			} else if(imgData && imgData.length > 0) {
-				tar.addFile(el.href = el.src = 'data/' + safeName, imgData);
+				return imgOnly ? null : this.getDataFromImg(el).then(
+					data => tar.addFile(el.src = thumbName, data),
+					() => (el.src = safeName));
+			} else if(fileData?.length) {
+				tar.addFile(el.href = el.src = 'data/' + safeName, fileData);
 			} else {
-				$del(el);
+				el.remove();
 			}
-		}), () => {
-			const docName = `${ aib.dm }-${ aib.b.replace(/[\\/:*?"<>|]/g, '') }-${ aib.t }`;
+		}), async () => {
+			const docName = `${ aib.domain }-${ delSymbols(aib.b) }-${ aib.t }`;
 			if(!imgOnly) {
 				$q('head', dc).insertAdjacentHTML('beforeend',
 					'<script type="text/javascript" src="data/dollscript.js" charset="utf-8"></script>');
@@ -6030,20 +6240,33 @@ const ContentLoader = {
 				tar.addString('data/dollscript.js', `${ nav.isESNext ?
 					`(${ String(deMainFuncInner) })(window, null, null, (x, y) => window.scrollTo(x, y), ` :
 					`(${ String(/* global deMainFuncOuter */ deMainFuncOuter) })(`
-				}${ JSON.stringify({ dm: aib.dm, b: aib.b, t: aib.t }) });`);
+				}${ JSON.stringify({ domain: aib.domain, b: aib.b, t: aib.t }) });`);
 				const dt = doc.doctype;
-				tar.addString(docName + '.html', '<!DOCTYPE ' + dt.name +
-					(dt.publicId ? ` PUBLIC "${ dt.publicId }"` : dt.systemId ? ' SYSTEM' : '') +
-					(dt.systemId ? ` "${ dt.systemId }"` : '') + '>' + dc.outerHTML);
+				let html = dc.outerHTML;
+				if(aib._4chan) {
+					html = html.replace('</head>', `<style type="text/css">
+						.bfl { background-image: url(data/flags-pol.png); }
+						.flag { background-image: url(data/flags-country.png); }
+					</style></head>`);
+					tar.addFile('data/flags-country.png',
+						await this.loadFileData('//s.4cdn.org/image/flags.8.png', false));
+					if(aib.b === 'pol') {
+						tar.addFile('data/flags-pol.png',
+							await this.loadFileData('//s.4cdn.org/image/flags/pol/flags.png?2', false));
+					}
+				}
+				tar.addString(docName + '.html', `<!DOCTYPE ${ dt.name }${
+					dt.publicId ? ` PUBLIC "${ dt.publicId }"` : dt.systemId ? ' SYSTEM' : '' }${
+					dt.systemId ? ` "${ dt.systemId }"` : '' }>${ html }`);
 			}
-			const title = Thread.first.op.title.trim().replace(/[/\\:*?"<>|]/g, '');
+			const title = delSymbols(Thread.first.op.title.trim());
 			downloadBlob(tar.get(), `${ docName }${ imgOnly ? '-images' : '' }${
 				title ? ' - ' + title : '' }.tar`);
 			closePopup('load-files');
 			this._thrPool = tar = warnings = count = current = imgOnly = progress = counter = null;
 		});
 		els.forEach(el => {
-			const parentLink = $parent(el, 'A');
+			const parentLink = el.closest('a');
 			if(parentLink) {
 				const url = parentLink.href;
 				this._thrPool.runTask(
@@ -6053,32 +6276,32 @@ const ContentLoader = {
 		if(!imgOnly) {
 			$delAll('.de-btn-img, #de-main, .de-parea, .de-post-btns, .de-refmap, .de-thr-buttons, ' +
 				'.de-video-obj, #de-win-reply, link[rel="alternate stylesheet"], script, ' + aib.qForm, dc);
-			$each($Q('a', dc), el => {
+			$Q('a', dc).forEach(el => {
 				let num;
 				const tc = el.textContent;
-				if(tc[0] === '>' && tc[1] === '>' && (num = +tc.substr(2)) && pByNum.has(num)) {
+				if(tc[0] === '>' && tc[1] === '>' && (num = parseInt(tc.substr(2), 10)) && pByNum.has(num)) {
 					el.href = aib.anchor + num;
 					if(!el.classList.contains('de-link-postref')) {
 						el.className = 'de-link-postref ' + el.className;
 					}
 				} else {
-					el.href = getAbsLink(el.href);
+					el.href = aib.getAbsLink(el.href);
 				}
 			});
-			$each($Q(aib.qRPost, dc), (el, i) => el.setAttribute('de-num', i ? aib.getPNum(el) : aib.t));
+			$Q(aib.qPost, dc).forEach((el, i) => el.setAttribute('de-num', i ? aib.getPNum(el) : aib.t));
 			const files = [];
 			const urlRegex = new RegExp(`^\\/\\/?|^https?:\\/\\/([^\\/]*\\.)?${
-				quoteReg(aib._4chan ? '4cdn.org' : aib.dm) }\\/`, 'i');
-			$each($Q('link, *[src]', dc), el => {
+				escapeRegExp(aib._4chan ? '4cdn.org' : aib.domain) }\\/`, 'i');
+			$Q('link, *[src]', dc).forEach(el => {
 				if(els.indexOf(el) !== -1) {
 					return;
 				}
-				let url = el.tagName === 'LINK' ? el.href : el.src;
+				let url = el.tagName.toLowerCase() === 'link' ? el.href : el.src;
 				if(!urlRegex.test(url)) {
 					el.remove();
 					return;
 				}
-				let fName = getFileName(url).replace(/[\\/:*?"<>|]/g, '_').toLowerCase();
+				let fName = delSymbols(getFileName(url).replace(/(#|\?).*?$/, ''), '_').toLowerCase();
 				if(files.indexOf(fName) !== -1) {
 					let temp = url.lastIndexOf('.');
 					const ext = url.substring(temp);
@@ -6104,32 +6327,32 @@ const ContentLoader = {
 		this._thrPool.completeTasks();
 		els = null;
 	},
+	getDataFromCanvas: el =>
+		new Uint8Array(atob(el.toDataURL('image/png').split(',')[1]).split('').map(a => a.charCodeAt())),
 	getDataFromImg(el) {
 		if(el.getAttribute('loading') === 'lazy') {
-			return this.loadImgData(el.src);
+			return this.loadFileData(el.src);
 		}
 		try {
 			const cnv = this._canvas || (this._canvas = doc.createElement('canvas'));
 			cnv.width = el.width || el.videoWidth;
 			cnv.height = el.height || el.videoHeight;
 			cnv.getContext('2d').drawImage(el, 0, 0);
-			return Promise.resolve(new Uint8Array(atob(cnv.toDataURL('image/png').split(',')[1])
-				.split('').map(a => a.charCodeAt())));
+			return Promise.resolve(this.getDataFromCanvas(cnv));
 		} catch(err) {
-			return this.loadImgData(el.src);
+			return this.loadFileData(el.src);
 		}
 	},
-	loadImgData: (url, repeatOnError = true) => $ajax(
-		url, { responseType: 'arraybuffer' }, !url.startsWith('blob')
-	).then(xhr => {
-		if('response' in xhr) {
-			try {
-				return nav.getUnsafeUint8Array(xhr.response);
-			} catch(err) {}
-		}
-		const txt = xhr.responseText;
-		return new Uint8Array(txt.length).map((val, i) => txt.charCodeAt(i) & 0xFF);
-	}, err => err.code !== 404 && repeatOnError ? ContentLoader.loadImgData(url, false) : null),
+	loadFileData: (url, repeatOnError = true) =>
+		$ajax(url, { responseType: 'arraybuffer' }, !url.startsWith('blob')).then(xhr => {
+			if('response' in xhr) {
+				try {
+					return nav.getUnsafeUint8Array(xhr.response);
+				} catch(err) {}
+			}
+			const txt = xhr.responseText;
+			return new Uint8Array(txt.length).map((val, i) => txt.charCodeAt(i) & 0xFF);
+		}, err => err.code !== 404 && repeatOnError ? this.loadFileData(url, false) : null),
 	preloadImages(data) {
 		if(!Cfg.preLoadImgs && !Cfg.openImgs && !isPreImg) {
 			return;
@@ -6143,9 +6366,9 @@ const ContentLoader = {
 			const mReqs = isPost ? 1 : 4;
 			const rarJpgFinder = (isPreImg || Cfg.findImgFile) && new WorkerPool(mReqs, this._detectImgFile,
 				err => console.error('File detector error:', `line: ${ err.lineno } - ${ err.message }`));
-			preloadPool = new TasksPool(mReqs, (num, data) => this.loadImgData(data[0]).then(imageData => {
+			preloadPool = new TasksPool(mReqs, (num, data) => this.loadFileData(data[0]).then(fileData => {
 				const [url, parentLink, iType, isRepToOrig, el, isVideo] = data;
-				if(imageData) {
+				if(fileData) {
 					const fName = decodeURIComponent(getFileName(url));
 					const nameLink = getImgNameLink(el);
 					parentLink.setAttribute('download', fName);
@@ -6154,7 +6377,7 @@ const ContentLoader = {
 						nameLink.setAttribute('de-href', nameLink.href);
 					}
 					parentLink.href = nameLink.href =
-						deWindow.URL.createObjectURL(new Blob([imageData], { type: iType }));
+						deWindow.URL.createObjectURL(new Blob([fileData], { type: iType }));
 					if(isVideo) {
 						el.setAttribute('de-video', '');
 					}
@@ -6162,7 +6385,7 @@ const ContentLoader = {
 						el.src = parentLink.href;
 					}
 					if(rarJpgFinder) {
-						rarJpgFinder.runWorker(imageData.buffer, [imageData.buffer],
+						rarJpgFinder.runWorker(fileData.buffer, [fileData.buffer],
 							info => this._addImgFileIcon(nameLink, fName, info));
 					}
 				}
@@ -6184,14 +6407,15 @@ const ContentLoader = {
 		}
 		for(let i = 0; i < len; ++i) {
 			const imgEl = els[i];
-			const parentLink = $parent(imgEl, 'A');
+			const parentLink = imgEl.closest('a');
 			if(!parentLink) {
 				continue;
 			}
 			let isRepToOrig = !!Cfg.openImgs;
 			const url = aib.getImgSrcLink(imgEl).getAttribute('href');
-			const type = getFileType(url);
-			const isVideo = type && (type === 'video/webm' || type === 'video/mp4' || type === 'video/ogv');
+			const type = getFileMime(url);
+			const isVideo = type && (type === 'video/webm' || type === 'video/mp4' ||
+				type === 'video/quicktime' || type === 'video/ogv');
 			if(!type || isVideo && Cfg.preLoadImgs === 2) {
 				continue;
 			} else if($q('img[src*="/spoiler"]', parentLink)) {
@@ -6327,10 +6551,10 @@ class DateTime {
 			!val.includes('y') || !(val.includes('n') || val.includes('m')) ||
 			/[^?\-+sihdmwny]|mm|ww|\?\?|([ihdny]\?)\1+/.test(val);
 	}
-	static toggleSettings(el) {
+	static async toggleSettings(el) {
 		if(el.checked && (!/^[+-]\d{1,2}$/.test(Cfg.timeOffset) || DateTime.checkPattern(Cfg.timePattern))) {
 			$popup('err-correcttime', Lng.cTimeError[lang]);
-			saveCfg('correctTime', 0);
+			await CfgSaver.save('correctTime', 0);
 			el.checked = false;
 		}
 	}
@@ -6367,9 +6591,7 @@ class DateTime {
 			rPattern += str.substring(j, k) + '_' + p;
 			j = k + a.length;
 		}
-		if(this.onRPat) {
-			this.onRPat(rPattern);
-		}
+		this.onRPat?.(rPattern);
 		this.genDateTime = this.genRFunc(rPattern);
 		return true;
 	}
@@ -6431,7 +6653,7 @@ class Videos {
 				(list ? '&' + list[0] : '') + '" frameborder="0" allowfullscreen></iframe>';
 		} else {
 			const id = m[1] + (m[2] ? m[2] : '');
-			txt = `<iframe class="de-video-player" src="${ aib.prot }//player.vimeo.com/video/${ id }${
+			txt = `<iframe class="de-video-player" src="${ aib.protocol }//player.vimeo.com/video/${ id }${
 				Cfg.embedYTube === 1 ? '?autoplay=1' : ''
 			}" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>`;
 		}
@@ -6459,7 +6681,7 @@ class Videos {
 	}
 	get player() {
 		const { post } = this;
-		const value = aib.insertYtPlayer(post.msg, `<div class="de-video-obj${
+		const value = $bBegin(post.msg, `<div class="de-video-obj${
 			post.images.hasAttachments && !post.isOp ? ' de-video-obj-inline' : '' }"></div>`);
 		Object.defineProperty(this, 'player', { value });
 		return value;
@@ -6488,8 +6710,8 @@ class Videos {
 			link.className = `de-video-link ${ isYtube ? 'de-ytube' : 'de-vimeo' }`;
 		} else {
 			const src = isYtube ?
-				`${ aib.prot }//www.youtube.com/watch?v=${ m[1] }${ time ? '#t=' + time : '' }` :
-				`${ aib.prot }//vimeo.com/${ m[1] }`;
+				`${ aib.protocol }//www.youtube.com/watch?v=${ m[1] }${ time ? '#t=' + time : '' }` :
+				`${ aib.protocol }//vimeo.com/${ m[1] }`;
 			link = $bEnd(this.post.msg, `<p class="de-video-ext"><a class="de-video-link ${
 				isYtube ? 'de-ytube' : 'de-vimeo' }${ time ? '" de-time="' + time : ''
 			}" href="${ src }">${ dataObj ? '' : src }</a></p>`).firstChild;
@@ -6543,11 +6765,11 @@ class Videos {
 	toggleFloatedThumb(linkEl, isOutEvent) {
 		let el = $id('de-video-thumb-floated');
 		if(isOutEvent) {
-			$del(el);
+			el.remove();
 			return;
 		}
 		if(!el) {
-			el = $bEnd(docBody, `<img id="de-video-thumb-floated" src="https://i.ytimg.com/vi/${
+			el = $bEnd(doc.body, `<img id="de-video-thumb-floated" src="https://i.ytimg.com/vi/${
 				linkEl.videoInfo[1] }/0.jpg">`);
 		}
 		const cr = linkEl.getBoundingClientRect();
@@ -6563,7 +6785,7 @@ class Videos {
 		for(let i = 0, len = newLinks.length; i < len; ++i) {
 			const el = newLinks[i];
 			const link = oldLinks[j];
-			if(link && link.classList.contains('de-current')) {
+			if(link?.classList.contains('de-current')) {
 				this.currentLink = el;
 			}
 			if(cloned) {
@@ -6606,7 +6828,7 @@ class Videos {
 				return Cfg.ytApiKey ? Videos._getYTInfoAPI(info, num, id) :
 					Videos._getYTInfoOembed(info, num, id);
 			}
-			return $ajax(`${ aib.prot }//vimeo.com/api/v2/video/${ id }.json`, null, true).then(xhr => {
+			return $ajax(`${ aib.protocol }//vimeo.com/api/v2/video/${ id }.json`, null, true).then(xhr => {
 				const entry = JSON.parse(xhr.responseText)[0];
 				return Videos._titlesLoaderHelper(
 					info, num,
@@ -6648,7 +6870,7 @@ class Videos {
 		}).catch(() => Videos._titlesLoaderHelper(info, num));
 	}
 	static _titlesLoaderHelper([link, isYtube, videoObj, id], num, ...data) {
-		if(data.length !== 0) {
+		if(data.length) {
 			Videos.setLinkData(link, data);
 			Videos._global.vData[+!isYtube][id] = data;
 			videoObj.vData[+!isYtube].push(data);
@@ -6668,7 +6890,7 @@ class Videos {
 		this.playerInfo = m;
 		el.classList.remove('de-video-expanded');
 		$show(el);
-		const str = `<a class="de-video-player" href="${ aib.prot }`;
+		const str = `<a class="de-video-player" href="${ aib.protocol }`;
 		if(isYtube) {
 			el.innerHTML = `${ str }//www.youtube.com/watch?v=${ m[1] }" target="_blank">` +
 				`<img class="de-video-thumb de-ytube" src="https://i.ytimg.com/vi/${ m[1] }/0.jpg"></a>`;
@@ -6676,9 +6898,9 @@ class Videos {
 		}
 		el.innerHTML = `${ str }//vimeo.com/${ m[1] }" target="_blank">` +
 			'<img class="de-video-thumb de-vimeo" src=""></a>';
-		$ajax(`${ aib.prot }//vimeo.com/api/v2/video/${ m[1] }.json`, null, true).then(xhr => {
+		$ajax(`${ aib.protocol }//vimeo.com/api/v2/video/${ m[1] }.json`, null, true).then(xhr => {
 			el.firstChild.firstChild.setAttribute('src', JSON.parse(xhr.responseText)[0].thumbnail_large);
-		}).catch(emptyFn);
+		}).catch(Function.prototype);
 	}
 }
 Videos.ytReg =
@@ -6703,9 +6925,7 @@ class VideosParser {
 		this._loader = Videos._getTitlesLoader();
 	}
 	endParser() {
-		if(this._loader) {
-			this._loader.completeTasks();
-		}
+		this._loader?.completeTasks();
 	}
 	parse(data) {
 		const isPost = data instanceof AbstractPost;
@@ -6771,17 +6991,13 @@ function embedAudioLinks(data) {
 		}
 	}
 	if(Cfg.addVocaroo) {
-		const els = $Q('a[href*="vocaroo.com"]', isPost ? data.el : data);
-		for(let i = 0, len = els.length; i < len; ++i) {
-			const link = els[i];
-			const el = link.previousSibling;
-			if(!el || el.className !== 'de-vocaroo') { // Don't embed already embedded links
-				link.insertAdjacentHTML('beforebegin', `<div class="de-vocaroo">
-					<embed src="http://vocaroo.com/player.swf?playMediaID=${ getFileName(link.href) }` +
-						`" width="148" height="44" wmode="transparent" type="application/x-shockwave-flash">
-				</div>`);
+		$Q('a[href*="voca.ro"], a[href*="vocaroo.com"]', isPost ? data.el : data).forEach(link => {
+			if(!(link.previousSibling?.className === 'de-vocaroo')) {
+				link.insertAdjacentHTML('beforebegin',
+					`<iframe class="de-vocaroo" width="300" height="48" src="https://vocaroo.com/embed/${
+						getFileName(link.href) }" frameborder="0"></iframe>`);
 			}
-		}
+		});
 	}
 }
 
@@ -6794,14 +7010,16 @@ function $ajax(url, params = null, isCORS = false) {
 	let resolve, reject, cancelFn;
 	const needTO = params ? params.useTimeout : false;
 	const WAITING_TIME = 5e3;
-	if(((isCORS ? !nav.hasGMXHR : !nav.canUseNativeXHR) || aib.hasRefererErr && nav.canUseFetch) &&
-		(nav.canUseFetchBlob || !url.startsWith('blob'))
+	if(nav.canUseFetch &&
+		((isCORS ? !nav.hasGMXHR : !nav.canUseNativeXHR) || aib.hasRefererErr) &&
+		!(isCORS && nav.isTampermonkey)
 	) {
 		if(!params) {
 			params = {};
 		}
 		params.referrer =
-			doc.referrer.startsWith(aib.prot + '//' + aib.host) ? doc.referrer : deWindow.location;
+			doc.referrer.startsWith(aib.protocol + '//' + aib.host) ? doc.referrer : deWindow.location;
+		params.referrerPolicy = 'unsafe-url';
 		if(params.data) {
 			params.body = params.data;
 			delete params.data;
@@ -6809,69 +7027,32 @@ function $ajax(url, params = null, isCORS = false) {
 		if(isCORS) {
 			params.mode = 'cors';
 		}
-		url = getAbsLink(url);
-		// Chrome-extension: avoid CORS in content script. Sending data to background.js
-		if(isCORS && nav.isChrome && nav.scriptHandler === 'WebExtension') {
-			if(params.body) {
-				// Converting image as Uint8Array to text data for sending in POST request from background.js
-				let textData = '';
-				const arrData = params.body.arr;
-				for(let i = 0, len = arrData.length; i < len; ++i) {
-					textData += String.fromCharCode(arrData[i]);
-				}
-				params.body.arr = textData;
-			}
-			chrome.runtime.sendMessage({ 'de-messsage': 'corsRequest', url, params }, res => {
-				const { answer } = res;
-				if(res.isError || !aib.isAjaxStatusOK(res.status)) {
-					reject(res.statusText ?
-						new AjaxError(res.status, res.statusText) : getErrorMessage(answer));
-					return;
-				}
-				const obj = {};
-				switch(params.responseType) {
-				case 'arraybuffer':
-				case 'blob': { // Converting text data from the background.js response to arraybuffer/blob
-					const buf = new ArrayBuffer(answer.length);
-					const bufView = new Uint8Array(buf);
-					for(let i = 0, len = answer.length; i < len; ++i) {
-						bufView[i] = answer.charCodeAt(i);
-					}
-					obj.response = params.responseType === 'blob' ? new Blob([buf]) : buf;
-					break;
-				}
-				default: obj.responseText = answer;
-				}
-				resolve(obj);
-			});
-		} else {
-			const controller = new AbortController();
-			params.signal = controller.signal;
-			const loadTO = needTO && setTimeout(() => {
-				reject(AjaxError.Timeout);
-				try {
-					controller.abort();
-				} catch(err) {}
-			}, WAITING_TIME);
-			cancelFn = () => {
-				if(needTO) {
-					clearTimeout(loadTO);
-				}
+		const controller = new AbortController();
+		params.signal = controller.signal;
+		const loadTO = needTO && setTimeout(() => {
+			reject(AjaxError.Timeout);
+			try {
 				controller.abort();
-			};
-			fetch(url, params).then(async res => {
-				if(!aib.isAjaxStatusOK(res.status)) {
-					reject(new AjaxError(res.status, res.statusText));
-					return;
-				}
-				switch(params.responseType) {
-				case 'arraybuffer': res.response = await res.arrayBuffer(); break;
-				case 'blob': res.response = await res.blob(); break;
-				default: res.responseText = await res.text();
-				}
-				resolve(res);
-			}).catch(err => reject(getErrorMessage(err)));
-		}
+			} catch(err) {}
+		}, WAITING_TIME);
+		cancelFn = () => {
+			if(needTO) {
+				clearTimeout(loadTO);
+			}
+			controller.abort();
+		};
+		fetch(aib.getAbsLink(url), params).then(async res => {
+			if(!aib.isAjaxStatusOK(res.status)) {
+				reject(new AjaxError(res.status, res.statusText));
+				return;
+			}
+			switch(params.responseType) {
+			case 'arraybuffer': res.response = await res.arrayBuffer(); break;
+			case 'blob': res.response = await res.blob(); break;
+			default: res.responseText = await res.text();
+			}
+			resolve(res);
+		}).catch(err => reject(getErrorMessage(err)));
 	} else if((isCORS || !nav.canUseNativeXHR) && nav.hasGMXHR) {
 		let gmxhr;
 		const timeoutFn = () => {
@@ -6881,14 +7062,18 @@ function $ajax(url, params = null, isCORS = false) {
 			} catch(err) {}
 		};
 		let loadTO = needTO && setTimeout(timeoutFn, WAITING_TIME);
-		const obj = {
-			method : (params && params.method) || 'GET',
-			url    : nav.fixLink(url),
+		const newParams = {
+			method : params?.method || 'GET',
+			url    : nav.isSafari ? aib.getAbsLink(url) : url,
 			onreadystatechange(e) {
 				if(needTO) {
 					clearTimeout(loadTO);
 				}
-				if(e.readyState === 4) {
+				if(e.readyState === 4 && !(
+					// Violentmonkey gives extra stage with undefined responseText and 200 status
+					nav.isViolentmonkey && e.status === 200 &&
+					typeof e.responseText === 'undefined' && typeof e.response === 'undefined'
+				)) {
 					if(aib.isAjaxStatusOK(e.status)) {
 						resolve(e);
 					} else {
@@ -6901,17 +7086,17 @@ function $ajax(url, params = null, isCORS = false) {
 		};
 		if(params) {
 			if(params.onprogress) {
-				obj.upload = { onprogress: params.onprogress };
+				newParams.upload = { onprogress: params.onprogress };
 				delete params.onprogress;
 			}
 			delete params.method;
-			Object.assign(obj, params);
+			Object.assign(newParams, params);
 		}
 		if(nav.hasNewGM) {
-			GM.xmlHttpRequest(obj);
-			cancelFn = emptyFn; // GreaseMonkey 4 cannot cancel xhr's
+			GM.xmlHttpRequest(newParams);
+			cancelFn = Function.prototype; // GreaseMonkey 4 cannot cancel xhr's
 		} else {
-			gmxhr = GM_xmlhttpRequest(obj);
+			gmxhr = GM_xmlhttpRequest(newParams);
 			cancelFn = () => {
 				if(needTO) {
 					clearTimeout(loadTO);
@@ -6928,8 +7113,11 @@ function $ajax(url, params = null, isCORS = false) {
 			xhr.abort();
 		};
 		let loadTO = needTO && setTimeout(timeoutFn, WAITING_TIME);
-		if(params && params.onprogress) {
+		if(params?.onprogress) {
 			xhr.upload.onprogress = params.onprogress;
+		}
+		if(aib._4chan) {
+			xhr.withCredentials = true;
 		}
 		xhr.onreadystatechange = ({ target }) => {
 			if(needTO) {
@@ -6946,21 +7134,21 @@ function $ajax(url, params = null, isCORS = false) {
 			}
 		};
 		try {
-			xhr.open((params && params.method) || 'GET', getAbsLink(url), true);
+			xhr.open(params?.method || 'GET', aib.getAbsLink(url), true);
 			if(params) {
 				if(params.responseType) {
 					xhr.responseType = params.responseType;
 				}
 				const { headers } = params;
 				if(headers) {
-					for(const h in headers) {
-						if($hasProp(headers, h)) {
-							xhr.setRequestHeader(h, headers[h]);
+					for(const header in headers) {
+						if($hasProp(headers, header)) {
+							xhr.setRequestHeader(header, headers[header]);
 						}
 					}
 				}
 			}
-			xhr.send(params && params.data || null);
+			xhr.send(params?.data || null);
 			cancelFn = () => {
 				if(needTO) {
 					clearTimeout(loadTO);
@@ -6973,7 +7161,7 @@ function $ajax(url, params = null, isCORS = false) {
 			return $ajax(url, params);
 		}
 	} else {
-		reject(new AjaxError(0, 'Ajax error: Can`t send any type of request.'));
+		reject(new AjaxError(0, 'Ajax error: Canʼt send any type of request.'));
 	}
 	return new CancelablePromise((res, rej) => {
 		resolve = res;
@@ -7000,7 +7188,7 @@ const AjaxCache = {
 	clearCache() {
 		this._data = new Map();
 	},
-	fixURL: url => `${ url }${ url.includes('?') ? '&' : '?' }nocache=${ Math.random() }`,
+	fixURL: url => `${ url }${ url.includes('?') ? '&' : '?' }nocache=${ Math.round(Math.random() * 1e12) }`,
 	runCachedAjax(url, useCache) {
 		const { hasCacheControl, params } = this._data.get(url) || {};
 		const ajaxURL = hasCacheControl === false ? this.fixURL(url) : url;
@@ -7062,7 +7250,8 @@ const AjaxCache = {
 };
 
 function getAjaxResponseEl(text, needForm) {
-	return !text.includes('</html>') ? null : needForm ? $q(aib.qDForm, $DOM(text)) : $DOM(text);
+	return !text.includes('</html>') ? null :
+		needForm ? $q(aib.qDelForm, $createDoc(text)) : $createDoc(text);
 }
 
 function ajaxLoad(url, needForm = true, useCache = false, checkArch = false) {
@@ -7075,25 +7264,25 @@ function ajaxLoad(url, needForm = true, useCache = false, checkArch = false) {
 	}, err => err.code === 304 ? null : CancelablePromise.reject(err));
 }
 
-function ajaxPostsLoad(brd, tNum, useCache, useJson = true) {
+function ajaxPostsLoad(board, tNum, useCache, useJson = true) {
 	if(useJson && aib.JsonBuilder) {
-		return AjaxCache.runCachedAjax(aib.getJsonApiUrl(brd, tNum), useCache).then(xhr => {
+		return AjaxCache.runCachedAjax(aib.getJsonApiUrl(board, tNum), useCache).then(xhr => {
 			try {
-				return new aib.JsonBuilder(JSON.parse(xhr.responseText), brd);
+				return new aib.JsonBuilder(JSON.parse(xhr.responseText), board);
 			} catch(err) {
 				if(err instanceof AjaxError) {
 					return CancelablePromise.reject(err);
 				}
 				console.warn(`API error: ${ err }. Switching to DOM parsing!`);
 				aib.JsonBuilder = null;
-				return ajaxPostsLoad(brd, tNum, useCache);
+				return ajaxPostsLoad(board, tNum, useCache);
 			}
 		}, err => err.code === 304 ? null : CancelablePromise.reject(err));
 	}
 	return aib.hasArchive ?
-		ajaxLoad(aib.getThrUrl(brd, tNum), true, useCache, true)
-			.then(data => data && data[0] ? new DOMPostsBuilder(data[0], data[1]) : null) :
-		ajaxLoad(aib.getThrUrl(brd, tNum), true, useCache)
+		ajaxLoad(aib.getThrUrl(board, tNum), true, useCache, true)
+			.then(data => data?.[0] ? new DOMPostsBuilder(data[0], data[1]) : null) :
+		ajaxLoad(aib.getThrUrl(board, tNum), true, useCache)
 			.then(form => form ? new DOMPostsBuilder(form) : null);
 }
 
@@ -7142,7 +7331,7 @@ const Pages = {
 						DelForm.tNums.delete(thr.num);
 					} else {
 						const oldLastThr = firstForm.lastThr;
-						$after(oldLastThr.el, thr.el);
+						oldLastThr.el.after(thr.el);
 						newForm.firstThr = thr.next;
 						thr.prev = oldLastThr;
 						thr.form = firstForm;
@@ -7170,6 +7359,22 @@ const Pages = {
 			}
 		});
 	},
+	handleEvent(e) {
+		let needLoad = false;
+		switch(e.type) {
+		case 'mousewheel': needLoad = -('wheelDeltaY' in e ? e.wheelDeltaY : e.wheelDelta) > 0; break;
+		case 'touchmove': needLoad = this._scrollY > e.touches[0].clientY; break; // Swipe down
+		case 'touchstart': this._scrollY = e.touches[0].clientY; break;
+		case 'wheel': needLoad = e.deltaY; break;
+		}
+		if(needLoad) {
+			deWindow.requestAnimationFrame(() => {
+				if(Thread.last.bottom - 150 < Post.sizing.wHeight) {
+					Pages.addPage();
+				}
+			});
+		}
+	},
 	async loadPages(count) {
 		$popup('load-pages', Lng.loading[lang], true);
 		if(this._addingPromise) {
@@ -7182,12 +7387,12 @@ const Pages = {
 		pByNum = new Map();
 		Post.hiddenNums = new Set();
 		AttachedImage.closeImg();
-		if(pr.isQuick) {
-			pr.clearForm();
+		if(postform.isQuick) {
+			postform.clearForm();
 		}
 		DelForm.tNums = new Set();
 		for(const form of DelForm) {
-			$each($Q('a[href^="blob:"]', form.el), el => URL.revokeObjectURL(el.href));
+			$Q('a[href^="blob:"]', form.el).forEach(el => URL.revokeObjectURL(el.href));
 			$hide(form.el);
 			if(form === DelForm.last) {
 				break;
@@ -7210,13 +7415,26 @@ const Pages = {
 			closePopup('load-pages');
 		}
 	},
+	toggleInfinityScroll() {
+		if(aib.t) {
+			return;
+		}
+		if(nav.isMobile) {
+			['touchmove', 'touchstart'].forEach(e =>
+				doc.defaultView[Cfg.inftyScroll ? 'addEventListener' : 'removeEventListener'](e, this));
+		} else {
+			doc.defaultView[Cfg.inftyScroll ? 'addEventListener' : 'removeEventListener'](
+				'onwheel' in doc.defaultView ? 'wheel' : 'mousewheel', this);
+		}
+	},
 
-	_isAdding      : false,
 	_addingPromise : null,
+	_isAdding      : false,
+	_scrollY       : 0,
 	_addForm(formEl, pageNum) {
 		formEl = doc.adoptNode(formEl);
 		$hide(formEl = aib.fixHTML(formEl));
-		$after(DelForm.last.el, formEl);
+		DelForm.last.el.after(formEl);
 		const form = new DelForm(formEl, +pageNum, DelForm.last);
 		DelForm.last = form;
 		form.addStuff();
@@ -7234,33 +7452,13 @@ const Pages = {
 	},
 	async _updateForms(newForm) {
 		readPostsData(newForm.firstThr.op, await readFavorites());
-		if(pr.passw) {
-			PostForm.setUserPassw();
+		if(postform.passw) {
+			await PostForm.setUserPassw();
 		}
 		embedPostMsgImages(newForm.el);
 		if(HotKeys.enabled) {
 			HotKeys.clearCPost();
 		}
-	}
-};
-
-function toggleInfinityScroll() {
-	if(!aib.t) {
-		const evtName = 'onwheel' in doc.defaultView ? 'wheel' : 'mousewheel';
-		if(Cfg.inftyScroll) {
-			doc.defaultView.addEventListener(evtName, toggleInfinityScroll.onwheel);
-		} else {
-			doc.defaultView.removeEventListener(evtName, toggleInfinityScroll.onwheel);
-		}
-	}
-}
-toggleInfinityScroll.onwheel = e => {
-	if((e.type === 'wheel' ? e.deltaY : -('wheelDeltaY' in e ? e.wheelDeltaY : e.wheelDelta)) > 0) {
-		deWindow.requestAnimationFrame(() => {
-			if(Thread.last.bottom - 150 < Post.sizing.wHeight) {
-				Pages.addPage();
-			}
-		});
 	}
 };
 
@@ -7313,7 +7511,7 @@ const Spells = Object.create({
 	get needArg() {
 		return [
 			/* words */ true, /* exp */ true, /* exph */ true, /* imgn */ true, /* ihash */ true,
-			/* subj */ false, /* name */ true, /* trip */ false, /* img */ false, /* sage */ false,
+			/* subj */ false, /* name */ false, /* trip */ false, /* img */ false, /* sage */ false,
 			/* op */ false, /* tlen */ false, /* all */ false, /* video */ false, /* wipe */ false,
 			/* num */ true, /* vauthor */ true, /* // */ false
 		];
@@ -7326,19 +7524,20 @@ const Spells = Object.create({
 		this._initSpells();
 		return this.reps;
 	},
-	addSpell(type, arg, isNeg) {
-		const fld = $id('de-spell-txt');
-		const val = fld && fld.value;
-		const chk = $q('input[info="hideBySpell"]');
-		let spells = val && this.parseText(val);
-		if(!val || spells) {
+	async addSpell(type, arg, isNeg) {
+		const inputEl = $id('de-spell-txt');
+		const value = inputEl?.value;
+		const checkboxEl = $q('input[info="hideBySpell"]');
+		let spells = value && this.parseText(value);
+		if(!value || spells) {
 			if(!spells) {
 				try {
 					spells = JSON.parse(Cfg.spells);
 				} catch(err) {}
 				spells = spells || [Date.now(), [], null, null];
 			}
-			let idx, isAdded = true;
+			let idx;
+			let isAdded = true;
 			const scope = aib.t ? [aib.b, aib.t] : null;
 			if(spells[1]) {
 				const sScope = String(scope);
@@ -7383,32 +7582,35 @@ const Spells = Object.create({
 				isAdded = false;
 			}
 			if(isAdded) {
-				saveCfg('hideBySpell', 1);
-				if(chk) {
-					chk.checked = true;
+				await CfgSaver.save('hideBySpell', 1);
+				if(checkboxEl) {
+					checkboxEl.checked = true;
 				}
 			} else if(!spells[1] && !spells[2] && !spells[3]) {
-				saveCfg('hideBySpell', 0);
-				if(chk) {
-					chk.checked = false;
+				await CfgSaver.save('hideBySpell', 0);
+				if(checkboxEl) {
+					checkboxEl.checked = false;
 				}
 			}
-			saveCfg('spells', JSON.stringify(spells));
-			this.setSpells(spells, true);
-			if(fld) {
-				fld.value = this.list;
+			if(spells[1] && Cfg.sortSpells) {
+				this._sort(spells[1]);
+			}
+			await CfgSaver.save('spells', JSON.stringify(spells));
+			await this.setSpells(spells, true);
+			if(inputEl) {
+				inputEl.value = this.list;
 			}
 			Pview.updatePosition(true);
 			return;
 		}
-		if(chk) {
-			chk.checked = false;
+		if(checkboxEl) {
+			checkboxEl.checked = false;
 		}
 	},
 	decompileSpell(type, neg, val, scope, wipeMsg = null) {
 		let spell = (neg ? '!#' : '#') + this.names[type] +
 			(scope ? `[${ scope[0] }${ scope[1] ? `,${ scope[1] === -1 ? '' : scope[1] }` : '' }]` : '');
-		if(!val) {
+		if(!val && val !== 0) {
 			return spell;
 		}
 		switch(type) {
@@ -7444,7 +7646,8 @@ const Spells = Object.create({
 		}
 		case 11: // #tlen
 		case 15: { // #num
-			let temp_, temp = val[1].length - 1;
+			let temp_;
+			let temp = val[1].length - 1;
 			if(temp !== -1) {
 				for(temp_ = []; temp >= 0; --temp) {
 					temp_.push(val[1][temp][0] + '-' + val[1][temp][1]);
@@ -7463,14 +7666,12 @@ const Spells = Object.create({
 		case 0: // #words
 		case 6: // #name
 		case 7: // #trip
-		case 16: // #vauthor
-			return `${ spell }(${ val.replace(/([)\\])/g, '\\$1').replace(/\n/g, '\\n') })`;
-		case 17: // // comment
-			return '//' + String(val);
+		case 16: return `${ spell }(${ val.replace(/([)\\])/g, '\\$1').replace(/\n/g, '\\n') })`; // #vauthor
+		case 17: return '//' + String(val); // comment
 		default: return `${ spell }(${ String(val) })`;
 		}
 	},
-	disableSpells() {
+	async disableSpells() {
 		const value = null;
 		const configurable = true;
 		Object.defineProperties(this, {
@@ -7478,7 +7679,7 @@ const Spells = Object.create({
 			outreps : { configurable, value },
 			reps    : { configurable, value }
 		});
-		saveCfg('hideBySpell', 0);
+		await CfgSaver.save('hideBySpell', 0);
 	},
 	outReplace(txt) {
 		for(const orep of this.outreps) {
@@ -7505,45 +7706,45 @@ const Spells = Object.create({
 		}
 		return txt;
 	},
-	setSpells(spells, sync) {
+	async setSpells(spells, sync) {
 		if(sync) {
 			this._sync(spells);
 		}
 		if(!Cfg.hideBySpell) {
 			SpellsRunner.unhideAll();
-			this.disableSpells();
+			await this.disableSpells();
 			return;
 		}
 		this._optimize(spells);
-		if(this.hiders) {
-			const sRunner = new SpellsRunner();
-			for(let post = Thread.first.op; post; post = post.next) {
-				sRunner.runSpells(post);
-			}
-			sRunner.endSpells();
-		} else {
+		if(!this.hiders) {
 			SpellsRunner.unhideAll();
+			return;
 		}
+		const sRunner = new SpellsRunner();
+		for(let post = Thread.first.op; post; post = post.next) {
+			sRunner.runSpells(post);
+		}
+		sRunner.endSpells();
 	},
-	toggle() {
+	async toggle() {
 		let spells;
-		const fld = $id('de-spell-txt');
-		const val = fld.value;
-		if(val && (spells = this.parseText(val))) {
+		const inputEl = $id('de-spell-txt');
+		const { value } = inputEl;
+		if(value && (spells = this.parseText(value))) {
 			closePopup('err-spell');
-			this.setSpells(spells, true);
-			saveCfg('spells', JSON.stringify(spells));
-			fld.value = this.list;
-		} else {
-			if(!val) {
-				closePopup('err-spell');
-				SpellsRunner.unhideAll();
-				this.disableSpells();
-				saveCfg('spells', JSON.stringify([Date.now(), null, null, null]));
-				sendStorageEvent('__de-spells', '{ hide: false, data: null }');
-			}
-			$q('input[info="hideBySpell"]').checked = false;
+			await this.setSpells(spells, true);
+			await CfgSaver.save('spells', JSON.stringify(spells));
+			inputEl.value = this.list;
+			return;
 		}
+		if(!value) {
+			closePopup('err-spell');
+			SpellsRunner.unhideAll();
+			await this.disableSpells();
+			await CfgSaver.save('spells', JSON.stringify([Date.now(), null, null, null]));
+			sendStorageEvent('__de-spells', '{ hide: false, data: null }');
+		}
+		$q('input[info="hideBySpell"]').checked = false;
 	},
 
 	_decompileRep(rep, isOrep) {
@@ -7610,7 +7811,7 @@ const Spells = Object.create({
 		if(spells) {
 			this._optimize(spells);
 		} else {
-			this.disableSpells();
+			/* await */ this.disableSpells();
 		}
 	},
 	_initHiders(data) {
@@ -7623,7 +7824,7 @@ const Spells = Object.create({
 					case 2:
 					case 3:
 					case 5:
-					case 13: item[1] = toRegExp(val, true); break;
+					case 13: item[1] = strToRegExp(val, true); break;
 					case 0xFF: this._initHiders(val);
 					}
 				}
@@ -7634,7 +7835,7 @@ const Spells = Object.create({
 	_initReps(data) {
 		if(data) {
 			for(const item of data) {
-				item[0] = toRegExp(item[0], false);
+				item[0] = strToRegExp(item[0], false);
 			}
 		}
 		return data;
@@ -7659,7 +7860,8 @@ const Spells = Object.create({
 		return !rv.length ? null : rv;
 	},
 	_optimizeSpells(spells) {
-		let neg, lastSpell = -1;
+		let neg;
+		let lastSpell = -1;
 		let newSpells = [];
 		for(let i = 0, len = spells.length; i < len; ++i) {
 			let j;
@@ -7733,7 +7935,9 @@ const Spells = Object.create({
 				sp.splice(i, 0, temp);
 			}
 		}
-		sp = sp.sort();
+		sp = sp.sort().sort((a, b) =>
+			// Sort spells by scope
+			a[2] && !b[2] || a[2] && b[2] && (a[2][0] > b[2][0] || a[2][1] > b[2][1]) ? 1 : 0);
 		for(let i = 0, len = sp.length - 1; i < len; ++i) {
 			// Removes duplicates and weaker spells
 			const j = i + 1;
@@ -7785,8 +7989,8 @@ class SpellsCodegen {
 	}
 
 	static _getScope(str) {
-		const m = str.match(/^\[([a-z0-9/]+)(?:(,)|,(\s*[0-9]+))?\]/);
-		return m ? [m[0].length, [m[1], m[3] ? +m[3] : m[2] ? -1 : false]] : null;
+		const m = str.match(/^\[([a-z0-9/-]+)?(?:(,)|,(\s*[0-9]+))?\]/);
+		return m ? [m[0].length, [m[1] || '', m[3] ? +m[3] : m[2] ? -1 : false]] : null;
 	}
 	static _getText(str, haveBracket) {
 		if(haveBracket && (str[0] !== '(')) {
@@ -7948,7 +8152,7 @@ class SpellsCodegen {
 				}
 				lastType = this.TYPE_NOT;
 				break;
-			case '/': {
+			case '/': { // "//" Comment
 				i++;
 				this._col++;
 				if(sList[i] === '/') {
@@ -8009,7 +8213,7 @@ class SpellsCodegen {
 		}
 		const val = m[1];
 		try {
-			toRegExp(val, true);
+			strToRegExp(val, true);
 		} catch(err) {
 			this._col++;
 			this._setError(Lng.seErrRegex[lang], val);
@@ -8045,7 +8249,8 @@ class SpellsCodegen {
 		return null;
 	}
 	_doSpell(name, str, isNeg) {
-		let m, i = 0;
+		let m;
+		let i = 0;
 		const spellIdx = Spells.names.indexOf(name);
 		if(spellIdx === -1) {
 			this._col -= name.length + 1;
@@ -8506,7 +8711,7 @@ class SpellsInterpreter {
 		const txt = this._post.text;
 		// (1 << 0): samelines
 		if(val & 1) {
-			arr = txt.replace(/>/g, '').split(/\s*\n\s*/);
+			arr = txt.replaceAll('>', '').split(/\s*\n\s*/);
 			if((len = arr.length) > 5) {
 				arr.sort();
 				for(let i = 0, n = len / 4; i < len;) {
@@ -8633,6 +8838,7 @@ class PostForm {
 		this.pArea = [];
 		this.pForm = null;
 		this.qArea = null;
+		this.quotedText = '';
 		this._pBtn = [];
 		const qOeForm = 'form[name="oeform"], form[action*="paint"]';
 		this.oeForm = oeForm || $q(qOeForm);
@@ -8641,8 +8847,9 @@ class PostForm {
 				ajaxLoad(aib.getThrUrl(aib.b, Thread.first.num), false).then(loadedDoc => {
 					const form = $q(aib.qForm, loadedDoc);
 					const oeForm = $q(qOeForm, loadedDoc);
-					pr = new PostForm(form && doc.adoptNode(form), oeForm && doc.adoptNode(oeForm), true);
-				}, () => (pr = new PostForm(null, null, true)));
+					postform = new PostForm(form && doc.adoptNode(form),
+						oeForm && doc.adoptNode(oeForm), true);
+				}, () => (postform = new PostForm(null, null, true)));
 			} else {
 				this.form = null;
 			}
@@ -8675,18 +8882,18 @@ class PostForm {
 		this._initTextarea();
 		this.addMarkupPanel();
 		this.setPlaceholders();
-		this.updateLanguage();
 		this._initCaptcha();
 		this._initSubmit();
+		aib.updateSubmitBtn(this.subm);
 		if(Cfg.ajaxPosting) {
 			this._initAjaxPosting();
 		}
 		if(Cfg.addSageBtn && this.mail) {
-			PostForm.hideField($parent(this.mail, 'LABEL') || this.mail);
+			PostForm.hideField(this.mail.closest('label') || this.mail);
 			setTimeout(() => this.toggleSage(), 0);
 		}
 		if(Cfg.noPassword && this.passw) {
-			$hide($qParent(this.passw, aib.qFormTr));
+			$hide(this.passw.closest(aib.qFormTr));
 		}
 		if(Cfg.noName && this.name) {
 			PostForm.hideField(this.name);
@@ -8702,26 +8909,32 @@ class PostForm {
 		}
 	}
 	static hideField(el) {
-		const next = el.nextElementSibling;
-		$toggle(next && (next.style.display !== 'none') ||
-			el.previousElementSibling ? el : $qParent(el, aib.qFormTr));
+		const els = el.parentNode.children;
+		let hideTr = true;
+		for(let i = 0, len = els.length; i < len; ++i) {
+			if(els[i] !== el && els[i].style.display !== 'none') {
+				hideTr = false;
+				break;
+			}
+		}
+		$toggle(hideTr ? el.closest(aib.qFormTr) : el);
 	}
-	static setUserName() {
+	static async setUserName() {
 		const el = $q('input[info="nameValue"]');
 		if(el) {
-			saveCfg('nameValue', el.value);
+			await CfgSaver.save('nameValue', el.value);
 		}
-		pr.name.value = Cfg.userName ? Cfg.nameValue : '';
+		postform.name.value = Cfg.userName ? Cfg.nameValue : '';
 	}
-	static setUserPassw() {
+	static async setUserPassw() {
 		if(!Cfg.userPassw) {
 			return;
 		}
 		const el = $q('input[info="passwValue"]');
 		if(el) {
-			saveCfg('passwValue', el.value);
+			await CfgSaver.save('passwValue', el.value);
 		}
-		const value = pr.passw.value = Cfg.passwValue;
+		const value = postform.passw.value = Cfg.passwValue;
 		for(const { passEl } of DelForm) {
 			if(passEl) {
 				passEl.value = value;
@@ -8738,8 +8951,8 @@ class PostForm {
 	get sageBtn() {
 		const value = $aEnd(this.subm, '<span id="de-sagebtn"><svg class="de-btn-sage">' +
 			'<use xlink:href="#de-symbol-post-sage"/></svg></span>');
-		value.onclick = () => {
-			toggleCfg('sageReply');
+		value.onclick = async () => {
+			await toggleCfg('sageReply');
 			this.toggleSage();
 		};
 		Object.defineProperty(this, 'sageBtn', { value });
@@ -8751,16 +8964,15 @@ class PostForm {
 	addMarkupPanel() {
 		let el = $id('de-txt-panel');
 		if(!Cfg.addTextBtns) {
-			$del(el);
+			aib.removeMarkupButtons(el);
 			return;
 		}
 		if(!el) {
 			el = $add('<span id="de-txt-panel"></span>');
-			el.addEventListener('click', this);
-			el.addEventListener('mouseover', this);
+			['click', 'mouseover'].forEach(e => el.addEventListener(e, this));
 		}
 		el.style.cssFloat = Cfg.txtBtnsLoc ? 'none' : 'right';
-		$after(Cfg.txtBtnsLoc ? $id('de-resizer-text') || this.txta : this.subm, el);
+		aib.insertMarkupButtons(this, el);
 		const id = ['bold', 'italic', 'under', 'strike', 'spoil', 'code', 'sup', 'sub'];
 		const val = ['B', 'i', 'U', 'S', '%', 'C', 'x\u00b2', 'x\u2082'];
 		const mode = Cfg.addTextBtns;
@@ -8803,9 +9015,12 @@ class PostForm {
 			this.setReply(false, !aib.t || Cfg.addPostForm > 1);
 		}
 	}
+	getSelectedText() {
+		this.quotedText = deWindow.getSelection().toString();
+	}
 	handleEvent(e) {
 		let el = e.target;
-		if(el.tagName !== 'DIV') {
+		if(el.tagName.toLowerCase() !== 'div') {
 			el = el.parentNode;
 		}
 		const { id } = el;
@@ -8814,7 +9029,7 @@ class PostForm {
 		}
 		if(e.type === 'mouseover') {
 			if(id === 'de-btn-quote') {
-				quotedText = deWindow.getSelection().toString();
+				this.getSelectedText();
 			}
 			let key = -1;
 			if(HotKeys.enabled) {
@@ -8829,32 +9044,31 @@ class PostForm {
 			KeyEditListener.setTitle(el, key);
 			return;
 		}
-		const txtaEl = pr.txta;
+		const txtaEl = postform.txta;
 		const { selectionStart: start, selectionEnd: end } = txtaEl;
 		const quote = Cfg.spacedQuote ? '> ' : '>';
 		if(id === 'de-btn-quote') {
-			insertText(txtaEl, quote + (start === end ? quotedText : txtaEl.value.substring(start, end))
-				.replace(/^[\r\n]|[\r\n]+$/g, '').replace(/\n/gm, '\n' + quote) + '\n');
-			quotedText = '';
+			insertText(txtaEl, quote + (start === end ? this.quotedText : txtaEl.value.substring(start, end))
+				.replace(/^[\r\n]|[\r\n]+$/g, '')
+				.replace(/\n/gm, '\n' + quote) + (this.quotedText ? '\n' : ''));
+			this.quotedText = '';
 		} else {
-			const { scrtop } = txtaEl;
-			const val = PostForm._wrapText(el.getAttribute('de-tag'), txtaEl.value.substring(start, end));
+			const { scrtop, value } = txtaEl;
+			const val = PostForm._wrapText(el.getAttribute('de-tag'), value.substring(start, end));
 			const len = start + val[0];
-			txtaEl.value = txtaEl.value.substr(0, start) + val[1] + txtaEl.value.substr(end);
+			txtaEl.value = value.substr(0, start) + val[1] + value.substr(end);
 			txtaEl.setSelectionRange(len, len);
 			txtaEl.focus();
 			txtaEl.scrollTop = scrtop;
 		}
-		$pd(e);
+		e.preventDefault();
 		e.stopPropagation();
 	}
-	refreshCap(isErr = false) {
-		if(this.cap) {
-			this.cap.refreshCaptcha(isErr, isErr, this.tNum);
-		}
+	refreshCap(isError = false) {
+		this.cap?.refreshCaptcha(isError, isError, this.tNum);
 	}
 	setPlaceholders() {
-		if(aib.kusaba || !aib.multiFile && Cfg.fileInputs === 2) {
+		if(aib.formHeaders || !aib.multiFile && Cfg.fileInputs === 2) {
 			return;
 		}
 		this._setPlaceholder('name');
@@ -8867,10 +9081,10 @@ class PostForm {
 	}
 	setReply(isQuick, needToHide) {
 		if(isQuick) {
-			$after(this.qArea.firstChild, this.pForm);
+			this.qArea.firstChild.after(this.pForm);
 		} else {
-			$after(this.pArea[+this.isBottom], this.qArea);
-			$after(this._pBtn[+this.isBottom], this.pForm);
+			this.pArea[+this.isBottom].after(this.qArea);
+			this._pBtn[+this.isBottom].after(this.pForm);
 		}
 		this.isHidden = needToHide;
 		$toggle(this.qArea, isQuick);
@@ -8892,7 +9106,7 @@ class PostForm {
 			this.setReply(false, false);
 		}
 		if(e) {
-			$pd(e);
+			e.preventDefault();
 		}
 	}
 	showQuickReply(post, pNum, isCloseReply, isNumClick, isNoLink = false) {
@@ -8901,13 +9115,13 @@ class PostForm {
 			this.setReply(true, false);
 			$q('a', this._pBtn[+this.isBottom]).className =
 				`de-abtn de-parea-btn-${ aib.t ? 'reply' : 'thr' }`;
-		} else if(isCloseReply && !quotedText && post.wrap.nextElementSibling === this.qArea) {
+		} else if(isCloseReply && !this.quotedText && post.wrap.nextElementSibling === this.qArea) {
 			this.closeReply();
 			return;
 		}
-		$after(post.wrap, this.qArea);
+		post.wrap.after(this.qArea);
 		if(this.qArea.classList.contains('de-win')) {
-			updateWinZ(this.qArea.style);
+			updateWinZ(this.qArea);
 		}
 		const qNum = post.thr.num;
 		if(!aib.t) {
@@ -8927,8 +9141,8 @@ class PostForm {
 			isNumClick ? `>>${ pNum }${ isOnNewLine ? '\n' : '' }` :
 			(isOnNewLine ? '' : '\n') +
 				(this.lastQuickPNum === pNum && txt.includes('>>' + pNum) ? '' : `>>${ pNum }\n`);
-		const quote = !quotedText ? '' : `${ quotedText.replace(/^[\r\n]|[\r\n]+$/g, '')
-			.replace(/(^|\n)(.)/gm, `$1>${ Cfg.spacedQuote ? ' ' : '' }$2`) }\n`;
+		const quote = this.quotedText ? `${ this.quotedText.replace(/^[\r\n]|[\r\n]+$/g, '')
+			.replace(/(^|\n)(.)/gm, `$1>${ Cfg.spacedQuote ? ' ' : '' }$2`) }\n` : '';
 		insertText(this.txta, link + quote);
 		const winTitle = post.thr.op.title.trim();
 		$q('.de-win-title', this.qArea).textContent =
@@ -8941,16 +9155,12 @@ class PostForm {
 		}
 		const isSage = Cfg.sageReply;
 		this.sageBtn.style.opacity = isSage ? '1' : '.3';
-		this.sageBtn.title = isSage ? 'SAGE!' : Lng.noSage[lang];
+		this.sageBtn.title = isSage ? Lng.disableSage[lang] : Lng.enableSage[lang];
 		if(this.mail.type === 'text') {
 			this.mail.value = isSage ? 'sage' : aib._4chan ? 'noko' : '';
 		} else {
 			this.mail.checked = isSage;
 		}
-	}
-	updateLanguage() {
-		this.txta.title = Lng.pasteImage[lang];
-		aib.updateSubmitBtn(this.subm);
 	}
 	updatePAreaBtns() {
 		const txt = 'de-abtn de-parea-btn-';
@@ -8974,7 +9184,9 @@ class PostForm {
 			const str = `${ m[1] }[${ tag }]${ m[2] }[/${ tag }]${ m[3] }`;
 			return [!m[2].length ? m[1].length + tag.length + 2 : str.length, str];
 		}
-		let m, rv = '', i = 0;
+		let m;
+		let rv = '';
+		let i = 0;
 		const arr = text.split('\n');
 		for(let len = arr.length; i < len; ++i) {
 			m = arr[i].match(/^(\s*)(.*?)(\s*)$/);
@@ -8987,13 +9199,18 @@ class PostForm {
 	_initAjaxPosting() {
 		let el;
 		if(aib.qFormRedir && (el = $q(aib.qFormRedir, this.form))) {
-			aib.disableRedirection(el);
+			$hide(el.closest(aib.qFormTr));
+			el.checked = true;
 		}
-		this.form.onsubmit = e => {
-			$pd(e);
+		this.form.onsubmit = async e => {
+			e.preventDefault();
 			$popup('upload', Lng.sending[lang], true);
-			html5Submit(this.form, this.subm, true).then(checkUpload)
-				.catch(err => $popup('upload', getErrorMessage(err)));
+			try {
+				const data = await html5Submit(this.form, this.subm, true);
+				await checkSubmit(data);
+			} catch(err) {
+				showSubmitError(err);
+			}
 		};
 	}
 	_initCaptcha() {
@@ -9020,7 +9237,7 @@ class PostForm {
 			return;
 		}
 		if(aib.fixFileInputs) {
-			aib.fixFileInputs($qParent(fileEl, aib.qFormTd));
+			aib.fixFileInputs(fileEl.closest(aib.qFormTd));
 		}
 		this.files = new Files(this, $q(aib.qFormFile, this.form));
 		// We need to clear file inputs in case if session was restored.
@@ -9029,18 +9246,8 @@ class PostForm {
 	}
 	_initSubmit() {
 		this.subm.addEventListener('click', e => {
-			/* if(aib.makaba && !aib._2channel && !Cfg.altCaptcha) {
-				if(!this.cap.isSubmitWait) {
-					$pd(e);
-					$popup('upload', 'reCaptcha...', true);
-					this.cap.isSubmitWait = true;
-					this.refreshCap();
-					return;
-				}
-				this.cap.isSubmitWait = false;
-			} */
 			if(Cfg.warnSubjTrip && this.subj && /#.|##./.test(this.subj.value)) {
-				$pd(e);
+				e.preventDefault();
 				$popup('upload', Lng.subjHasTrip[lang]);
 				return;
 			}
@@ -9062,22 +9269,19 @@ class PostForm {
 			if(Cfg.ajaxPosting) {
 				$popup('upload', Lng.checking[lang], true);
 			}
-			if(this.video && (val = this.video.value) && (val = val.match(Videos.ytReg))) {
+			if(this.video && (val = this.video.value?.match(Videos.ytReg))) {
 				this.video.value = 'http://www.youtube.com/watch?v=' + val[1];
 			}
 			if(this.isQuick) {
 				$hide(this.pForm);
 				$hide(this.qArea);
-				$after(this._pBtn[+this.isBottom], this.pForm);
+				this._pBtn[+this.isBottom].after(this.pForm);
 			}
 			updater.pauseUpdater();
 		});
 	}
 	_initTextarea() {
 		const el = this.txta;
-		if(aib.dobrochan) {
-			el.removeAttribute('id');
-		}
 		el.classList.add('de-textarea');
 		const { style } = el;
 		style.setProperty('width', Cfg.textaWidth + 'px', 'important');
@@ -9091,19 +9295,15 @@ class PostForm {
 			}
 		});
 		// Add image from clipboard to file inputs on Ctrl+V
-		el.addEventListener('paste', e => {
-			if('clipboardData' in e) {
-				for(const item of e.clipboardData.items) {
-					if(item.kind === 'file') {
-						const inputs = this.files._inputs;
-						for(let i = 0, len = inputs.length; i < len; ++i) {
-							const input = inputs[i];
-							if(!input.hasFile) {
-								const file = item.getAsFile();
-								input._addUrlFile(URL.createObjectURL(file), file);
-								break;
-							}
-						}
+		el.addEventListener('paste', async e => {
+			const files = e?.clipboardData?.files;
+			for(const file of files) {
+				const inputs = this.files._inputs;
+				for(let i = 0, len = inputs.length; i < len; ++i) {
+					const input = inputs[i];
+					if(!input.hasFile) {
+						await input.addUrlFile(URL.createObjectURL(file), file);
+						break;
 					}
 				}
 			}
@@ -9115,8 +9315,8 @@ class PostForm {
 				const { width, height } = s;
 				s.setProperty('width', width + 'px', 'important');
 				s.setProperty('height', height + 'px', 'important');
-				saveCfg('textaWidth', parseInt(width, 10));
-				saveCfg('textaHeight', parseInt(height, 10));
+				/* await */ CfgSaver.save('textaWidth', parseInt(width, 10),
+					'textaHeight', parseInt(height, 10));
 			});
 			return;
 		}
@@ -9126,9 +9326,8 @@ class PostForm {
 			handleEvent(e) {
 				switch(e.type) {
 				case 'mousedown':
-					docBody.addEventListener('mousemove', this);
-					docBody.addEventListener('mouseup', this);
-					$pd(e);
+					['mousemove', 'mouseup'].forEach(e => doc.body.addEventListener(e, this));
+					e.preventDefault();
 					return;
 				case 'mousemove': {
 					const cr = this._el.getBoundingClientRect();
@@ -9137,22 +9336,16 @@ class PostForm {
 					return;
 				}
 				default: // mouseup
-					docBody.removeEventListener('mousemove', this);
-					docBody.removeEventListener('mouseup', this);
-					saveCfg('textaWidth', parseInt(this._elStyle.width, 10));
-					saveCfg('textaHeight', parseInt(this._elStyle.height, 10));
+					['mousemove', 'mouseup'].forEach(e => doc.body.removeEventListener(e, this));
+					/* await */ CfgSaver.save('textaWidth', parseInt(this._elStyle.width, 10),
+						'textaHeight', parseInt(this._elStyle.height, 10));
 				}
 			}
 		});
 	}
 	_makeHideableContainer() {
-		this.pForm = $add('<div id="de-pform" class="de-win-body"></div>');
-		if(this.form) {
-			this.pForm.appendChild(this.form);
-		}
-		if(this.oeForm) {
-			this.pForm.appendChild(this.oeForm);
-		}
+		(this.pForm = $add('<div id="de-pform" class="de-win-body"></div>'))
+			.append(this.form || '', this.oeForm || '');
 		const html = '<div class="de-parea"><div>[<a href="#"></a>]</div><hr></div>';
 		this.pArea = [
 			$bBegin(DelForm.first.el, html),
@@ -9183,25 +9376,25 @@ class PostForm {
 		const buttons = $q('.de-win-buttons', this.qArea);
 		buttons.onmouseover = ({ target }) => {
 			const el = target.parentNode;
-			switch(fixEventEl(target).classList[0]) {
+			switch(nav.fixEventEl(target).classList[0]) {
 			case 'de-win-btn-clear': el.title = Lng.clearForm[lang]; break;
 			case 'de-win-btn-close': el.title = Lng.closeReply[lang]; break;
 			case 'de-win-btn-toggle': el.title = Cfg.replyWinDrag ? Lng.underPost[lang] : Lng.makeDrag[lang];
 			}
 		};
 		const [clearBtn, toggleBtn, closeBtn] = [...buttons.children];
-		clearBtn.onclick = () => {
-			saveCfg('sageReply', 0);
+		clearBtn.onclick = async () => {
+			await CfgSaver.save('sageReply', 0);
 			this.toggleSage();
 			this.files.clearInputs();
 			[this.txta, this.name, this.mail, this.subj, this.video, this.cap && this.cap.textEl].forEach(
 				el => el && (el.value = ''));
 		};
-		toggleBtn.onclick = () => {
-			toggleCfg('replyWinDrag');
+		toggleBtn.onclick = async () => {
+			await toggleCfg('replyWinDrag');
 			if(Cfg.replyWinDrag) {
 				this.qArea.className = aib.cReply + ' de-win';
-				updateWinZ(this.qArea.style);
+				updateWinZ(this.qArea);
 			} else {
 				this.qArea.className = aib.cReply + ' de-win-inpost';
 				this.txta.focus();
@@ -9212,12 +9405,16 @@ class PostForm {
 	_setPlaceholder(val) {
 		const el = val === 'cap' ? this.cap.textEl : this[val];
 		if(el) {
-			toggleAttr(el, 'placeholder', Lng[val][lang], aib.multiFile || Cfg.fileInputs !== 2);
+			if(aib.multiFile || Cfg.fileInputs !== 2) {
+				el.placeholder = Lng[val][lang];
+			} else {
+				el.removeAttribute('placeholder');
+			}
 		}
 	}
 	_toggleQuickReply(tNum) {
 		if(this.oeForm) {
-			$del($q('input[name="oek_parent"]', this.oeForm));
+			$q('input[name="oek_parent"]', this.oeForm)?.remove();
 			if(tNum) {
 				this.oeForm.insertAdjacentHTML('afterbegin',
 					`<input type="hidden" value="${ tNum }" name="oek_parent">`);
@@ -9227,7 +9424,7 @@ class PostForm {
 			if(aib.changeReplyMode && tNum !== this.tNum) {
 				aib.changeReplyMode(this.form, tNum);
 			}
-			$del($q(`input[name="${ aib.formParent }"]`, this.form));
+			$q(`input[name="${ aib.formParent }"]`, this.form)?.remove();
 			if(tNum) {
 				this.form.insertAdjacentHTML('afterbegin',
 					`<input type="hidden" name="${ aib.formParent }" value="${ tNum }">`);
@@ -9242,28 +9439,41 @@ class PostForm {
 =========================================================================================================== */
 
 function getSubmitError(dc) {
-	if(!dc.body.hasChildNodes() || $q(aib.qDForm, dc)) {
+	if(!dc.body?.hasChildNodes() || $q(aib.qDelForm, dc)) {
 		return null;
 	}
 	const err = [...$Q(aib.qError, dc)].map(str => str.innerHTML + '\n').join('')
-		.replace(/<a [^>]+>Назад.+|<br.+/, '') || dc.body.innerHTML;
+		.replace(/<a [^>]+>Назад.+/, '') || dc.body.innerHTML;
 	return aib.isIgnoreError(err) ? null : err;
 }
 
-function checkUpload(data) {
+function showSubmitError(error) {
+	if(postform.isQuick) {
+		postform.setReply(true, false);
+	}
+	if(/[cf]aptch|капч|подтвер|verifi/i.test(error)) {
+		postform.refreshCap(true);
+	}
+	$popup('upload', error.toString());
+	updater.sendErrNotif();
+	updater.continueUpdater();
+	DollchanAPI.notify('submitform', { success: false, error });
+}
+
+async function checkSubmit(data) {
 	let error = null;
 	let postNum = null;
-	const isDocument = data instanceof HTMLDocument;
+	const isDocument = data instanceof Document;
 	if(aib.getSubmitData) {
 		if(aib.jsonSubmit) {
-			if(aib.captchaAfterSubmit && aib.captchaAfterSubmit(data)) {
+			if(aib.captchaAfterSubmit?.(data)) {
 				return;
 			}
 			const _data = (isDocument ? data.body.textContent : data).trim();
 			try {
 				data = JSON.parse(_data);
 			} catch(err) {
-				error = getSubmitError(_data);
+				error = getSubmitError(isDocument ? data : $createDoc(data));
 			}
 		}
 		if(!error) {
@@ -9273,19 +9483,10 @@ function checkUpload(data) {
 		error = getSubmitError(data);
 	}
 	if(error) {
-		if(pr.isQuick) {
-			pr.setReply(true, false);
-		}
-		if(/[cf]aptch|капч|подтвер|verifi/i.test(error)) {
-			pr.refreshCap(true);
-		}
-		$popup('upload', error.toString());
-		updater.sendErrNotif();
-		updater.continueUpdater();
-		DollchanAPI.notify('submitform', { success: false, error });
+		showSubmitError(error);
 		return;
 	}
-	const { tNum } = pr;
+	const { tNum } = postform;
 	if((Cfg.markMyPosts || Cfg.markMyLinks) && postNum) {
 		MyPosts.set(postNum, tNum || postNum);
 	}
@@ -9299,15 +9500,19 @@ function checkUpload(data) {
 			sesStorage['de-fav-newthr'] = JSON.stringify({ num: postNum, date: Date.now() });
 		}
 	}
-	pr.clearForm();
+	postform.clearForm();
 	DollchanAPI.notify('submitform', { success: true, num: postNum });
-	Cfg.stats[tNum ? 'reply' : 'op']++;
-	saveCfgObj(aib.dm, Cfg);
+	const statsParam = tNum ? 'reply' : 'op';
+	Cfg.stats[statsParam]++;
+	await CfgSaver.saveObj(aib.domain, loadedCfg => {
+		loadedCfg.stats[statsParam]++;
+		return loadedCfg;
+	});
 	if(!tNum) {
 		if(postNum) {
 			deWindow.location.assign(aib.getThrUrl(aib.b, postNum));
 		} else if(isDocument) {
-			const dForm = $q(aib.qDForm, data);
+			const dForm = $q(aib.qDelForm, data);
 			if(dForm) {
 				deWindow.location.assign(aib.getThrUrl(aib.b, aib.getTNum(dForm)));
 			}
@@ -9327,18 +9532,18 @@ function checkUpload(data) {
 	} else {
 		pByNum.get(tNum).thr.loadPosts('new', false, false).then(() => closePopup('upload'));
 	}
-	pr.closeReply();
-	pr.refreshCap();
+	postform.closeReply();
+	postform.refreshCap();
 }
 
 async function checkDelete(data) {
-	const err = getSubmitError(data instanceof HTMLDocument ? data : $DOM(data));
+	const err = getSubmitError(data instanceof Document ? data : $createDoc(data));
 	if(err) {
 		$popup('delete', Lng.errDelete[lang] + ':\n' + err);
 		updater.sendErrNotif();
 		return;
 	}
-	const els = $Q(`[de-form] ${ aib.qRPost.split(', ').join(' input:checked, [de-form] ') } input:checked`);
+	const els = $Q(`[de-form] ${ aib.qPost.split(', ').join(' input:checked, [de-form] ') } input:checked`);
 	const threads = new Set();
 	const isThr = aib.t;
 	for(let i = 0, len = els.length; i < len; ++i) {
@@ -9375,32 +9580,33 @@ function isFormElDisabled(el) {
 	}
 	return false;
 }
+
 // https://html.spec.whatwg.org/multipage/forms.html#constructing-form-data-set
-function * getFormElements(form, submitter) {
+function* getFormElements(form, submitter) {
 	const controls = $Q('button, input, keygen, object, select, textarea', form);
 	const fixName = name => name ? name.replace(/([^\r])\n|\r([^\n])/g, '$1\r\n$2') : '';
 
 	constructSet:
 	for(let i = 0, len = controls.length; i < len; ++i) {
 		const field = controls[i];
-		const tagName = field.tagName.toLowerCase();
+		const tag = field.tagName.toLowerCase();
 		const type = field.getAttribute('type');
 		const name = field.getAttribute('name');
-		if($parent(field, 'DATALIST', form) || isFormElDisabled(field) ||
+		if(field.closest('datalist') || isFormElDisabled(field) ||
 			field !== submitter && (
-				tagName === 'button' ||
-				tagName === 'input' && (type === 'submit' || type === 'reset' || type === 'button')
+				tag === 'button' ||
+				tag === 'input' && (type === 'submit' || type === 'reset' || type === 'button')
 			) ||
-			tagName === 'input' && (
+			tag === 'input' && (
 				type === 'checkbox' && !field.checked ||
 				type === 'radio' && !field.checked ||
 				type === 'image' && !name
 			) ||
-			tagName === 'object'
+			tag === 'object'
 		) {
 			continue;
 		}
-		if(tagName === 'select') {
+		if(tag === 'select') {
 			const options = $Q('select > option, select > optgrout > option', field);
 			for(let j = 0, jlen = options.length; j < jlen; ++j) {
 				const option = options[j];
@@ -9408,7 +9614,7 @@ function * getFormElements(form, submitter) {
 					yield { type, el: field, name: fixName(name), value: option.value };
 				}
 			}
-		} else if(tagName === 'input') {
+		} else if(tag === 'input') {
 			switch(type) {
 			case 'image': throw new Error('input[type="image"] is not supported');
 			case 'checkbox':
@@ -9417,7 +9623,7 @@ function * getFormElements(form, submitter) {
 				continue constructSet;
 			case 'file': {
 				let img;
-				if(field.files.length > 0) {
+				if(field.files.length) {
 					const { files } = field;
 					for(let j = 0, jlen = files.length; j < jlen; ++j) {
 						yield { name, type, el: field, value: files[j] };
@@ -9430,12 +9636,7 @@ function * getFormElements(form, submitter) {
 						value : new File([img.data], img.name, { type: img.type })
 					};
 				} else {
-					yield {
-						el    : field,
-						name  : fixName(name),
-						type  : 'application/octet-stream',
-						value : new File([''], '')
-					};
+					yield aib.getEmptyFile(field, fixName(name));
 				}
 				continue constructSet;
 			}
@@ -9493,19 +9694,18 @@ async function html5Submit(form, submitter, needProgress = false) {
 		if(type === 'file') {
 			hasFiles = true;
 			const fileName = value.name;
-			const newFileName =
-				!Cfg.removeFName || el.obj && el.obj.imgFile && el.obj.imgFile.isConstName ? fileName : (
-					Cfg.removeFName === 1 ? '' :
-					// 5 years = 5*365*24*60*60*1e3 = 15768e7
-					Date.now() - (Cfg.removeFName === 2 ? 0 : Math.round(Math.random() * 15768e7))
-				) + '.' + getFileExt(fileName);
+			const newFileName = !Cfg.removeFName || el.obj?.imgFile?.isCustomName ? fileName : (
+				Cfg.removeFName === 1 ? '' :
+				// 5 years = 5*365*24*60*60*1e3 = 15768e7
+				Date.now() - (Cfg.removeFName === 2 ? 0 : Math.round(Math.random() * 15768e7))
+			) + '.' + getFileExt(fileName);
 			const mime = value.type;
 			if((Cfg.postSameImg || Cfg.removeEXIF) && (
 				mime === 'image/jpeg' ||
 				mime === 'image/png' ||
 				mime === 'image/gif' ||
-				mime === 'video/webm' && !aib.makaba)
-			) {
+				mime === 'video/webm'
+			)) {
 				const cleanData = cleanFile((await readFile(value)).data, el.obj ? el.obj.extraFile : null);
 				if(!cleanData) {
 					return Promise.reject(new Error(Lng.fileCorrupt[lang] + ': ' + fileName));
@@ -9526,7 +9726,7 @@ async function html5Submit(form, submitter, needProgress = false) {
 	}
 	const url = form.action;
 	return $ajax(url, ajaxParams).then(({ responseText: text }) => aib.jsonSubmit ? text :
-		aib.stormWallFixSubmit ? aib.stormWallFixSubmit(url, text, ajaxParams) : $DOM(text)
+		aib.stormWallFixSubmit ? aib.stormWallFixSubmit(url, text, ajaxParams) : $createDoc(text)
 	).catch(err => Promise.reject(err));
 }
 
@@ -9676,7 +9876,7 @@ function readExif(data, off, len) {
 class Files {
 	constructor(form, fileEl) {
 		this.filesCount = 0;
-		this.fileTr = $qParent(fileEl, aib.qFormTr);
+		this.fileTr = fileEl.closest(aib.qFormTr);
 		this.onchange = null;
 		this._form = form;
 		this._inputs = [];
@@ -9688,7 +9888,7 @@ class Files {
 		this.hideEmpty();
 	}
 	get rarInput() {
-		const value = $bEnd(docBody, '<input type="file" style="display: none;">');
+		const value = $bEnd(doc.body, '<input type="file" style="display: none;">');
 		Object.defineProperty(this, 'rarInput', { value });
 		return value;
 	}
@@ -9697,7 +9897,7 @@ class Files {
 		if(aib.multiFile) {
 			value = $aEnd(this.fileTr, '<div id="de-file-area"></div>');
 		} else {
-			value = $qParent(this._form.txta, aib.qFormTd).previousElementSibling;
+			value = this._form.txta.closest(aib.qFormTd).previousElementSibling;
 			value.innerHTML = `<div style="display: none;">${ value.innerHTML }</div><div></div>`;
 			value = value.lastChild;
 		}
@@ -9716,6 +9916,9 @@ class Files {
 			inp.clearInp();
 		}
 		this.hideEmpty();
+		if(aib.clearFileInputs) {
+			aib.clearFileInputs();
+		}
 	}
 	hideEmpty() {
 		for(let els = this._inputs, i = els.length - 1; i > 0; --i) {
@@ -9769,7 +9972,7 @@ class FileInput {
 		el.obj = this;
 		el.classList.add('de-file-input');
 		el.addEventListener('change', this);
-		if(el.files && el.files[0]) {
+		if(el.files?.[0]) {
 			this._removeFile();
 		}
 		if(Cfg.fileInputs) {
@@ -9781,13 +9984,55 @@ class FileInput {
 		if(FileInput._isThumbMode) {
 			this._initThumbs();
 		} else {
-			$before(this._input, this._txtWrap);
-			$after(this._input, this._utils);
+			this._initUtils();
 		}
+	}
+	async addUrlFile(url, file = null) {
+		if(!url) {
+			return Promise.reject(new Error('URL is null'));
+		}
+		$popup('file-loading', Lng.loading[lang], true);
+		return await ContentLoader.loadFileData(url, false).then(data => {
+			if(file) {
+				deWindow.URL.revokeObjectURL(url);
+			}
+			if(!data) {
+				$popup('file-loading', Lng.cantLoad[lang] + ' URL: ' + url);
+				return;
+			}
+			closePopup('file-loading');
+			this._isTxtEditable = this._isTxtEditName = false;
+			let name = file?.name || getFileName(url);
+			const type = file?.type || getFileMime(name);
+			if(!type || name.includes('?')) {
+				let ext;
+				switch((data[0] << 8) | data[1]) {
+				case 0xFFD8: ext = 'jpg'; break;
+				case 0x8950: ext = 'png'; break;
+				case 0x4749: ext = 'gif'; break;
+				case 0x1A45: ext = 'webm'; break;
+				default: ext = '';
+				}
+				if(ext) {
+					name = name.split('?').shift() + '.' + ext;
+				}
+			}
+			this.imgFile = { data: data.buffer, name, type: type || getFileMime(name) };
+			if(!file) {
+				file = new Blob([data], { type: this.imgFile.type });
+				file.name = name;
+			}
+			this._parent._files[this._parent._inputs.indexOf(this)] = file;
+			DollchanAPI.notify('filechange', this._parent._files);
+			if(FileInput._isThumbMode) {
+				$hide(this._txtWrap);
+			}
+			this._onFileChange(true);
+		});
 	}
 	changeMode(showThumbs) {
 		$toggle(this._input, !Cfg.fileInputs);
-		toggleAttr(this._input, 'multiple', true, aib.multiFile && Cfg.fileInputs);
+		this._input.toggleAttribute('multiple', aib.multiFile && Cfg.fileInputs);
 		$toggle(this._btnRen, Cfg.fileInputs && this.hasFile);
 		if(!(showThumbs ^ !!this._thumb)) {
 			return;
@@ -9796,16 +10041,15 @@ class FileInput {
 			this._initThumbs();
 			return;
 		}
-		$before(this._input, this._txtWrap);
-		$after(this._input, this._utils);
-		$del($q('de-file-txt-area'));
+		this._initUtils();
 		$show(this._parent.fileTr);
 		$show(this._txtWrap);
 		if(this._mediaEl) {
 			deWindow.URL.revokeObjectURL(this._mediaEl.src);
 		}
 		this._toggleDragEvents(this._thumb, false);
-		$del(this._thumb);
+		$q('.de-file-txt-area')?.remove();
+		this._thumb.remove();
 		this._thumb = this._mediaEl = null;
 	}
 	clearInp() {
@@ -9826,7 +10070,7 @@ class FileInput {
 			}
 			$hide(this._btnRar);
 			$hide(this._txtAddBtn);
-			$del(this._rarMsg);
+			this._rarMsg?.remove();
 			if(FileInput._isThumbMode) {
 				$hide(this._txtWrap);
 			}
@@ -9869,7 +10113,7 @@ class FileInput {
 				}
 			}
 			DollchanAPI.notify('filechange', this._parent._files);
-			return;
+			break;
 		}
 		case 'click': {
 			const parent = el.parentNode;
@@ -9919,7 +10163,7 @@ class FileInput {
 						return;
 					}
 					if(this.imgFile) {
-						this.imgFile.isConstName = true;
+						this.imgFile.isCustomName = true;
 						this.imgFile.name = newName;
 						if(FileInput._isThumbMode) {
 							this._addThumbTitle(newName, this.imgFile.data.byteLength);
@@ -9928,7 +10172,7 @@ class FileInput {
 					}
 					const file = this._input.files[0];
 					readFile(file).then(({ data }) => {
-						this.imgFile = { data, name: newName, type: file.type, isConstName: true };
+						this.imgFile = { data, name: newName, type: file.type, isCustomName: true };
 						this._removeFileHelper(); // Clear the original file
 						if(FileInput._isThumbMode) {
 							this._addThumbTitle(newName, data.byteLength);
@@ -9936,15 +10180,13 @@ class FileInput {
 					});
 					return;
 				} else {
-					this._addUrlFile(this._txtInput.value);
+					this.addUrlFile(this._txtInput.value);
 				}
 			} else if(el === this._txtInput && !this._isTxtEditable) {
 				this._input.click();
 				this._txtInput.blur();
 			}
-			$pd(e);
-			e.stopPropagation();
-			return;
+			break;
 		}
 		case 'dragenter':
 			if(isThumb) {
@@ -9971,15 +10213,15 @@ class FileInput {
 				}
 				DollchanAPI.notify('filechange', this._parent._files);
 			} else {
-				this._addUrlFile(dt.getData('text/plain'));
+				this.addUrlFile(dt.getData('text/plain'));
 			}
 			if(FileInput._isThumbMode) {
 				setTimeout(() => thumb.classList.remove('de-file-drag'), 10);
 			}
-			$pd(e);
-			e.stopPropagation();
 		}
 		}
+		e.preventDefault();
+		e.stopPropagation();
 	}
 	hideInp() {
 		if(FileInput._isThumbMode) {
@@ -10045,83 +10287,39 @@ class FileInput {
 	_addThumbTitle(name, size) {
 		this._thumb.firstChild.firstChild.title = `${ name }, ${ (size / 1024).toFixed(2) }KB`;
 	}
-	_addUrlFile(url, file = null) {
-		if(!url) {
-			return Promise.reject(new Error('URL is null'));
-		}
-		$popup('file-loading', Lng.loading[lang], true);
-		return ContentLoader.loadImgData(url, false).then(data => {
-			if(file) {
-				deWindow.URL.revokeObjectURL(url);
-			}
-			if(!data) {
-				$popup('file-loading', Lng.cantLoad[lang] + ' URL: ' + url);
-				return;
-			}
-			closePopup('file-loading');
-			this._isTxtEditable = this._isTxtEditName = false;
-			let name = file ? file.name : getFileName(url);
-			const type = file && file.type || getFileType(name);
-			if(!type || name.includes('?')) {
-				let ext;
-				switch((data[0] << 8) | data[1]) {
-				case 0xFFD8: ext = 'jpg'; break;
-				case 0x8950: ext = 'png'; break;
-				case 0x4749: ext = 'gif'; break;
-				case 0x1A45: ext = 'webm'; break;
-				default: ext = '';
-				}
-				if(ext) {
-					name = name.split('?').shift() + '.' + ext;
-				}
-			}
-			this.imgFile = { data: data.buffer, name, type: type || getFileType(name) };
-			if(!file) {
-				file = new Blob([data], { type: this.imgFile.type });
-				file.name = name;
-			}
-			this._parent._files[this._parent._inputs.indexOf(this)] = file;
-			DollchanAPI.notify('filechange', this._parent._files);
-			if(FileInput._isThumbMode) {
-				$hide(this._txtWrap);
-			}
-			this._onFileChange(true);
-		});
-	}
 	_changeFilesCount(val) {
 		this._parent.filesCount = Math.max(this._parent.filesCount + val, 0);
-		if(aib.dobrochan) {
-			$id('post_files_count').value = this._parent.filesCount + 1;
-		}
 	}
 	_initThumbs() {
 		const { fileTr } = this._parent;
 		$hide(fileTr);
 		$hide(this._txtWrap);
-		const isTr = fileTr.tagName === 'TR';
+		const isTr = fileTr.tagName.toLowerCase() === 'tr';
 		const txtArea = $q('.de-file-txt-area') || $bBegin(fileTr, isTr ?
 			'<tr class="de-file-txt-area"><td class="postblock"></td><td></td></tr>' :
 			'<div class="de-file-txt-area"></div>');
-		(isTr ? txtArea.lastChild : txtArea).appendChild(this._txtWrap);
+		(isTr ? txtArea.lastChild : txtArea).append(this._txtWrap);
 		this._thumb = $bEnd(this._parent.thumbsEl,
 			`<div class="de-file de-file-off"><div class="de-file-img"><div class="de-file-img" title="${
 				Lng.youCanDrag[lang] }"></div></div></div>`);
-		this._thumb.addEventListener('click', this);
-		this._thumb.addEventListener('dragenter', this);
-		this._thumb.appendChild(this._utils);
+		['click', 'dragenter'].forEach(e => this._thumb.addEventListener(e, this));
+		this._thumb.append(this._utils);
 		this._toggleDragEvents(this._thumb, true);
 		if(this.hasFile) {
 			this._showFileThumb();
 		}
+	}
+	_initUtils() {
+		this._input.parentNode.classList.add('de-file-wrap');
+		this._input.before(this._txtWrap);
+		this._input.after(this._utils);
 	}
 	_onFileChange(hasImgFile) {
 		this._txtInput.value = hasImgFile ? this.imgFile.name : this._input.files[0].name;
 		if(!hasImgFile) {
 			this.imgFile = null;
 		}
-		if(this._parent.onchange) {
-			this._parent.onchange();
-		}
+		this._parent.onchange?.();
 		if(FileInput._isThumbMode) {
 			this._showFileThumb();
 		}
@@ -10146,7 +10344,7 @@ class FileInput {
 		if(!nav.isPresto && !aib._4chan &&
 			/^image\/(?:png|jpeg)$/.test(hasImgFile ? this.imgFile.type : this._input.files[0].type)
 		) {
-			$del(this._rarMsg);
+			this._rarMsg?.remove();
 			$show(this._btnRar);
 		}
 	}
@@ -10188,10 +10386,8 @@ class FileInput {
 	}
 	_toggleDragEvents(el, isAdd) {
 		const name = isAdd ? 'addEventListener' : 'removeEventListener';
-		el[name]('dragover', $pd);
-		el[name]('dragenter', this);
-		el[name]('dragleave', this);
-		el[name]('drop', this);
+		el[name]('dragover', e => e.preventDefault());
+		['dragenter', 'dragleave', 'drop'].forEach(e => el[name](e, this));
 	}
 }
 
@@ -10206,8 +10402,8 @@ class Captcha {
 		this.tNum = initNum;
 		this.parentEl = nav.matchesSelector(el, aib.qFormTr) ? el : aib.getCapParent(el);
 		this.isAdded = false;
-		this.isSubmitWait = false;
-		this._isRecap = !aib._02ch && !!$q('[id*="recaptcha"], [class*="recaptcha"]', this.parentEl);
+		this._isHcap = !!$q('.h-captcha', this.parentEl);
+		this._isRecap = this._isHcap || !!$q('[id*="recaptcha"], [class*="recaptcha"]', this.parentEl);
 		this._lastUpdate = null;
 		this.originHTML = this.parentEl.innerHTML;
 		$hide(this.parentEl);
@@ -10216,17 +10412,20 @@ class Captcha {
 		}
 	}
 	addCaptcha() {
-		if(this.isAdded) { // Run this function only once
+		if(this.isAdded) {
 			return;
 		}
 		this.isAdded = true;
-		if(!this._isRecap) {
+		if(this._isHcap) {
+			$show(this.parentEl);
+		} else if(this._isRecap) {
+			const el = $q('#g-recaptcha, .g-recaptcha');
+			el.insertAdjacentHTML('afterend', `<div id="g-recaptcha" class="g-recaptcha" data-sitekey="${
+				el.getAttribute('data-sitekey') }"></div>`);
+			el.remove();
+		} else {
 			this.parentEl.innerHTML = this.originHTML;
 			this.textEl = $q('input[type="text"][name*="aptcha"]', this.parentEl);
-		} else {
-			const el = $q('#g-recaptcha, .g-recaptcha');
-			$replace(el, `<div id="g-recaptcha" class="g-recaptcha" data-sitekey="${
-				el.getAttribute('data-sitekey') }"></div>`);
 		}
 		this.initCapPromise();
 	}
@@ -10237,9 +10436,10 @@ class Captcha {
 				return;
 			}
 			const ruUa = 'йцукенгшщзхъїфыівапролджэєячсмитьбюёґ';
-			const en = "qwertyuiop[]]assdfghjkl;''zxcvbnm,.`\\";
+			const en = 'qwertyuiop[]]assdfghjkl;\'\'zxcvbnm,.`\\';
 			const code = e.charCode || e.keyCode;
-			let i, chr = String.fromCharCode(code).toLowerCase();
+			let i;
+			let chr = String.fromCharCode(code).toLowerCase();
 			if(Cfg.captchaLang === 1) {
 				if(code < 0x0410 || code > 0x04FF || (i = ruUa.indexOf(chr)) === -1) {
 					return;
@@ -10256,7 +10456,7 @@ class Captcha {
 		}
 		case 'focus': this.updateOutdated();
 		}
-		$pd(e);
+		e.preventDefault();
 		e.stopPropagation();
 	}
 	initCapPromise() {
@@ -10281,12 +10481,11 @@ class Captcha {
 	}
 	initTextEl() {
 		this.textEl.autocomplete = 'off';
-		if(!aib.kusaba && (aib.multiFile || Cfg.fileInputs !== 2)) {
+		if(!aib.formHeaders && (aib.multiFile || Cfg.fileInputs !== 2)) {
 			this.textEl.placeholder = Lng.cap[lang];
 		}
-		this.textEl.addEventListener('keypress', this);
+		['keypress', 'focus'].forEach(e => this.textEl.addEventListener(e, this));
 		this.textEl.onkeypress = null;
-		this.textEl.addEventListener('focus', this);
 		this.textEl.onfocus = null;
 	}
 	showCaptcha(isUpdateImage = false) {
@@ -10307,8 +10506,8 @@ class Captcha {
 		}
 		this.initImage(img);
 		const a = img.parentNode;
-		if(a.tagName === 'A') {
-			$replace(a, img);
+		if(a.tagName.toLowerCase() === 'a') {
+			a.replaceWith(img);
 		}
 		if(isUpdateImage) {
 			this.refreshCaptcha(false);
@@ -10317,7 +10516,7 @@ class Captcha {
 		}
 		$show(this.parentEl);
 	}
-	refreshCaptcha(isFocus, isErr = false, tNum = this.tNum) {
+	refreshCaptcha(isFocus, isError = false, tNum = this.tNum) {
 		if(!this.isAdded || tNum !== this.tNum) {
 			this.tNum = tNum;
 			this.isAdded = false;
@@ -10326,12 +10525,12 @@ class Captcha {
 			$hide(this.parentEl);
 			this.addCaptcha();
 			return;
-		} else if(!this.hasCaptcha && !isErr) {
+		} else if(!this.hasCaptcha && !isError) {
 			return;
 		}
 		this._lastUpdate = Date.now();
 		if(aib.captchaUpdate) {
-			const updatePromise = aib.captchaUpdate(this, isErr);
+			const updatePromise = aib.captchaUpdate(this, isError);
 			if(updatePromise) {
 				updatePromise.then(() => this._updateTextEl(isFocus), err => this._setUpdateError(err));
 			}
@@ -10360,28 +10559,28 @@ class Captcha {
 		}
 	}
 	updateHelper(url, fn) {
-		if(aib._capUpdPromise) {
-			aib._capUpdPromise.cancelPromise();
+		if(aib.captchaUpdPromise) {
+			aib.captchaUpdPromise.cancelPromise();
 		}
-		return (aib._capUpdPromise = $ajax(url).then(xhr => {
-			aib._capUpdPromise = null;
+		return (aib.captchaUpdPromise = $ajax(url).then(xhr => {
+			aib.captchaUpdPromise = null;
 			fn(xhr);
 		}, err => {
 			if(!(err instanceof CancelError)) {
-				aib._capUpdPromise = null;
+				aib.captchaUpdPromise = null;
 				return CancelablePromise.reject(err);
 			}
 		}));
 	}
 	updateOutdated() {
-		if(this._lastUpdate && (Date.now() - this._lastUpdate > Cfg.capUpdTime * 1e3)) {
+		if(!aib.makaba && this._lastUpdate && (Date.now() - this._lastUpdate > Cfg.capUpdTime * 1e3)) {
 			this.refreshCaptcha(false);
 		}
 	}
 
 	_setUpdateError(e) {
 		if(e) {
-			this.parentEl = e.toString();
+			this.parentEl.innerHTML = e.toString();
 			this.isAdded = false;
 			this.parentEl.onclick = () => {
 				this.parentEl.onclick = null;
@@ -10391,13 +10590,13 @@ class Captcha {
 		}
 	}
 	_updateRecap() {
-		// EXCLUDED FROM FIREFOX EXTENSION - START
+		// <EXCLUDED_FROM_EXTENSION>
 		const script = doc.createElement('script');
-		script.type = 'text/javascript';
-		script.src = aib.prot + '//www.google.com/recaptcha/api.js';
-		doc.head.appendChild(script);
+		script.src = aib.protocol +
+			(this._isHcap ? '//js.hcaptcha.com/1/api.js' : '//www.google.com/recaptcha/api.js');
+		doc.head.append(script);
 		setTimeout(() => script.remove(), 1e5);
-		// EXCLUDED FROM FIREFOX EXTENSION - END
+		// </EXCLUDED_FROM_EXTENSION>
 	}
 	_updateTextEl(isFocus) {
 		if(this.textEl) {
@@ -10537,9 +10736,9 @@ class AbstractPost {
 		this.ref = new RefMap(this);
 		this.thr = thr;
 		this._hasEvents = false;
-		this._linkDelay = 0;
+		this._linkTO = null;
 		this._menu = null;
-		this._menuDelay = 0;
+		this._menuTO = null;
 	}
 	get btnFav() {
 		const value = $q('.de-btn-fav, .de-btn-fav-sel', this.btns);
@@ -10596,158 +10795,181 @@ class AbstractPost {
 		embedAudioLinks(this);
 	}
 	handleEvent(e) {
-		let temp, el = fixEventEl(e.target);
+		let temp;
+		let el = nav.fixEventEl(e.target);
 		const { type } = e;
 		const isOutEvent = type === 'mouseout';
 		const isPview = this instanceof Pview;
+
+		// Click event
 		if(type === 'click') {
+			if(aib.handlePostClick) {
+				aib.handlePostClick(this, el, e);
+			}
+			// Skip the click by wheel button
 			switch(e.button) {
 			case 0: break;
-			case 1: e.stopPropagation(); // Skip the click on wheel button
+			case 1: e.stopPropagation();
 				/* falls through */
 			default: return;
 			}
-			if(this._menu) { // Hide the dropdown menu after the click on its option
+			// Hide the dropdown menu after the click on its option
+			if(this._menu && el.classList.contains('de-menu-item')) {
 				this._menu.removeMenu();
 				this._menu = null;
 			}
-			switch(el.tagName) {
-			case 'A':
+			// Handle click on links/images/videos
+			switch(el.tagName.toLowerCase()) {
+			case 'a':
 				// Click on YouTube link - show/hide player or thumbnail
 				if(el.classList.contains('de-video-link')) {
 					this.videos.clickLink(el, Cfg.embedYTube);
-					$pd(e);
+					e.preventDefault();
 					return;
 				}
 				// Check if the link is not an image container
-				if(!(temp = el.firstElementChild) || temp.tagName !== 'IMG') {
+				if((temp = el.firstElementChild)?.tagName.toLowerCase() !== 'img') {
 					temp = el.parentNode;
+					const text = el.textContent;
 					if(temp === this.trunc) { // Click on "truncated message" link
 						this._getFullMsg(temp, false);
-						$pd(e);
+						e.preventDefault();
 						e.stopPropagation();
-					} else if(Cfg.insertNum && pr.form && (this._pref === temp || this._pref === el) &&
-						!/Reply|Ответ/.test(el.textContent)
+					} else if(Cfg.insertNum && postform.form && (this._pref === temp || this._pref === el) &&
+						!/Reply|Ответ|№/.test(text)
 					) { // Click on post number link - show quick reply or redirect with an #anchor
-						$pd(e);
+						e.preventDefault();
 						e.stopPropagation();
 						if(!Cfg.showRepBtn) {
-							quotedText = deWindow.getSelection().toString();
-							pr.showQuickReply(isPview ? Pview.topParent : this, this.num, !isPview, false);
-							quotedText = '';
-						} else if(pr.isQuick || (aib.t && pr.isHidden)) {
-							pr.showQuickReply(isPview ? Pview.topParent : this, this.num, false, true);
+							postform.getSelectedText();
+							postform.showQuickReply(isPview ? Pview.topParent : this,
+								this.num, !isPview, false);
+							postform.quotedText = '';
+						} else if(postform.isQuick || aib.t && postform.isHidden) {
+							postform.showQuickReply(isPview ? Pview.topParent : this, this.num, false, true);
 						} else if(aib.t) {
-							const formText = pr.txta.value;
+							const formText = postform.txta.value;
 							const isOnNewLine = formText === '' || formText.slice(-1) === '\n';
-							insertText(pr.txta, `>>${ this.num }${ isOnNewLine ? '\n' : '' }`);
+							insertText(postform.txta, `>>${ this.num }${ isOnNewLine ? '\n' : '' }`);
 						} else {
-							deWindow.location.assign(el.href.replace(/#i/, '#'));
+							deWindow.location.assign(el.href);
 						}
-					} else if((temp = el.textContent)[0] === '>' &&
-						temp[1] === '>' && !temp[2].includes('/')
-					) { // Click on >>link - scroll to the referenced post
-						const post = pByNum.get(+temp.match(/\d+/));
-						if(post) {
-							post.selectAndScrollTo();
-						}
+					} else if(text === '№') {
+						pByNum.get(+el.href.match(/#(\d+)/)[1])?.selectAndScrollTo();
+					} else if(nav.isMobile) {
+						break;
+					} else if(text[0] === '>' && text[1] === '>' && !text[2].includes('/')) {
+						// Click on >>link - scroll to the referenced post
+						pByNum.get(+text.match(/\d+/))?.selectAndScrollTo();
 					}
 					return;
 				}
 				el = temp; // The link is an image container
 				/* falls through */
-			case 'IMG': // Click on attached image - expand/collapse
+			case 'img': // Click on attached image - expand/collapse
 				if(el.classList.contains('de-video-thumb')) {
 					if(Cfg.embedYTube === 1) {
 						const { videos } = this;
 						videos.currentLink.classList.add('de-current');
 						videos.setPlayer(videos.playerInfo, el.classList.contains('de-ytube'));
-						$pd(e);
+						e.preventDefault();
 					}
 				} else if(Cfg.expandImgs !== 0) {
 					this._clickImage(el, e);
 				}
 				return;
-			case 'OBJECT':
-			case 'VIDEO': // Click on attached video - expand/collapse
+			case 'object':
+			case 'video': // Click on attached video - expand/collapse
 				if(Cfg.expandImgs !== 0 && !ExpandableImage.isControlClick(e)) {
 					this._clickImage(el, e);
 				}
 				return;
 			}
-			if(aib.makaba) {
-				// Makaba: Click on like/dislike elements
-				let c = el.classList;
-				if(c.contains('post__rate') || c[0] === 'like-div' || c[0] === 'dislike-div' ||
-					(temp = el.parentNode) && (
-						(c = temp.classList).contains('post__rate') ||
-						c[0] === 'like-div' ||
-						c[0] === 'dislike-div') ||
-					(temp = temp.parentNode) && (
-						(c = temp.className) === 'like-div' ||
-						c === 'dislike-div')
-				) {
-					const task = temp.id.split('-')[0];
-					const num = +temp.id.match(/\d+/);
-					$ajax(`/api/${ task }?board=${ aib.b }&num=${ num }`).then(xhr => {
-						const obj = JSON.parse(xhr.responseText);
-						if(obj.Status !== 'OK') {
-							$popup('err-2chlike', obj.Reason);
-							return;
-						}
-						temp.classList.add(`${ task }-div-checked`, `post__rate_${ task }d`);
-						const countEl = $q(`.${ task }-count, #${ task }-count${ num }`, temp);
-						countEl.textContent = +countEl.textContent + 1;
-					}, () => $popup('err-2chlike', Lng.noConnect[lang]));
-				}
-				// Makaba: Click on "truncated message" link
-				if(el.classList.contains('expand-large-comment')) {
-					this._getFullMsg(el, false);
-					$pd(e);
-					e.stopPropagation();
-				}
-			}
 			// Click on post buttons
 			switch(el.classList[0]) {
-			case 'de-btn-expthr': this.thr.loadPosts('all'); return;
+			case 'de-btn-expthr':
+				if(nav.isMobile) {
+					this._menuToggleClickBtn(el, arrTags(Lng.selExpandThr[lang],
+						'<span class="de-menu-item" info="thr-exp">', '</span>'));
+				} else {
+					this.thr.loadPosts('all');
+				}
+				return;
 			case 'de-btn-fav': this.thr.toggleFavState(true, isPview ? this : null); return;
 			case 'de-btn-fav-sel': this.thr.toggleFavState(false, isPview ? this : null); return;
 			case 'de-btn-hide':
 			case 'de-btn-hide-user':
 			case 'de-btn-unhide':
-			case 'de-btn-unhide-user': this.setUserVisib(!this.isHidden); return;
+			case 'de-btn-unhide-user':
+				if(nav.isMobile && Cfg.showHideBtn === 1) {
+					this._menuToggleClickBtn(el,
+						(this instanceof Pview ? pByNum.get(this.num) : this)._getMenuHide());
+				} else {
+					this.setUserVisib(!this.isHidden);
+				}
+				return;
 			case 'de-btn-img':
-				quotedText = aib.getImgRealName(aib.getImgWrap(el));
-				pr.showQuickReply(isPview ? Pview.topParent : this, this.num, !isPview, false);
+				if(nav.isMobile) {
+					this._menuToggleClickBtn(el, Menu.getMenuImg(el));
+				} else {
+					postform.quotedText = aib.getImgRealName(aib.getImgWrap(el));
+					postform.showQuickReply(isPview ? Pview.topParent : this, this.num, !isPview, false);
+				}
 				return;
 			case 'de-btn-reply':
-				pr.showQuickReply(isPview ? Pview.topParent : this, this.num, !isPview, false);
-				quotedText = '';
+				if(nav.isMobile && Cfg.showRepBtn === 1) {
+					this._menuToggleClickBtn(el,
+						(this instanceof Pview ? pByNum.get(this.num) : this)._getMenuReply());
+				} else {
+					postform.showQuickReply(isPview ? Pview.topParent : this, this.num, !isPview, false);
+					postform.quotedText = '';
+				}
 				return;
-			case 'de-btn-sage': Spells.addSpell(9, '', false); return;
+			case 'de-btn-sage': /* await */ Spells.addSpell(9, '', false); return;
 			case 'de-btn-stick': this.toggleSticky(true); return;
 			case 'de-btn-stick-on': this.toggleSticky(false); return;
+			// Mobile devices: Click on >>links - show/delete post previews
+			default:
+				if(!nav.isMobile || !Cfg.linksNavig || el.tagName.toLowerCase() !== 'a' || el.isNotRefLink) {
+					return;
+				}
+				if(!el.textContent.startsWith('>>')) {
+					el.isNotRefLink = true;
+					return;
+				}
+				// Donʼt use classList here, 'de-link-postref ' should be first
+				el.className = 'de-link-postref ' + el.className;
+				/* falls through */
+			case 'de-link-backref':
+			case 'de-link-postref':
+				if(!nav.isMobile || !Cfg.linksNavig) {
+					return;
+				}
+				if(this.kid && this.kid.parent.num === this.num &&
+					this.kid.num === +el.textContent.match(/\d+/g)?.[0]
+				) {
+					this.kid.deletePview();
+				} else {
+					this.kid = Pview.showPview(this, el);
+				}
+				e.preventDefault();
+				e.stopPropagation();
 			}
 			return;
 		}
+
+		// Mouseover/mouseout events
 		if(!this._hasEvents) {
 			this._hasEvents = true;
-			this.el.addEventListener('click', this, true);
-			this.el.addEventListener('mouseout', this, true);
+			['click', 'mouseout'].forEach(e => this.el.addEventListener(e, this, true));
 		}
 		// Mouseover/mouseout on YouTube links
-		if(el.classList.contains('de-video-link')) {
-			if(aib.makaba && !el.videoInfo) {
-				const origMsg = this.msg.firstChild;
-				this.videos.updatePost($Q('.de-video-link', origMsg),
-					$Q('.de-video-link', origMsg.nextSibling), true);
-			}
-			if(Cfg.embedYTube === 2) {
-				this.videos.toggleFloatedThumb(el, isOutEvent);
-			}
+		if(Cfg.embedYTube === 2 && el.classList.contains('de-video-link')) {
+			this.videos.toggleFloatedThumb(el, isOutEvent);
 		}
 		// Mouseover/mouseout on attached images/videos - update title
-		if(!isOutEvent && Cfg.expandImgs && el.tagName === 'IMG' && !el.classList.contains('de-fullimg') &&
+		if(!isOutEvent && Cfg.expandImgs &&
+			el.tagName.toLowerCase() === 'img' && !el.classList.contains('de-fullimg') &&
 			(temp = this.images.getImageByEl(el)) && (temp.isImage || temp.isVideo)
 		) {
 			el.title = Cfg.expandImgs === 1 ? Lng.expImgInline[lang] : Lng.expImgFull[lang];
@@ -10756,8 +10978,10 @@ class AbstractPost {
 		switch(el.classList[0]) {
 		case 'de-btn-expthr':
 			this.btns.title = Lng.expandThr[lang];
-			this._addMenu(el, isOutEvent, arrTags(Lng.selExpandThr[lang],
-				'<span class="de-menu-item" info="thr-exp">', '</span>'));
+			if(!nav.isMobile) {
+				this._menuToggleOverBtn(el, isOutEvent, arrTags(Lng.selExpandThr[lang],
+					'<span class="de-menu-item" info="thr-exp">', '</span>'));
+			}
 			return;
 		case 'de-btn-fav': this.btns.title = Lng.addFav[lang]; return;
 		case 'de-btn-fav-sel': this.btns.title = Lng.delFav[lang]; return;
@@ -10766,30 +10990,23 @@ class AbstractPost {
 		case 'de-btn-unhide':
 		case 'de-btn-unhide-user':
 			this.btns.title = this.isOp ? Lng.toggleThr[lang] : Lng.togglePost[lang];
-			if(Cfg.showHideBtn === 1) {
-				this._addMenu(el, isOutEvent,
+			if(!nav.isMobile && Cfg.showHideBtn === 1) {
+				this._menuToggleOverBtn(el, isOutEvent,
 					(this instanceof Pview ? pByNum.get(this.num) : this)._getMenuHide());
 			}
 			return;
 		case 'de-btn-img':
-			if(el.parentNode.className !== 'de-fullimg-info') {
-				this._addMenu(el, isOutEvent, Menu.getMenuImg(el));
+			if(!nav.isMobile && el.parentNode.className !== 'de-fullimg-info') {
+				this._menuToggleOverBtn(el, isOutEvent, Menu.getMenuImg(el));
 			}
 			return;
 		case 'de-btn-reply': {
-			const title = this.btns.title = this.isOp ? Lng.replyToThr[lang] : Lng.replyToPost[lang];
-			if(Cfg.showRepBtn === 1) {
+			if(!nav.isMobile && Cfg.showRepBtn === 1) {
 				if(!isOutEvent) {
-					quotedText = deWindow.getSelection().toString();
+					postform.getSelectedText();
 				}
-				this._addMenu(el, isOutEvent,
-					`<span class="de-menu-item" info="post-reply">${ title }</span>` +
-					(aib.reportForm ? `<span class="de-menu-item" info="post-report">${
-						this.num === this.thr.num ? Lng.reportThr[lang] : Lng.reportPost[lang] }</span>` : ''
-					) +
-					(Cfg.markMyPosts || Cfg.markMyLinks ? `<span class="de-menu-item" info="post-markmy">${
-						MyPosts.has(this.num) ? Lng.deleteMyPost[lang] : Lng.markMyPost[lang] }</span>` : ''
-					));
+				this._menuToggleOverBtn(el, isOutEvent,
+					(this instanceof Pview ? pByNum.get(this.num) : this)._getMenuReply());
 			}
 			return;
 		}
@@ -10798,14 +11015,14 @@ class AbstractPost {
 		case 'de-post-btns': el.removeAttribute('title'); return;
 		// Mouseover/mouseout on >>links - show/delete post previews
 		default:
-			if(!Cfg.linksNavig || el.tagName !== 'A' || el.isNotRefLink) {
+			if(nav.isMobile || !Cfg.linksNavig || el.tagName.toLowerCase() !== 'a' || el.isNotRefLink) {
 				return;
 			}
 			if(!el.textContent.startsWith('>>')) {
 				el.isNotRefLink = true;
 				return;
 			}
-			// Don't use classList here, 'de-link-postref ' should be first
+			// Donʼt use classList here, 'de-link-postref ' should be first
 			el.className = 'de-link-postref ' + el.className;
 			/* falls through */
 		case 'de-link-backref':
@@ -10814,36 +11031,34 @@ class AbstractPost {
 				return;
 			}
 			if(isOutEvent) { // Mouseout - We need to delete previews
-				clearTimeout(this._linkDelay);
-				if(!(aib.getPostOfEl(fixEventEl(e.relatedTarget)) instanceof Pview) && Pview.top) {
+				clearTimeout(this._linkTO);
+				if(!(aib.getPostOfEl(nav.fixEventEl(e.relatedTarget)) instanceof Pview) && Pview.top) {
 					Pview.top.markToDel(); // If cursor is not over one of previews - delete all previews
 				} else if(this.kid) {
 					this.kid.markToDel(); // If cursor is over any preview - delete its kids
 				}
 			} else { // Mouseover - we need to show a preview for this link
-				this._linkDelay = setTimeout(() => (this.kid = Pview.showPview(this, el)), Cfg.linksOver);
+				if(nav.isMobile) {
+					return;
+				}
+				this._linkTO = setTimeout(() => (this.kid = Pview.showPview(this, el)), Cfg.linksOver);
 			}
-			$pd(e);
+			e.preventDefault();
 			e.stopPropagation();
 		}
 	}
 	toggleFavBtn(isEnable) {
 		const elClass = isEnable ? 'de-btn-fav-sel' : 'de-btn-fav';
-		if(this.btnFav) {
-			this.btnFav.setAttribute('class', elClass);
-		}
-		if(this.thr.btnFav) {
-			this.thr.btnFav.setAttribute('class', elClass);
-		}
+		this.btnFav?.setAttribute('class', elClass);
+		this.thr.btnFav?.setAttribute('class', elClass);
 	}
 	updateMsg(newMsg, sRunner) {
 		let videoExt, videoLinks;
-		const origMsg = aib.dobrochan ? this.msg.firstElementChild : this.msg;
 		if(Cfg.embedYTube) {
-			videoExt = $q('.de-video-ext', origMsg);
-			videoLinks = $Q(':not(.de-video-ext) > .de-video-link', origMsg);
+			videoExt = $q('.de-video-ext', this.msg);
+			videoLinks = $Q(':not(.de-video-ext) > .de-video-link', this.msg);
 		}
-		$replace(origMsg, newMsg);
+		this.msg.replaceWith(newMsg);
 		Object.defineProperties(this, {
 			msg   : { configurable: true, value: newMsg },
 			trunc : { configurable: true, value: null }
@@ -10852,7 +11067,7 @@ class AbstractPost {
 		if(Cfg.embedYTube) {
 			this.videos.updatePost(videoLinks, $Q('a[href*="youtu"], a[href*="vimeo.com"]', newMsg), false);
 			if(videoExt) {
-				newMsg.appendChild(videoExt);
+				newMsg.append(videoExt);
 			}
 		}
 		this.addFuncs();
@@ -10863,24 +11078,37 @@ class AbstractPost {
 		}
 		closePopup('load-fullmsg');
 	}
-
-	_addMenu(el, isOutEvent, html) {
-		if(!this.menu || this.menu.parentEl !== el) {
-			if(isOutEvent) {
-				clearTimeout(this._menuDelay);
-			} else {
-				this._menuDelay = setTimeout(() => this._showMenu(el, html), Cfg.linksOver);
+	changeMyMark(val) {
+		this.el.classList.toggle('de-mypost', val);
+		$Q(`[de-form] ${ aib.qPostMsg } a[href$="${ aib.anchor + this.num }"]`).forEach(el => {
+			const post = aib.getPostOfEl(el);
+			if(post.el !== this.el) {
+				el.classList.toggle('de-ref-you', val);
+				post.el.classList.toggle('de-mypost-reply', val);
 			}
-		}
+		});
 	}
+
 	_clickImage(el, e) {
 		const image = this.images.getImageByEl(el);
 		if(!image || (!image.isImage && !image.isVideo)) {
 			return;
 		}
 		image.expandImg((Cfg.expandImgs === 1) ^ e.ctrlKey, e);
-		$pd(e);
+		e.preventDefault();
 		e.stopPropagation();
+	}
+	async _downloadImageByLink(el, e) {
+		e.preventDefault();
+		$popup('file-loading', Lng.loading[lang], true);
+		const url = el.href;
+		const data = await ContentLoader.loadFileData(url, false);
+		if(!data) {
+			$popup('file-loading', Lng.cantLoad[lang] + ' URL: ' + url);
+			return;
+		}
+		closePopup('file-loading');
+		downloadBlob(new Blob([data], { type: getFileMime(url) }), el.getAttribute('download'));
 	}
 	_getFullMsg(truncEl, isInit) {
 		if(aib.deleteTruncMsg) {
@@ -10896,7 +11124,7 @@ class AbstractPost {
 			if(this.isOp) {
 				sourceEl = form;
 			} else {
-				const posts = $Q(aib.qRPost, form);
+				const posts = $Q(aib.qPost, form);
 				for(let i = 0, len = posts.length; i < len; ++i) {
 					const post = posts[i];
 					if(this.num === aib.getPNum(post)) {
@@ -10912,15 +11140,121 @@ class AbstractPost {
 			if(maybeSpells.hasValue) {
 				maybeSpells.value.endSpells();
 			}
-		}, emptyFn);
+		}, Function.prototype);
 	}
-	_showMenu(el, html) {
-		if(this._menu) {
-			this._menu.removeMenu();
+	_menuAdd(el, html) {
+		return new Menu(el, html, (el, e) =>
+			(this instanceof Pview ? pByNum.get(this.num) || this : this)._menuClickOnOptions(el, e), false);
+	}
+	async _menuClickOnOptions(el, e) {
+		const isHide = !this.isHidden;
+		const { num } = this;
+		switch(el.getAttribute('info')) {
+		case 'hide-sel': {
+			let { startContainer: start, endContainer: end } = this._selRange;
+			if(start.nodeType === 3) {
+				start = start.parentNode;
+			}
+			if(end.nodeType === 3) {
+				end = end.parentNode;
+			}
+			const inMsgSel = `${ aib.qPostMsg }, ${ aib.qPostMsg } *`;
+			if((nav.matchesSelector(start, inMsgSel) && nav.matchesSelector(end, inMsgSel)) || (
+				nav.matchesSelector(start, aib.qPostSubj) &&
+				nav.matchesSelector(end, aib.qPostSubj)
+			)) {
+				if(this._selText.includes('\n')) {
+					await Spells.addSpell(1 /* #exp */,
+						`/${ escapeRegExp(this._selText).replace(/\r?\n/g, '\\n') }/`, false);
+				} else {
+					await Spells.addSpell(0 /* #words */, this._selText.toLowerCase(), false);
+				}
+			} else {
+				dummy.innerHTML = '';
+				dummy.append(this._selRange.cloneContents());
+				await Spells.addSpell(2 /* #exph */,
+					`/${ escapeRegExp(dummy.innerHTML.replace(/^<[^>]+>|<[^>]+>$/g, '')) }/`, false);
+			}
+			return;
 		}
-		this._menu = new Menu(el, html,
-			el => (this instanceof Pview ? pByNum.get(this.num) : this)._clickMenu(el), false);
+		case 'hide-name': await Spells.addSpell(6 /* #name */, this.posterName, false); return;
+		case 'hide-trip': await Spells.addSpell(7 /* #trip */, this.posterTrip, false); return;
+		case 'hide-img': {
+			const { weight: w, width: wi, height: h } = this.images.firstAttach;
+			await Spells.addSpell(8 /* #img */, [0, [w, w], [wi, wi, h, h]], false);
+			return;
+		}
+		case 'hide-imgn':
+			await Spells.addSpell(3 /* #imgn */, `/${ escapeRegExp(this.images.firstAttach.name) }/`, false);
+			return;
+		case 'hide-ihash': {
+			const hash = await ImagesHashStorage.getHash(this.images.firstAttach);
+			if(hash !== -1) {
+				await Spells.addSpell(4 /* #ihash */, hash, false);
+			}
+			return;
+		}
+		case 'hide-noimg': await Spells.addSpell(0x108 /* (#all & !#img) */, '', true); return;
+		case 'hide-post': this.setUserVisib(!this.isHidden); break;
+		case 'hide-text': {
+			const words = Post.getWrds(this.text);
+			for(let post = Thread.first.op; post; post = post.next) {
+				Post.findSameText(num, !isHide, words, post);
+			}
+			return;
+		}
+		case 'hide-notext': await Spells.addSpell(0x10B /* (#all & !#tlen) */, '', true); return;
+		case 'hide-refs':
+			this.ref.toggleRef(isHide, true);
+			this.setUserVisib(isHide);
+			return;
+		case 'hide-refsonly': await Spells.addSpell(0 /* #words */, '>>' + num, false); return;
+		case 'img-load': this._downloadImageByLink(el, e); return;
+		case 'post-markmy': {
+			const isAdd = !MyPosts.has(num);
+			if(isAdd) {
+				MyPosts.set(num, this.thr.num);
+			} else {
+				MyPosts.removeStorage(num);
+			}
+			this.changeMyMark(isAdd);
+			return;
+		}
+		case 'post-reply': {
+			const isPview = this instanceof Pview;
+			postform.showQuickReply(isPview ? Pview.topParent : this, num, !isPview, false);
+			postform.quotedText = '';
+			return;
+		}
+		case 'post-report': aib.reportForm(num, this.thr.num); return;
+		case 'thr-exp': {
+			const task = +el.textContent.match(/\d+/);
+			this.thr.loadPosts(!task ? 'all' : task === 10 ? 'more' : task);
+		}
+		}
+	}
+	_menuShowOverBtn(el, html) {
+		this._menu?.removeMenu();
+		this._menu = this._menuAdd(el, html);
 		this._menu.onremove = () => (this._menu = null);
+	}
+	_menuToggleClickBtn(el, html) {
+		if(this._menu?.el && this._menu.parentEl === el) {
+			this._menu.removeMenu();
+			this._menu = null;
+			return;
+		}
+		this._menu = this._menuAdd(el, html);
+	}
+	_menuToggleOverBtn(el, isOutEvent, html) {
+		if(this._menu?.parentEl === el) {
+			return;
+		}
+		if(isOutEvent) {
+			clearTimeout(this._menuTO);
+		} else {
+			this._menuTO = setTimeout(() => this._menuShowOverBtn(el, html), Cfg.linksOver);
+		}
 	}
 }
 
@@ -10957,7 +11291,6 @@ class Post extends AbstractPost {
 		}
 		const isOpsPost = thr.opPosterId && thr.opPosterId === this.posterId;
 		el.classList.add(isOp ? 'de-oppost' : 'de-reply');
-		this.sage = aib.getSage(el);
 		this.btns = $aEnd(this._pref = $q(aib.qPostRef, el),
 			'<span class="de-post-btns">' + Post.getPostBtns(isOp, aib.t) +
 			(this.sage ? '<svg class="de-btn-sage"><use xlink:href="#de-symbol-post-sage"/></svg>' : '') +
@@ -11014,20 +11347,20 @@ class Post extends AbstractPost {
 		el.addEventListener('mouseover', this, true);
 	}
 	static addMark(postEl, forced) {
-		if(!doc.hidden && !forced) {
-			Post.clearMarks();
-		} else {
+		if(doc.hidden || forced) {
 			if(!Post.hasNew) {
 				Post.hasNew = true;
 				doc.addEventListener('click', Post.clearMarks, true);
 			}
 			postEl.classList.add('de-new-post');
+		} else {
+			Post.clearMarks();
 		}
 	}
 	static clearMarks() {
 		if(Post.hasNew) {
 			Post.hasNew = false;
-			$each($Q('.de-new-post'), el => el.classList.remove('de-new-post'));
+			$Q('.de-new-post').forEach(el => el.classList.remove('de-new-post'));
 			doc.removeEventListener('click', Post.clearMarks, true);
 		}
 	}
@@ -11084,12 +11417,12 @@ class Post extends AbstractPost {
 	static hideContent(headerEl, btnHide, isUser, isHide) {
 		if(!isHide) {
 			btnHide.setAttribute('class', isUser ? 'de-btn-hide-user' : 'de-btn-hide');
-			$each($Q('.de-post-hiddencontent', headerEl.parentNode),
+			$Q('.de-post-hiddencontent', headerEl.parentNode).forEach(
 				el => el.classList.remove('de-post-hiddencontent'));
 			return;
 		}
 		if(aib.t) {
-			Thread.first.hidCounter++;
+			Thread.first.hiddenCount++;
 		}
 		btnHide.setAttribute('class', isUser ? 'de-btn-unhide-user' : 'de-btn-unhide');
 		if(headerEl) {
@@ -11122,7 +11455,7 @@ class Post extends AbstractPost {
 	}
 	get nextNotDeleted() {
 		let post = this.nextInThread;
-		while(post && post.isDeleted) {
+		while(post?.isDeleted) {
 			post = post.nextInThread;
 		}
 		return post;
@@ -11140,6 +11473,11 @@ class Post extends AbstractPost {
 	}
 	get posterTrip() {
 		return new Post.Сontent(this).posterTrip;
+	}
+	get sage() {
+		const value = aib.getSage(this.el);
+		Object.defineProperty(this, 'sage', { value });
+		return value;
 	}
 	get subj() {
 		return new Post.Сontent(this).subj;
@@ -11233,10 +11571,7 @@ class Post extends AbstractPost {
 			HotKeys.cPost = this;
 			HotKeys.lastPageOffset = deWindow.pageYOffset;
 		} else {
-			const el = $q('.de-selected');
-			if(el) {
-				el.unselect();
-			}
+			$q('.de-selected')?.unselect();
 		}
 		this.select();
 	}
@@ -11327,10 +11662,7 @@ class Post extends AbstractPost {
 	}
 	unselect() {
 		if(this.isOp) {
-			const el = $id('de-thr-hid-' + this.num);
-			if(el) {
-				el.classList.remove('de-selected');
-			}
+			$id('de-thr-hid-' + this.num)?.classList.remove('de-selected');
 			this.thr.el.classList.remove('de-selected');
 		} else {
 			this.el.classList.remove('de-selected');
@@ -11370,14 +11702,6 @@ class Post extends AbstractPost {
 			return;
 		}
 		case 'hide-name': Spells.addSpell(6 /* #name */, this.posterName, false); return;
-		case 'hide-uid': {
-			let fixedId = this.posterId;
-			if(fixedId && fixedId.length) {
-				fixedId = [...fixedId].map(c => /[A-Za-z0-9]/.test(c) ? c : '\\' + c).join('');
-			}
-			const exph = `/(?:<span.*>)\s?${ fixedId }/`;
-			Spells.addSpell(2 /* #id */, exph, false); return;
-		}
 		case 'hide-trip': Spells.addSpell(7 /* #trip */, this.posterTrip, false); return;
 		case 'hide-img': {
 			const { weight: w, width: wi, height: h } = this.images.firstAttach;
@@ -11446,13 +11770,26 @@ class Post extends AbstractPost {
 			this._selRange = sel.getRangeAt(0);
 		}
 		return `${ ssel ? item('sel') : '' }${
-			this.posterId ? item('uid') : '' }${
 			this.posterName ? item('name') : '' }${
 			this.posterTrip ? item('trip') : '' }${
 			this.images.hasAttachments ? item('img') + item('imgn') + item('ihash') : item('noimg') }${
 			this.text ? item('text') : item('notext') }${
 			!Cfg.hideRefPsts && this.ref.hasMap ? item('refs') : '' }${
 			item('refsonly') }`;
+	}
+	_getMenuReply() {
+		return `<span class="de-menu-item" info="post-reply">${
+			this.btns.title = this.isOp ? Lng.replyToThr[lang] : Lng.replyToPost[lang]
+		}</span>` +
+		(getCookies().atom_access === '1' ? `<a class="de-menu-item" target="_blank" href="/${
+			aib.b }/imgboard.php?manage=&moderate=${ this.num }">${
+			this.isOp ? Lng.moderateThread[lang] : Lng.moderatePost[lang] }</a>` : '') +
+		(aib.reportForm ? `<span class="de-menu-item" info="post-report">${
+			this.isOp ? Lng.reportThr[lang] : Lng.reportPost[lang] }</span>` : '') +
+		(Cfg.markMyPosts || Cfg.markMyLinks ?
+			`<span class="de-menu-item" info="post-markmy">${
+				MyPosts.has(this.num) ? Lng.deleteMyPost[lang] : Lng.markMyPost[lang]
+			}</span>` : '');
 	}
 	_strikePostNum(isHide) {
 		const { num } = this;
@@ -11461,7 +11798,7 @@ class Post extends AbstractPost {
 		} else {
 			Post.hiddenNums.delete(+num);
 		}
-		$each($Q(`[de-form] a[href$="${ aib.anchor + num }"]`), el => {
+		$Q(`[de-form] a[href$="${ aib.anchor + num }"]`).forEach(el => {
 			el.classList.toggle('de-link-hid', isHide);
 			if(Cfg.removeHidd && el.classList.contains('de-link-backref')) {
 				const refMapEl = el.parentNode;
@@ -11522,14 +11859,14 @@ Post.Сontent = class PostContent extends TemporaryContent {
 		const value = this.post.msg.innerHTML
 			.replace(/<\/?(?:br|p|li)[^>]*?>/gi, '\n')
 			.replace(/<[^>]+?>/g, '')
-			.replace(/&gt;/g, '>')
-			.replace(/&lt;/g, '<')
-			.replace(/&nbsp;/g, '\u00A0').trim();
+			.replaceAll('&gt;', '>')
+			.replaceAll('&lt;', '<')
+			.replaceAll('&nbsp;', '\u00A0').trim();
 		Object.defineProperty(this, 'text', { value });
 		return value;
 	}
 	get title() {
-		const value = this.subj || this.text.substring(0, 70).replace(/\s+/g, ' ');
+		const value = this.subj || this.text.substring(0, 85).replace(/\s+/g, ' ');
 		Object.defineProperty(this, 'title', { value });
 		return value;
 	}
@@ -11577,7 +11914,7 @@ Post.Note = class PostNote {
 		if(this.isHideThr) {
 			this._aEl.onmouseover = this._aEl.onmouseout = e => this._post.hideContent(e.type === 'mouseout');
 			this._aEl.onclick = e => {
-				$pd(e);
+				e.preventDefault();
 				this._post.setUserVisib(!this._post.isHidden);
 			};
 			text = (this._post.title ? `(${ this._post.title }) ` : '') +
@@ -11651,9 +11988,9 @@ class Pview extends AbstractPost {
 			return;
 		}
 		this._isCached = true;
-		this.brd = link.pathname.match(/^\/?(.+\/)/)[1].replace(aib.res, '').replace(/\/$/, '');
-		if(PviewsCache.has(this.brd + tNum)) {
-			post = PviewsCache.get(this.brd + tNum).getPost(pNum);
+		this.board = link.pathname.match(/^\/?(.+\/)/)[1].replace(aib.res, '').replace(/\/$/, '');
+		if(PviewsCache.has(this.board + tNum)) {
+			post = PviewsCache.get(this.board + tNum).getPost(pNum);
 			if(post) {
 				this._buildPview(post);
 			} else {
@@ -11666,16 +12003,15 @@ class Pview extends AbstractPost {
 			<svg class="de-wait"><use xlink:href="#de-symbol-wait"/></svg>${ Lng.loading[lang] }</div>`));
 
 		// Get post preview via ajax. Always use DOM parsing.
-		this._loadPromise = ajaxPostsLoad(this.brd, tNum, false, false)
+		this._loadPromise = ajaxPostsLoad(this.board, tNum, false, false)
 			.then(pBuilder => this._onload(pBuilder), err => this._onerror(err));
 	}
 	static get topParent() {
 		return Pview.top ? Pview.top.parent : null;
 	}
 	static showPview(parent, link) {
-		const tNum = +(link.pathname.match(/.+?\/[^\d]*(\d+)/) || [0, aib.getPostOfEl(link).tNum])[1];
-		let pNum = link.textContent.match(/\d+/g);
-		pNum = pNum ? +pNum.pop() : tNum;
+		const tNum = +link.pathname.match(/.+?\/[^\d]*(\d+)/)?.[1] || aib.getPostOfEl(link).tNum;
+		const pNum = +link.textContent.match(/\d+/g)?.[0] || tNum;
 		const isTop = !(parent instanceof Pview);
 		let pv = isTop ? Pview.top : parent.kid;
 		clearTimeout(Pview._delTO);
@@ -11690,7 +12026,7 @@ class Pview extends AbstractPost {
 				link.classList.add('de-link-parent');
 				pv._link = link;
 				if(pv.parent.num !== parent.num) {
-					$each($Q('.de-link-pview', pv.el), el => el.classList.remove('de-link-pview'));
+					$Q('.de-link-pview', pv.el).forEach(el => el.classList.remove('de-link-pview'));
 					Pview._markLink(pv.el, parent.num);
 				}
 			}
@@ -11756,7 +12092,7 @@ class Pview extends AbstractPost {
 			this._loadPromise.cancelPromise();
 			this._loadPromise = null;
 		}
-		let vPost = AttachedImage.viewer && AttachedImage.viewer.data.post;
+		let vPost = AttachedImage.viewer?.data.post;
 		let pv = this;
 		do {
 			clearTimeout(pv._readDelay);
@@ -11776,7 +12112,8 @@ class Pview extends AbstractPost {
 		} while((pv = pv.kid));
 	}
 	deleteNonSticky() {
-		let lastSticky = null, pv = this;
+		let lastSticky = null;
+		let pv = this;
 		do {
 			if(pv.isSticky) {
 				lastSticky = pv;
@@ -11805,9 +12142,9 @@ class Pview extends AbstractPost {
 			case 'mouseout': break;
 			default: break checkMouse;
 			}
-			const el = fixEventEl(e.relatedTarget);
+			const el = nav.fixEventEl(e.relatedTarget);
 			if(!el ||
-				isOverEvent && (el.tagName !== 'A' || el.isNotRefLink) ||
+				isOverEvent && (el.tagName.toLowerCase() !== 'a' || el.isNotRefLink) ||
 				el !== this.el && !this.el.contains(el)
 			) {
 				if(isOverEvent) {
@@ -11823,7 +12160,7 @@ class Pview extends AbstractPost {
 	}
 	markToDel() {
 		clearTimeout(Pview._delTO);
-		Pview._delTO = setTimeout(() => this.deleteNonSticky(), Cfg.linksOut);
+		Pview._delTO = setTimeout(() => this.deleteNonSticky(), nav.isMobile ? 0 : Cfg.linksOut);
 	}
 	mouseEnter() {
 		if(this.kid) {
@@ -11837,7 +12174,7 @@ class Pview extends AbstractPost {
 		const isHide = post.isHidden;
 		post.setUserVisib(!isHide);
 		Pview.updatePosition(true);
-		$each($Q(`.de-btn-pview-hide[de-num="${ this.num }"]`), el => {
+		$Q(`.de-btn-pview-hide[de-num="${ this.num }"]`).forEach(el => {
 			el.setAttribute('class',
 				`${ isHide ? 'de-btn-hide-user' : 'de-btn-unhide-user' } de-btn-pview-hide`);
 			el.parentNode.classList.toggle('de-post-hide', !isHide);
@@ -11849,12 +12186,17 @@ class Pview extends AbstractPost {
 	}
 
 	static _markLink(el, num) {
-		$each($Q(`a[href*="${ num }"]`, el),
+		$Q(`a[href*="${ num }"]`, el).forEach(
 			el => el.textContent.startsWith('>>' + num) && el.classList.add('de-link-pview'));
 	}
+	_menuShowOverBtn(el, html) {
+		super._menuShowOverBtn(el, html);
+		this._menu.onover = () => this.mouseEnter();
+		this._menu.onout = () => Pview.top.markToDel();
+	}
 	async _buildPview(post) {
-		$del(this.el);
-		const { num } = this;
+		this.el?.remove();
+		const { isOp, num } = this;
 		const pv = this.el = post.el.cloneNode(true);
 		pByEl.set(pv, this);
 		const isMyPost = MyPosts.has(num);
@@ -11866,18 +12208,15 @@ class Pview extends AbstractPost {
 			`${ isHighlighted ? ' de-highlighted' : '' }` +
 			`${ post.el.classList.contains('de-mypost-reply') ? ' de-mypost-reply' : '' }`;
 		$show(pv);
-		$each($Q('.de-post-hiddencontent', pv), el => el.classList.remove('de-post-hiddencontent'));
+		$Q('.de-post-hiddencontent', pv).forEach(el => el.classList.remove('de-post-hiddencontent'));
 		if(Cfg.linksNavig) {
 			Pview._markLink(pv, this.parent.num);
 		}
 		this._pref = $q(aib.qPostRef, pv);
 		this._link.classList.add('de-link-parent');
-		const { isOp } = this;
-		let f;
-		const isFav = isOp && (post.thr.isFav ||
-			((f = (await readFavorites())[aib.host]) && (f = f[this.brd]) && (num in f)));
+		const isFav = isOp && (post.thr.isFav || (await readFavorites())[aib.host]?.[this.board]?.[num]);
 		const isCached = post instanceof CacheItem;
-		const pCountHtml = (post.isDeleted ? ` de-post-counter-deleted">${ Lng.deleted[lang] }</span>` :
+		const postsCountHtml = (post.isDeleted ? ` de-post-counter-deleted">${ Lng.deleted[lang] }</span>` :
 			`">${ isOp ? '(OP)' : post.count + +!(aib.JsonBuilder && isCached) }</span>`) +
 			(isOpsPost ? '<span class="de-post-counter-op">(OP)</span>' : '') +
 			(isMyPost ? '<span class="de-post-counter-you">(You)</span>' : '');
@@ -11887,46 +12226,6 @@ class Pview extends AbstractPost {
 			(post.sage ? '<svg class="de-btn-sage"><use xlink:href="#de-symbol-post-sage"/></svg>' : '') +
 			'<svg class="de-btn-stick"><use xlink:href="#de-symbol-post-stick"/></svg>' +
 			'<span class="de-post-counter' + pCountHtml;
-
-		const { thr, posterId } = post;
-		const posterIdEl = $q(aib.qPosterId, pv);
-		if(posterIdEl) {
-			posterIdEl.addEventListener('click', e => {
-				const isAdd = !HighlightedPosts.has(post.posterId);
-				if(isAdd) {
-					HighlightedPosts.set(post.posterId, post.thr.num);
-				} else {
-					HighlightedPosts.removeStorage(post.posterId);
-				}
-				const allPosts = $Q('.de-pview, .de-post, .de-reply, .reply, .post', document.body);
-				for(let i = 0; i < allPosts.length; i++) {
-					const post = allPosts[i];
-					const posterIdEl = $q(aib.qPosterId, post);
-					if(posterIdEl && posterIdEl.textContent === posterId) {
-						post.classList.toggle('de-highlighted', isAdd);
-					}
-				}
-			}, true);
-
-			if(typeof thr.Tip !== 'undefined') {
-				posterIdEl.addEventListener('mouseover', e => {
-					const t = e.target.textContent;
-					let o = 0;
-					const allPosts = $Q(aib.qRPost, thr.el);
-					for(let i = 0; i < allPosts.length; i++) {
-						const post = allPosts[i];
-						const posterIdEl = $q(aib.qPosterId, post);
-						if(posterIdEl && posterIdEl.textContent === t) {
-							o++;
-						}
-					}
-					thr.Tip.show(e.target, o + ' post' + (o !== 1 ? 's' : '') + ' by this ID');
-				}, true);
-				posterIdEl.addEventListener('mouseout', e => {
-					thr.Tip.hide();
-				}, true);
-			}
-		}
 		if(isCached) {
 			if(isOp) {
 				this.remoteThr = post.thr;
@@ -11940,7 +12239,7 @@ class Pview extends AbstractPost {
 			processImgInfoLinks(this);
 		} else {
 			const btnsEl = this.btns = $q('.de-post-btns', pv);
-			$del($q('.de-post-counter', btnsEl));
+			$q('.de-post-counter', btnsEl)?.remove();
 			if(post.isHidden) {
 				btnsEl.classList.add('de-post-hide');
 			}
@@ -11949,7 +12248,7 @@ class Pview extends AbstractPost {
 				--><use class="de-btn-hide-use" xlink:href="#de-symbol-post-hide"/><!--
 				--><use class="de-btn-unhide-use" xlink:href="#de-symbol-post-unhide"/></svg>${ pText }`;
 			$delAll(`${ !aib.t && isOp ? aib.qOmitted + ', ' : '' }.de-fullimg-wrap, .de-fullimg-after`, pv);
-			$each($Q(aib.qPostImg, pv), el => $show(el.parentNode));
+			$Q(aib.qPostImg, pv).forEach(el => $show(el.parentNode));
 			const link = $q('.de-link-parent', pv);
 			if(link) {
 				link.classList.remove('de-link-parent');
@@ -11962,7 +12261,7 @@ class Pview extends AbstractPost {
 				this.videos.updatePost($Q('.de-video-link', post.el), $Q('.de-video-link', pv), true);
 			}
 			if(Cfg.addImgs) {
-				$each($Q('.de-img-embed', pv), $show);
+				$Q('.de-img-embed', pv).forEach($show);
 			}
 			if(Cfg.markViewed) {
 				this._readDelay = setTimeout(post => {
@@ -11986,14 +12285,14 @@ class Pview extends AbstractPost {
 		}
 	}
 	_onload(pBuilder) {
-		const b = this.brd;
-		const { num } = this.parent;
-		const post = new PviewsCache(pBuilder, b, this.tNum).getPost(this.num);
-		if(post && (aib.b !== b || !post.ref.hasMap || !post.ref.has(num))) {
+		const { board } = this;
+		const { num, tNum } = this.parent;
+		const post = new PviewsCache(pBuilder, board, this.tNum).getPost(this.num);
+		if(post && (aib.b !== board || !post.ref.hasMap || !post.ref.has(num))) {
 			(post.ref.hasMap ? $q('.de-refmap', post.el) : $aEnd(post.msg, '<div class="de-refmap"></div>'))
 				.insertAdjacentHTML('afterbegin', `<a class="de-link-backref" href="${
-					aib.getThrUrl(b, this.parent.tNum) + aib.anchor + num }">&gt;&gt;${
-					aib.b === b ? '' : `/${ aib.b }/` }${ num }</a><span class="de-refcomma">, </span>`);
+					aib.getThrUrl(board, tNum) + aib.anchor + num }">&gt;&gt;${
+					aib.b === board ? '' : `/${ aib.b }/` }${ num }</a><span class="de-refcomma">, </span>`);
 		}
 		if(post) {
 			this._buildPview(post);
@@ -12026,7 +12325,7 @@ class Pview extends AbstractPost {
 			style.top = top + 'px';
 			return;
 		}
-		const uId = 'de-movecss-' + Math.round(Math.random() * 1e3);
+		const uId = 'de-movecss-' + Math.round(Math.random() * 1e12);
 		$css(`@keyframes ${ uId } { to { ${ lmw } top:${ top }px; } }`).className = 'de-css-move';
 		if(this._newPos) {
 			style.cssText = this._newPos;
@@ -12039,15 +12338,9 @@ class Pview extends AbstractPost {
 		pv.classList.add('de-pview-anim');
 		style.animationName = uId;
 	}
-	_showMenu(el, html) {
-		super._showMenu(el, html);
-		this._menu.onover = () => this.mouseEnter();
-		this._menu.onout = () => Pview.top.markToDel();
-	}
 	_showPview(el) {
-		el.addEventListener('mouseover', this, true);
-		el.addEventListener('mouseout', this, true);
-		this.thr.form.el.appendChild(el);
+		['mouseover', 'mouseout'].forEach(e => el.addEventListener(e, this, true));
+		this.thr.form.el.append(el);
 		this._setPosition(this._link, false);
 		if(Cfg.animation) {
 			el.addEventListener('animationend', function aEvent() {
@@ -12074,7 +12367,7 @@ class CacheItem {
 		this.isViewed = false;
 	}
 	* refLinks() {
-		yield * this._pBuilder.getRefLinks(this.count, this._thrUrl);
+		yield* this._pBuilder.getRefLinks(this.count, this._thrUrl);
 	}
 	get msg() {
 		const value = $q(aib.qPostMsg, this.el);
@@ -12102,8 +12395,8 @@ class CacheItem {
 	get thr() {
 		let value = null;
 		if(this.isOp) {
-			const pcount = this._pBuilder.length;
-			value = { lastNum: this._pBuilder.getPNum(pcount - 1), pcount };
+			const postsCount = this._pBuilder.length;
+			value = { lastNum: this._pBuilder.getPNum(postsCount - 1), postsCount };
 			Object.defineProperty(value, 'title', { get: () => this.title });
 		}
 		Object.defineProperty(this, 'thr', { value });
@@ -12112,20 +12405,20 @@ class CacheItem {
 }
 
 class PviewsCache extends TemporaryContent {
-	constructor(pBuilder, b, tNum) {
-		super(b + tNum);
+	constructor(pBuilder, board, tNum) {
+		super(board + tNum);
 		if(this._isInited) {
 			return;
 		}
 		this._isInited = true;
 		const lPByNum = new Map();
-		const thrUrl = aib.getThrUrl(b, tNum);
+		const thrUrl = aib.getThrUrl(board, tNum);
 		lPByNum.set(tNum, new CacheItem(pBuilder, thrUrl, 0));
 		for(let i = 0; i < pBuilder.length; ++i) {
 			lPByNum.set(pBuilder.getPNum(i), new CacheItem(pBuilder, thrUrl, i + 1));
 		}
 		DelForm.tNums.add(tNum);
-		this._b = b;
+		this._b = board;
 		this._posts = lPByNum;
 		if(Cfg.linksNavig) {
 			RefMap.gen(lPByNum);
@@ -12156,7 +12449,7 @@ PviewsCache.purgeSecs = 3e5;
 // Navigation buttons for expanding of images/videos by center
 class ImagesNavigBtns {
 	constructor(viewerObj) {
-		const btns = $bEnd(docBody, `<div style="display: none;">
+		const btns = $bEnd(doc.body, `<div style="display: none;">
 			<div id="de-img-btn-prev" class="de-img-btn" de-title="${ Lng.prevImg[lang] }">
 				<svg><use xlink:href="#de-symbol-img-btn-arrow"/></svg></div>
 			<div id="de-img-btn-next" class="de-img-btn" de-title="${ Lng.nextImg[lang] }">
@@ -12168,7 +12461,7 @@ class ImagesNavigBtns {
 		[this.prevBtn, this.nextBtn, this.autoBtn] = [...btns.children];
 		this._btns = btns;
 		this._btnsStyle = btns.style;
-		this._hideTmt = 0;
+		this._hideTO = null;
 		this._isHidden = true;
 		this._oldX = -1;
 		this._oldY = -1;
@@ -12190,16 +12483,15 @@ class ImagesNavigBtns {
 		case 'mouseover':
 			if(!this.hasEvents) {
 				this.hasEvents = true;
-				this._btns.addEventListener('mouseout', this);
-				this._btns.addEventListener('click', this);
+				['mouseout', 'click'].forEach(e => this._btns.addEventListener(e, this));
 			}
 			if(!this._isHidden) {
-				clearTimeout(this._hideTmt);
+				clearTimeout(this._hideTO);
 				KeyEditListener.setTitle(this.prevBtn, 4);
 				KeyEditListener.setTitle(this.nextBtn, 17);
 			}
 			return;
-		case 'mouseout': this._setHideTmt(); return;
+		case 'mouseout': this._setHideTimeout(); return;
 		case 'click': {
 			const parent = e.target.parentNode;
 			const viewer = this._viewer;
@@ -12224,19 +12516,19 @@ class ImagesNavigBtns {
 	removeBtns() {
 		this._btns.remove();
 		doc.defaultView.removeEventListener('mousemove', this);
-		clearTimeout(this._hideTmt);
+		clearTimeout(this._hideTO);
 	}
 	showBtns() {
 		if(this._isHidden) {
 			this._btnsStyle.removeProperty('display');
 			this._isHidden = false;
-			this._setHideTmt();
+			this._setHideTimeout();
 		}
 	}
 
-	_setHideTmt() {
-		clearTimeout(this._hideTmt);
-		this._hideTmt = setTimeout(() => this.hideBtns(), 2e3);
+	_setHideTimeout() {
+		clearTimeout(this._hideTO);
+		this._hideTO = setTimeout(() => this.hideBtns(), 2e3);
 	}
 }
 
@@ -12245,7 +12537,6 @@ class ImagesViewer {
 	constructor(data) {
 		this.data = null;
 		this.isAutoPlay = false;
-		this._data = null;
 		this._elStyle = null;
 		this._fullEl = null;
 		this._height = 0;
@@ -12256,7 +12547,9 @@ class ImagesViewer {
 		this._oldX = 0;
 		this._oldY = 0;
 		this._parentEl = null;
+		this._touchDistStart = 0;
 		this._width = 0;
+		this._zoomed = false;
 		this._showFullImg(data);
 	}
 	closeImgViewer(e) {
@@ -12267,37 +12560,11 @@ class ImagesViewer {
 	}
 	handleEvent(e) {
 		switch(e.type) {
-		case 'mousedown':
-			if(this.data.isVideo && ExpandableImage.isControlClick(e)) {
-				return;
-			}
-			this._oldX = e.clientX;
-			this._oldY = e.clientY;
-			docBody.addEventListener('mousemove', this, true);
-			docBody.addEventListener('mouseup', this, true);
-			break;
-		case 'mousemove': {
-			const { clientX: curX, clientY: curY } = e;
-			if(curX !== this._oldX || curY !== this._oldY) {
-				this._oldL = parseInt(this._elStyle.left, 10) + curX - this._oldX;
-				this._elStyle.left = this._oldL + 'px';
-				this._oldT = parseInt(this._elStyle.top, 10) + curY - this._oldY;
-				this._elStyle.top = this._oldT + 'px';
-				this._oldX = curX;
-				this._oldY = curY;
-				this._moved = true;
-			}
-			return;
-		}
-		case 'mouseup':
-			docBody.removeEventListener('mousemove', this, true);
-			docBody.removeEventListener('mouseup', this, true);
-			return;
 		case 'click': {
 			const el = e.target;
+			const tag = el.tagName.toLowerCase();
 			if(this.data.isVideo && ExpandableImage.isControlClick(e) ||
-				el.tagName !== 'IMG' &&
-				el.tagName !== 'VIDEO' &&
+				tag !== 'img' && tag !== 'video' &&
 				!el.classList.contains('de-fullimg-wrap') &&
 				!el.classList.contains('de-fullimg-wrap-link') &&
 				!el.classList.contains('de-fullimg-video-hack') &&
@@ -12306,7 +12573,7 @@ class ImagesViewer {
 				return;
 			}
 			if(e.button === 0) {
-				if(this._moved) {
+				if(this._moved && !nav.isMobile) {
 					this._moved = false;
 				} else {
 					this.closeImgViewer(e);
@@ -12317,21 +12584,71 @@ class ImagesViewer {
 			}
 			return;
 		}
+		case 'mousedown':
+			if(this.data.isVideo && ExpandableImage.isControlClick(e)) {
+				return;
+			}
+			this._oldX = e.clientX;
+			this._oldY = e.clientY;
+			['mousemove', 'mouseup'].forEach(e => doc.body.addEventListener(e, this, true));
+			break;
+		case 'mousemove': this._moveFullImg(e.clientX, e.clientY); return;
+		case 'mouseup':
+			['mousemove', 'mouseup'].forEach(e => doc.body.removeEventListener(e, this, true));
+			return;
+
 		case 'mousewheel':
-			this._handleWheelEvent(e.clientX, e.clientY,
+			this._handleZoom(e.clientX, e.clientY,
 				-1 / 40 * ('wheelDeltaY' in e ? e.wheelDeltaY : e.wheelDelta));
 			break;
-		default: // 'wheel' event
-			this._handleWheelEvent(e.clientX, e.clientY, e.deltaY);
+		case 'touchend':
+			if(e.targetTouches.length === 0) {
+				this._zoomed = false;
+				return;
+			}
+		/* falls through */
+		case 'touchmove': {
+			const touchesLen = e.targetTouches.length;
+			if(touchesLen === 1 && !this._zoomed) {
+				this._moveFullImg(e.touches[0].clientX, e.touches[0].clientY);
+			} else if(touchesLen === 2 && e.changedTouches.length === 2) {
+				const finger0X = e.touches[0].clientX;
+				const finger1X = e.touches[1].clientX;
+				const finger0Y = e.touches[0].clientY;
+				const finger1Y = e.touches[1].clientY;
+				this._handleZoom(
+					(finger0X + finger1X) / 2, (finger0Y + finger1Y) / 2, this._touchDistStart -
+						(this._touchDistStart = Math.hypot(finger0X - finger1X, finger0Y - finger1Y)));
+				this._zoomed = true;
+			}
+			break;
 		}
-		$pd(e);
+		case 'touchstart': {
+			const touchesLen = e.targetTouches.length; // Number of fingers touched screen
+			if(touchesLen === 1) {
+				if(this.data.isVideo && ExpandableImage.isControlClick(e)) {
+					return;
+				}
+				this._oldX = e.touches[0].clientX;
+				this._oldY = e.touches[0].clientY;
+			} else if(touchesLen === 2) {
+				// Distance between two fingers
+				this._touchDistStart = Math.hypot(
+					e.touches[0].clientX - e.touches[1].clientX,
+					e.touches[0].clientY - e.touches[1].clientY);
+			}
+			return;
+		}
+		case 'wheel': this._handleZoom(e.clientX, e.clientY, e.deltaY);
+		}
+		e.preventDefault();
 	}
 	navigate(isForward, isVideoOnly = false) {
 		let { data } = this;
 		data.cancelWebmLoad(this._fullEl);
 		do {
 			data = data.getFollowImg(isForward);
-		} while(data && !data.isVideo && !data.isImage || isVideoOnly && data.isImage);
+		} while(data && (!data.isVideo && !data.isImage || isVideoOnly && data.isImage));
 		if(data) {
 			this.updateImgViewer(data, true, null);
 			data.post.selectAndScrollTo(data.post.images.first.el);
@@ -12360,7 +12677,7 @@ class ImagesViewer {
 	}
 	toggleVideoLoop() {
 		if(this.data.isVideo) {
-			toggleAttr($q('video', this._fullEl), 'loop', '', !this.isAutoPlay);
+			$q('video', this._fullEl).toggleAttribute('loop', !this.isAutoPlay);
 		}
 	}
 	updateImgViewer(data, showButtons, e) {
@@ -12374,25 +12691,29 @@ class ImagesViewer {
 		return value;
 	}
 	get _zoomFactor() {
-		const value = 1 + (Cfg.zoomFactor / 100);
+		const value = 1 + Cfg.zoomFactor / 100;
 		Object.defineProperty(this, '_zoomFactor', { value });
 		return value;
 	}
-	_handleWheelEvent(clientX, clientY, delta) {
+	_handleZoom(clientX, clientY, delta) {
 		if(delta === 0) {
 			return;
 		}
 		let width, height;
 		const { _width: oldW, _height: oldH } = this;
-		if(delta > 0) {
+		if(nav.isMobile) {
+			const wh = oldW / oldH;
+			width = oldW - 1.5 * delta;
+			height = width / wh;
+		} else if(delta > 0) {
 			width = oldW / this._zoomFactor;
 			height = oldH / this._zoomFactor;
-			if(width <= this._minSize && height <= this._minSize) {
-				return;
-			}
 		} else {
 			width = oldW * this._zoomFactor;
 			height = oldH * this._zoomFactor;
+		}
+		if(width <= this._minSize && height <= this._minSize) {
+			return;
 		}
 		this._width = width;
 		this._height = height;
@@ -12402,6 +12723,19 @@ class ImagesViewer {
 		this._elStyle.left = this._oldL + 'px';
 		this._oldT = parseInt(clientY - (height / oldH) * (clientY - this._oldT), 10);
 		this._elStyle.top = this._oldT + 'px';
+		const scale = 100 * width / this.data.width;
+		$q('.de-fullimg-scale', this._fullEl).textContent = scale === 100 ? '' : `${ parseInt(scale, 10) }%`;
+	}
+	_moveFullImg(curX, curY) {
+		if(curX !== this._oldX || curY !== this._oldY) {
+			this._oldL = parseInt(this._elStyle.left, 10) + curX - this._oldX;
+			this._elStyle.left = this._oldL + 'px';
+			this._oldT = parseInt(this._elStyle.top, 10) + curY - this._oldY;
+			this._elStyle.top = this._oldT + 'px';
+			this._oldX = curX;
+			this._oldY = curY;
+			this._moved = true;
+		}
 	}
 	_removeFullImg(e) {
 		const { data } = this;
@@ -12414,7 +12748,7 @@ class ImagesViewer {
 			data.sendCloseEvent(e, false);
 		}
 	}
-	_resizeFullImg(el) {
+	_resizeFullImg(el) { // Set size for images/videos without initial size
 		if(el !== this._fullEl) {
 			return;
 		}
@@ -12475,17 +12809,19 @@ class ImagesViewer {
 			data.isVideo ? ' de-fullimg-center-video' : '' }" style="top:${ this._oldT -
 			(Cfg.imgInfoLink ? 11 : 0) - (nav.firefoxVer >= 59 && data.isVideo ? 10 : 0) }px; left:${
 			this._oldL }px; width:${ width }px; height:${ height }px; display: block"></div>`);
-		el.appendChild(this._fullEl);
+		el.append(this._fullEl);
+		const scale = 100 * width / data.width;
+		$q('.de-fullimg-scale', this._fullEl).textContent = scale === 100 ? '' : `${ parseInt(scale, 10) }%`;
 		if(data.isImage) {
 			$aBegin(this._fullEl, `<a class="de-fullimg-wrap-link" href="${ data.src }"></a>`)
-				.appendChild($q('img', this._fullEl));
+				.append($q('img', this._fullEl));
 		}
 		this._elStyle = el.style;
 		this.data = data;
 		this._parentEl = el;
-		el.addEventListener('onwheel' in el ? 'wheel' : 'mousewheel', this, true);
-		el.addEventListener('mousedown', this, true);
-		el.addEventListener('click', this, true);
+		const events = nav.isMobile ? ['click', 'touchend', 'touchmove', 'touchstart'] :
+			['click', 'mousedown', 'onwheel' in el ? 'wheel' : 'mousewheel'];
+		events.forEach(e => el.addEventListener(e, this, true));
 		data.srcBtnEvents(this);
 		if(data.inPview && !data.post.isSticky) {
 			data.post.toggleSticky(true);
@@ -12497,7 +12833,7 @@ class ImagesViewer {
 		} else if($hasProp(this, '_btns')) {
 			btns.hideBtns();
 		}
-		data.post.thr.form.el.appendChild(el);
+		data.post.thr.form.el.append(el);
 		this.toggleVideoLoop();
 		if(this.data.rotate) {
 			this.rotateView(false);
@@ -12534,13 +12870,13 @@ class ExpandableImage {
 		return value;
 	}
 	get isImage() {
-		const value = /(jpe?g|png|gif|webp)$/i.test(this.src) ||
-			(this.src.startsWith('blob:') && !this.el.hasAttribute('de-video'));
+		const value = /(jfif|jpe?g|png|gif|webp)$/i.test(this.src) ||
+			this.src.startsWith('blob:') && !this.el.hasAttribute('de-video');
 		Object.defineProperty(this, 'isImage', { value });
 		return value;
 	}
 	get isVideo() {
-		const value = /(web|webm|mp4|m4v|ogv)(&|$)/i.test(this.src) ||
+		const value = /(webm|mp4|m4v|ogv)(&|$)/i.test(this.src) ||
 			(this.src.startsWith('blob:') && this.el.hasAttribute('de-video'));
 		Object.defineProperty(this, 'isVideo', { value });
 		return value;
@@ -12594,13 +12930,19 @@ class ExpandableImage {
 		$show(this.el.parentNode);
 		(aib.hasPicWrap ? this._getImageParent : this.el.parentNode).nextSibling.remove();
 		if(e) {
-			$pd(e);
+			e.preventDefault();
 			if(this.inPview) {
 				this.sendCloseEvent(e, true);
 			}
 			const origImgTop = this.el.getBoundingClientRect().top;
 			if(fullImgTop < 0 || origImgTop < 0) {
 				scrollTo(deWindow.pageXOffset, deWindow.pageYOffset + origImgTop);
+			}
+		}
+		if(aib.kohlchan) {
+			const containerEl = $q('.contentOverflow', this.post.el);
+			if(containerEl && !$q('.de-fullimg-wrap-inpost', containerEl)) {
+				containerEl.removeAttribute('style');
 			}
 		}
 	}
@@ -12629,9 +12971,9 @@ class ExpandableImage {
 				width = this.isVideo ? minSize : height * ar;
 			}
 		}
-		const maxWidth = Post.sizing.wWidth - 2;
-		const maxHeight = Post.sizing.wHeight -
-			(Cfg.imgInfoLink ? 24 : 2) - (nav.firefoxVer >= 59 && this.isVideo ? 19 : 0);
+		const maxWidth = Math.min(Post.sizing.wWidth - 2, Cfg.maxImgSize);
+		const maxHeight = Math.min(Post.sizing.wHeight -
+			(Cfg.imgInfoLink ? 24 : 2) - (nav.firefoxVer >= 59 && this.isVideo ? 19 : 0), Cfg.maxImgSize);
 		if(width > maxWidth || height > maxHeight) {
 			const ar = width / height;
 			if(ar > maxWidth / maxHeight) {
@@ -12670,19 +13012,28 @@ class ExpandableImage {
 			origImgTop = e.target.getBoundingClientRect().top;
 		}
 		this.expanded = true;
-		const { el } = this;
-		(aib.hasPicWrap ? this._getImageParent : el.parentNode).insertAdjacentHTML('afterend',
+		(aib.hasPicWrap ? this._getImageParent : this.el.parentNode).insertAdjacentHTML('afterend',
 			'<div class="de-fullimg-after"></div>');
-		this._fullEl = this.getFullImg(true, null, null);
-		this._fullEl.addEventListener('click', e => this.collapseImg(e), true);
+		const fullEl = this._fullEl = this.getFullImg(true, null, null);
+		fullEl.addEventListener('click', e => this.collapseImg(e), true);
 		this.srcBtnEvents(this);
-		$hide(el.parentNode);
-		$after(el.parentNode, this._fullEl);
-		this.checkForRedirect(this._fullEl);
+		const parent = this.el.parentNode;
+		$hide(parent);
+		parent.after(fullEl);
+		this.checkForRedirect(fullEl);
 		if(e) {
-			const fullImgTop = this._fullEl.getBoundingClientRect().top;
+			const fullImgTop = fullEl.getBoundingClientRect().top;
 			if(fullImgTop < 0 || origImgTop < 0) {
 				scrollTo(deWindow.pageXOffset, deWindow.pageYOffset + fullImgTop);
+			}
+		}
+		if(aib.kohlchan) {
+			if(!this.isVideo) {
+				$q('.de-fullimg', fullEl).classList.add('imgExpanded');
+			}
+			const containerEl = $q('.contentOverflow', this.post.el);
+			if(containerEl) {
+				containerEl.style.maxHeight = 'unset';
 			}
 		}
 	}
@@ -12691,7 +13042,8 @@ class ExpandableImage {
 		if(nImage) {
 			return nImage;
 		}
-		let imgs, { post } = this;
+		let imgs;
+		let { post } = this;
 		do {
 			post = post.getAdjacentVisPost(!isForward);
 			if(!post) {
@@ -12712,7 +13064,7 @@ class ExpandableImage {
 		const src = this._getImageSrc();
 		const parent = this._getImageParent;
 		if(this.el.className !== 'de-img-embed') {
-			const nameEl = $q(aib.qImgNameLink, parent) || $q('a', parent);
+			const nameEl = $q(aib.qPostImgNameLink, parent) || $q('a', parent);
 			origSrc = nameEl.getAttribute('de-href') || nameEl.href;
 			({ name } = this);
 		} else {
@@ -12733,7 +13085,7 @@ class ExpandableImage {
 			wrapEl = $add(`<div class="de-fullimg-wrap${ wrapClass }">
 				${ waitEl }
 				<img class="de-fullimg" src="${ src }" alt="${ src }">
-				<div class="de-fullimg-info">${ imgNameEl }</a></div>
+				<div class="de-fullimg-info">${ imgNameEl }</a> <span class="de-fullimg-scale"></span></div>
 			</div>`);
 			const imgEl = $q('.de-fullimg', wrapEl);
 			imgEl.onload = imgEl.onerror = ({ target: img }) => {
@@ -12745,10 +13097,9 @@ class ExpandableImage {
 					}
 					return;
 				}
-				const { naturalWidth: newW, naturalHeight: newH } = img;
+				const { naturalWidth: newW, naturalHeight: newH, scrollWidth } = img;
 				const ar = this._size ? this._size[1] / this._size[0] : newH / newW;
-				const isRotated = !img.scrollWidth ? false :
-					img.scrollHeight / img.scrollWidth > 1 ? ar < 1 : ar > 1;
+				const isRotated = scrollWidth ? img.scrollHeight / scrollWidth > 1 ? ar < 1 : ar > 1 : false;
 				if(!this._size || isRotated) {
 					this._size = isRotated ? [newH, newW] : [newW, newH];
 				}
@@ -12768,7 +13119,7 @@ class ExpandableImage {
 			return wrapEl;
 		}
 
-		// Expand videos: WEBM, MP4
+		// Expand videos
 		// FIXME: handle null size videos
 		const isWebm = getFileExt(origSrc) === 'webm' || getFileExt(origSrc) === 'web';
 		const needTitle = isWebm && Cfg.webmTitles;
@@ -12780,13 +13131,15 @@ class ExpandableImage {
 		const hasTitle = needTitle && this.el.hasAttribute('de-metatitle');
 		const title = hasTitle ? this.el.getAttribute('de-metatitle') : '';
 		wrapEl = $add(`<div class="de-fullimg-wrap${ wrapClass }"${ inPostSize }>${
-			nav.firefoxVer < 59 ? '' : '<div class="de-fullimg-video-hack"></div>' }
+			nav.firefoxVer >= 59 || nav.isMobile ? `<div class="de-fullimg-video-hack">${
+				nav.isMobile && nav.isWebkit ? '\u00D7' : ''
+			}</div>` : '' }
 			<video src="${ src }" ` +
 				`${ hasTitle && title ? `title="${ title }" ` : '' }loop autoplay ` +
 				`${ Cfg.webmControl ? 'controls ' : '' }` +
 				`${ Cfg.webmVolume === 0 ? 'muted ' : '' }></video>
-			<div class="de-fullimg-info">${ imgNameEl }</a>
-				<span class="de-fullimg-link de-webm-title">${ hasTitle && title ? title : '' }</span>
+			<div class="de-fullimg-info">${ imgNameEl }</a> <span class="de-fullimg-scale"></span>
+				<span class="de-webm-title">${ hasTitle && title ? title : '' }</span>
 				${ needTitle && !hasTitle ? `<svg class="de-wait">
 					<use xlink:href="#de-symbol-wait"/></svg>` : '' }
 			</div>
@@ -12808,10 +13161,10 @@ class ExpandableImage {
 		}
 		// Sync webm volume on all browser tabs
 		setTimeout(() => videoEl.dispatchEvent(new CustomEvent('volumechange')), 150);
-		videoEl.addEventListener('volumechange', ({ target: el, isTrusted }) => {
+		videoEl.addEventListener('volumechange', async ({ target: el, isTrusted }) => {
 			const val = el.muted ? 0 : Math.round(el.volume * 100);
 			if(isTrusted && val !== Cfg.webmVolume) {
-				saveCfg('webmVolume', val);
+				await CfgSaver.save('webmVolume', val);
 				sendStorageEvent('__de-webmvolume', val);
 			}
 		});
@@ -12823,12 +13176,13 @@ class ExpandableImage {
 		}
 		// Get webm title: load file and parse its metadata
 		if(needTitle && !hasTitle) {
-			this._webmTitleLoad = ContentLoader.loadImgData(videoEl.src, false).then(data => {
+			this._webmTitleLoad = ContentLoader.loadFileData(videoEl.src, false).then(data => {
 				$hide($q('.de-wait', wrapEl));
 				if(!data) {
 					return;
 				}
-				let str = '', d = new WebmParser(data.buffer).getWebmData();
+				let str = '';
+				let d = new WebmParser(data.buffer).getWebmData();
 				if(!d) {
 					return;
 				}
@@ -12850,7 +13204,7 @@ class ExpandableImage {
 				this.el.setAttribute('de-metatitle', loadedTitle);
 				if(str) {
 					$q('.de-webm-title', wrapEl).textContent =
-						videoEl.title = loadedTitle.replace(/\./g, ' ');
+						videoEl.title = loadedTitle.replaceAll('.', ' ');
 				}
 			});
 		}
@@ -12884,11 +13238,17 @@ class ExpandableImage {
 			return;
 		}
 		const srcBtnEl = $q('.de-btn-img', _fullEl);
-		srcBtnEl.addEventListener('mouseover', () => (srcBtnEl.odelay = setTimeout(() => {
+		const event = nav.isMobile ? 'click' : 'mouseover';
+		srcBtnEl.addEventListener(event, () => (srcBtnEl._menuTO = setTimeout(() => {
+			if(nav.isMobile && srcBtnEl._menu?.el && srcBtnEl._menu?.parentEl === srcBtnEl) {
+				srcBtnEl._menu.el.remove();
+				srcBtnEl._menu = null;
+				return;
+			}
 			const menuHtml = !this.isVideo ? Menu.getMenuImg(srcBtnEl) :
-				Menu.getMenuImg(srcBtnEl, true) + `<span class="de-menu-item de-menu-getframe">${
-					Lng.getFrameLinks[lang] }</span>`;
-			new Menu(srcBtnEl, menuHtml, !this.isVideo ? emptyFn : optiontEl => {
+				Menu.getMenuImg(srcBtnEl, true) +
+					`<span class="de-menu-item de-menu-getframe">${ Lng.getFrameLinks[lang] }</span>`;
+			srcBtnEl._menu = new Menu(srcBtnEl, menuHtml, !this.isVideo ? Function.prototype : optiontEl => {
 				if(!optiontEl.classList.contains('de-menu-getframe')) {
 					return;
 				}
@@ -12896,17 +13256,15 @@ class ExpandableImage {
 					$popup('upload', Lng.sending[lang], true);
 					const name = cutFileExt(this.name) + '.png';
 					const blob = new Blob([arr], { type: 'image/png' });
-					let formData;
-					if(!nav.isChrome || nav.scriptHandler !== 'WebExtension') {
-						formData = new FormData();
-						formData.append('file', blob, name);
-					}
+					const formData = new FormData();
+					formData.append('file', blob, name);
 					const ajaxParams = { data: formData || { arr, name }, method: 'POST' };
 					const frameLinkHtml = `<a class="de-menu-item de-list" href="${
 						deWindow.URL.createObjectURL(blob) }" download="${ name }" target="_blank">${
 						Lng.saveFrame[lang] }</a>`;
 					$ajax('https://tmp.saucenao.com/', ajaxParams, true).then(xhr => {
-						let hostUrl, errMsg = Lng.errSaucenao[lang];
+						let hostUrl;
+						let errMsg = Lng.errSaucenao[lang];
 						try {
 							const obj = JSON.parse(xhr.responseText);
 							if(obj.status === 'success') {
@@ -12914,13 +13272,13 @@ class ExpandableImage {
 							} else {
 								errMsg += ':<br>' + obj.error_message;
 							}
-						} catch(e) {}
+						} catch(err) {}
 						$popup('upload', (hostUrl || errMsg) + frameLinkHtml);
 					}, () => $popup('upload', Lng.errSaucenao[lang] + frameLinkHtml));
-				}, emptyFn);
+				}, Function.prototype);
 			});
 		}, Cfg.linksOver)));
-		srcBtnEl.addEventListener('mouseout', e => clearTimeout(e.target.odelay));
+		srcBtnEl.addEventListener('mouseout', e => clearTimeout(e.target._menuTO));
 	}
 
 	get _size() {
@@ -12965,14 +13323,18 @@ class AttachedImage extends ExpandableImage {
 		return value;
 	}
 	get nameLink() {
-		const value = $q(aib.qImgNameLink, this._getImageParent);
+		const value = $q(aib.qPostImgNameLink, this._getImageParent);
 		Object.defineProperty(this, 'nameLink', { value });
 		return value;
 	}
 	get weight() {
 		let value = 0;
 		if(this.info) {
-			const w = this.info.match(/(\d+(?:[.,]\d+)?)\s*([mмkк])?i?[bб]/i);
+			let w = this.info;
+			if(this.nameLink) {
+				w = w.replace(this.nameLink.innerText, '');
+			}
+			w = w.match(/(\d+(?:[.,]\d+)?)\s*([mмkк])?i?[bб]/i);
 			const w1 = w[1].replace(',', '.');
 			value = w[2] === 'M' ? (w1 * 1e3) | 0 : !w[2] ? Math.round(w1 / 1e3) : w1;
 		}
@@ -12995,19 +13357,7 @@ class AttachedImage extends ExpandableImage {
 	_getImageSrc() {
 		// XXX: DON'T USE aib.getImgSrcLink(this.el).href
 		// If #ihash spells enabled, Chrome reads href in ajaxed posts as empty -> image can't be expanded!
-		const src = aib.getImgSrcLink(this.el).getAttribute('href');
-		if (/effectivegatetocontent/i.test(src)) {
-		    const extensionRegex = /\.([0-9a-z]+)(?:[\?#]|$)/i;
-		    const m = this.name.trim().match(extensionRegex);
-		    const extension = m[1] || null;
-		    let fixedSrc = this.el.currentSrc.replace('thumb', 'image');
-		    fixedSrc = fixedSrc.replace(/(\d{9,})(s)/, '$1')
-		    if (extension) {
-			fixedSrc = fixedSrc.replace(/\.([0-9a-z]+)(?:[\?#]|$)/i, `.${extension}`);
-		    }
-		    return fixedSrc;
-		}
-		return src;
+		return aib.getImgSrcLink(this.el).getAttribute('href');
 	}
 }
 AttachedImage.viewer = null;
@@ -13015,7 +13365,9 @@ AttachedImage.viewer = null;
 // A class that finds a set of images in a post
 class PostImages {
 	constructor(post) {
-		let first = null, last = null, els = $Q(aib.qPostImg, post.el);
+		let first = null;
+		let last = null;
+		let els = $Q(aib.qPostImg, post.el);
 		let hasAttachments = false;
 		const filesMap = new Map();
 		for(let i = 0, len = els.length; i < len; ++i) {
@@ -13105,7 +13457,7 @@ const ImagesHashStorage = Object.create({
 		return value;
 	},
 	get _workers() {
-		const value = new WorkerPool(4, this._genImgHash, emptyFn);
+		const value = new WorkerPool(4, this._genImgHash, Function.prototype);
 		Object.defineProperty(this, '_workers', { value, configurable: true });
 		return value;
 	},
@@ -13117,7 +13469,7 @@ const ImagesHashStorage = Object.create({
 		}
 		const newh = 8;
 		const neww = 8;
-		const levels = 3;
+		const levels = 4;
 		const areas = 256 / levels;
 		const values = 256 / (levels - 1);
 		let hash = 0;
@@ -13153,7 +13505,8 @@ const ImagesHashStorage = Object.create({
 		if(el.naturalWidth + el.naturalHeight === 0) {
 			return -1;
 		}
-		let data, val = -1;
+		let data;
+		let val = -1;
 		const { naturalWidth: w, naturalHeight: h } = el;
 		const cnv = this._canvas;
 		cnv.width = w;
@@ -13174,7 +13527,7 @@ const ImagesHashStorage = Object.create({
 });
 
 function getImgNameLink(el) {
-	return $q(aib.qImgNameLink, aib.getImgWrap(el));
+	return $q(aib.qPostImgNameLink, aib.getImgWrap(el));
 }
 
 function addImgButtons(link) {
@@ -13188,7 +13541,7 @@ function processImgInfoLinks(parent, addSrc = Cfg.imgSrcBtns, imgNames = Cfg.img
 		if(parent instanceof AbstractPost) {
 			processPostImgInfoLinks(parent, addSrc, imgNames);
 		} else {
-			const posts = $Q(aib.qRPost + ', ' + aib.qOPost + ', .de-oppost', parent);
+			const posts = $Q(aib.qPost + ', ' + aib.qOPost + ', .de-oppost', parent);
 			for(let i = 0, len = posts.length; i < len; ++i) {
 				processPostImgInfoLinks(pByEl.get(posts[i]), addSrc, imgNames);
 			}
@@ -13216,8 +13569,8 @@ function processPostImgInfoLinks(post, addSrc, imgNames) {
 			link.setAttribute('de-href', link.href);
 		}
 		if(imgNames) {
-			let ext;
-			if(!(ext = link.getAttribute('de-img-ext'))) {
+			let ext = link.getAttribute('de-img-ext');
+			if(!ext) {
 				ext = getFileExt(name) || getFileExt(getFileName(link.href));
 				link.setAttribute('de-img-ext', ext);
 				link.setAttribute('de-img-name-old', link.textContent);
@@ -13239,8 +13592,8 @@ function embedPostMsgImages(el) {
 		if(url.includes('?') || aib.getPostOfEl(link).hidden) {
 			continue;
 		}
-		$bBegin(link, `<a href="${
-			link.href }" target="_blank"><img class="de-img-embed" src="${ url }"></a><br>`);
+		link.insertAdjacentHTML('beforebegin',
+			`<a href="${ url }" target="_blank"><img class="de-img-embed" src="${ url }"></a><br>`);
 		if(Cfg.imgSrcBtns) {
 			addImgButtons(link);
 		}
@@ -13254,7 +13607,7 @@ function embedPostMsgImages(el) {
 class DOMPostsBuilder {
 	constructor(form, isArchived) {
 		this._form = form;
-		this._posts = $Q(aib.qRPost, form);
+		this._posts = $Q(aib.qPost, form);
 		this.length = this._posts.length;
 		this.postersCount = '';
 		this._isArchived = isArchived;
@@ -13303,19 +13656,20 @@ class DOMPostsBuilder {
 }
 
 class _4chanPostsBuilder {
-	constructor(json, brd) {
+	constructor(json, board) {
 		this._posts = json.posts;
-		this._brd = brd;
+		this._board = board;
 		this.length = json.posts.length - 1;
 		this.postersCount = this._posts[0].unique_ips;
+		this._colorIDs = [];
 	}
 	static fixFileName(name, maxLength) {
-		const decodedName = name.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#039;/g, "'")
-			.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+		const decodedName = name.replaceAll('&amp;', '&').replaceAll('&quot;', '"').replaceAll('&#039;', '\'')
+			.replaceAll('&lt;', '<').replaceAll('&gt;', '>');
 		return decodedName.length <= maxLength ? { isFixed: false, name } : {
 			isFixed : true,
-			name    : decodedName.slice(0, 25).replace(/&/g, '&amp;').replace(/"/g, '&quot;')
-				.replace(/'/g, '&#039;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+			name    : decodedName.slice(0, 25).replaceAll('&', '&amp;').replaceAll('"', '&quot;')
+				.replaceAll('\'', '&#039;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
 		};
 	}
 	get isClosed() {
@@ -13337,7 +13691,7 @@ class _4chanPostsBuilder {
 	getPostHTML(i) {
 		const data = this._posts[i + 1];
 		const num = data.no;
-		const brd = this._brd;
+		const board = this._board;
 		const _icon = id => `//s.4cdn.org/image/${ id }${
 			deWindow.devicePixelRatio < 2 ? '.gif' : '@2x.gif' }`;
 
@@ -13364,14 +13718,14 @@ class _4chanPostsBuilder {
 			const fileTextTitle = isSpoiler ? ` title="${ data.filename + data.ext }"` : '';
 			const aHref = needTitle ? `title="${ data.filename + data.ext }"` : '';
 			const imgSrc = isSpoiler ? '//s.4cdn.org/image/spoiler.png' :
-				`//i.4cdn.org/${ brd }/${ data.tim }s.jpg`;
+				`//i.4cdn.org/${ board }/${ data.tim }s.jpg`;
 			fileHTML = `<div class="file" id="f${ num }">
 				<div class="fileText" id="fT${ num }"${ fileTextTitle }>File:
-					<a href="//i.4cdn.org/${ brd }/${ data.tim +
+					<a href="//i.4cdn.org/${ board }/${ data.tim +
 						data.ext }" ${ aHref } target="_blank">${ name }</a>
 					(${ size }, ${ data.ext === '.pdf' ? 'PDF' : data.w + 'x' + data.h })
 				</div>
-				<a class="fileThumb ${ isSpoiler ? 'imgspoiler' : '' }" href="//i.4cdn.org/${ brd }/` +
+				<a class="fileThumb ${ isSpoiler ? 'imgspoiler' : '' }" href="//i.4cdn.org/${ board }/` +
 					`${ data.tim + data.ext }" target="_blank">
 					<img src="${ imgSrc }" alt="${ size }" data-md5="` +
 						`${ data.md5 }" style="height: ${ data.tn_h }px; width: ${ data.tn_w }px;">
@@ -13383,7 +13737,8 @@ class _4chanPostsBuilder {
 		}
 
 		// --- CAPCODE ---
-		let highlight = '', ccBy = '';
+		let highlight = '';
+		let ccBy = '';
 		let cc = data.capcode;
 		switch(cc) {
 		case 'admin_highlight':
@@ -13396,7 +13751,10 @@ class _4chanPostsBuilder {
 		case 'manager': ccBy = 'Managers'; break;
 		case 'founder': ccBy = 'Founder';
 		}
-		let ccName = '', ccText = '', ccImg = '', ccClass = '';
+		let ccName = '';
+		let ccText = '';
+		let ccImg = '';
+		let ccClass = '';
 		if(cc) {
 			ccName = cc[0].toUpperCase() + cc.slice(1);
 			ccText = `<strong class="capcode hand id_${ cc === 'founder' ? 'admin' : cc }` +
@@ -13407,17 +13765,22 @@ class _4chanPostsBuilder {
 		}
 
 		// --- POST ---
-		const { name = '' } = data;
+		const { id, name = '' } = data;
 		const nameEl = `<span class="name">${ name }</span>`;
 		const mobNameEl = name.length <= 30 ? nameEl :
 			`<span class="name" data-tip data-tip-cb="mShowFull">${ name.substring(30) }(…)</span>`;
 		const tripEl = `${ data.trip ? `<span class="postertrip">${ data.trip }</span>` : '' }`;
-		const posteruidEl = data.id && !data.capcode ? `<span class="posteruid id_${ data.id }` +
-			`">(ID: <span class="hand" title="Highlight posts by this ID">${ data.id }</span>)</span>` : '';
-		const flagEl = data.country ? `<span title="${ data.country_name }" class="flag flag-${
-			data.country.toLowerCase() }"></span>` : '';
+		const cID = id ? this._colorIDs[id] || this._computeIDColor(id) : null;
+		const posteruidEl = id && !data.capcode ? `<span class="posteruid id_${ id }` +
+			`">(ID: <span class="hand" title="Highlight posts by this ID" style="background-color: rgb(${
+				cID[0] }, ${ cID[1] }, ${ cID[2] }); color: ${ cID[3] ? 'black' : 'white' };">${
+				id }</span>)</span>` : '';
+		const flagEl = (data.country ? `<span title="${ data.country_name }" class="flag flag-${
+			data.country.toLowerCase() }"></span>` : '') +
+			(data.board_flag ? `<span title="${ data.flag_name }" class="bfl bfl-${
+				data.board_flag.toLowerCase() }"></span>` : '');
 		const emailEl = data.email ? `<a href="mailto:${
-			data.email.replace(/ /g, '%20') }" class="useremail">` : '';
+			data.email.replaceAll(' ', '%20') }" class="useremail">` : '';
 		const replyEl = `<a href="#p${ num }" title="Link to this post">No.</a><a href="javascript:quote('${
 			num }');" title="Reply to this post">${ num }</a>`;
 		const subjEl = `<span class="subject">${ data.sub || '' }</span>`;
@@ -13458,128 +13821,30 @@ class _4chanPostsBuilder {
 		</div>`;
 	}
 	* bannedPostsData() {}
+
+	_computeIDColor(text) {
+		let hash = 0;
+		for(let i = 0, len = text.length; i < len; ++i) {
+			hash = (hash << 5) - hash + text.charCodeAt(i);
+		}
+		const r = hash >> 24 & 255;
+		const g = hash >> 16 & 255;
+		const b = hash >> 8 & 255;
+		const value = this._colorIDs[text] = [r, g, b, 0.299 * r + 0.587 * g + 0.114 * b > 125];
+		return value;
+	}
 }
 _4chanPostsBuilder._customSpoiler = new Map();
 
-class DobrochanPostsBuilder {
-	constructor(json, brd) {
-		if(json.error) {
-			throw new AjaxError(0, `API error: ${ json.error.message }`);
-		}
-		this._json = json.result;
-		this._brd = brd;
-		this._posts = json.result.threads[0].posts;
-		this.length = this._posts.length - 1;
-		this.postersCount = '';
-	}
-	get isClosed() {
-		return !!this._json.threads[0].archived;
-	}
-	getOpMessage() {
-		return $add(aib.fixHTML(`<div class="postbody"> ${ this._posts[0].message_html }</div>`));
-	}
-	getPNum(i) {
-		return this._posts[i + 1].display_id;
-	}
-	getOpEl() {
-		return this.getPostEl(-1);
-	}
-	getPostEl(i) {
-		const el = $add(aib.fixHTML(this.getPostHTML(i)));
-		if(i === -1) {
-			return el;
-		}
-		return el.firstElementChild.firstElementChild.lastElementChild;
-	}
-	getPostHTML(i) {
-		const data = this._posts[i + 1];
-		const num = data.display_id;
-		const brd = this._brd;
-		const multiFile = data.files.length > 1;
-
-		// --- FILE ---
-		let filesHTML = '';
-		for(const { file_id, metadata, rating, size, src, thumb, thumb_height, thumb_width } of data.files) {
-			let fileName, fullFileName, th = thumb;
-			let thumbW = 200;
-			let thumbH = 200;
-			const ext = getFileExt(src);
-			if(brd === 'b' || brd === 'rf') {
-				fileName = fullFileName = getFileName(th);
-			} else {
-				fileName = fullFileName = getFileName(src);
-				if(multiFile && fileName.length > 20) {
-					fileName = fileName.substr(0, 20 - ext.length) + '(…)' + ext;
-				}
-			}
-			const maxRating = 'r15'; // FIXME: read from settings
-			if(rating === 'r-18g' && maxRating !== 'r-18g') {
-				th = 'images/r-18g.png';
-			} else if(rating === 'r-18' && (maxRating !== 'r-18g' || maxRating !== 'r-18')) {
-				th = 'images/r-18.png';
-			} else if(rating === 'r-15' && maxRating === 'sfw') {
-				th = 'images/r-15.png';
-			} else if(rating === 'illegal') {
-				th = 'images/illegal.png';
-			} else {
-				thumbW = thumb_width;
-				thumbH = thumb_height;
-			}
-			const fileInfo = `<div class="fileinfo${ multiFile ? ' limited' : '' }">Файл:
-				<a href="/${ src }" title="${ fullFileName }" target="_blank">${ fileName }</a><br>
-				<em>${ ext }, ${ prettifySize(size) }, ${ metadata.width }x${ metadata.height }
-				</em>${ multiFile ? '' : ' - Нажмите на картинку для увеличения' }<br>
-				<a class="edit_ icon" href="/utils/image/edit/${ file_id }/${ num }">
-					<img title="edit" alt="edit" src="/images/blank.png">
-				</a>
-			</div>`;
-			filesHTML += `${ multiFile ? '' : fileInfo }
-			<div id="file_${ num }_${ file_id }" class="file">${ multiFile ? fileInfo : '' }
-				<a href="/${ src }" target="_blank">
-					<img class="thumb" src="/${ th }" width="${ thumbW }" height="${ thumbH }">
-				</a>
-			</div>`;
-		}
-
-		// --- POST ---
-		const date = data.date.replace(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/,
-			(all, y, mo, d, h, m, s) => {
-				const dt = new Date(y, +mo - 1, d, h, m, s);
-				return `${ pad2(dt.getDate()) } ${ Lng.fullMonth[1][dt.getMonth()] } ${ dt.getFullYear()
-				} (${ Lng.week[1][dt.getDay()] }) ${ pad2(dt.getHours()) }:${ pad2(dt.getMinutes()) }`;
-			});
-		const isOp = i === -1;
-		return `${ isOp ? `<div id="post_${ num }" class="oppost post">` :
-			`<table id="post_${ num }" class="replypost post"><tbody><tr>
-			<td class="doubledash">&gt;&gt;</td>
-			<td class="reply" id="reply${ num }">` }
-				<a name="i${ num }"></a>
-				<label>
-					<input name="${ num }" value="${ data.thread_id }" ` +
-						`class="delete_checkbox" id="delbox_${ num }" type="checkbox">
-					${ data.subject ? `<span class="replytitle">${ data.subject }</span>` : '' }
-					<span class="postername">${ data.name || 'Анонимус' }</span> ${ date }
-				</label>
-				<span class="reflink">
-					<a href="/${ brd }/res/${ data.thread_id }.xhtml#i${ num }"> No.${ num }</a>
-				</span><br>
-				${ filesHTML }
-				${ multiFile ? '<div style="clear: both;"></div>' : '' }
-				<div class="postbody"> ${ data.message_html }</div>
-			${ isOp ? '</div>' : '</td></tr></tbody></table>' }`;
-	}
-	* bannedPostsData() {}
-}
-
 class MakabaPostsBuilder {
-	constructor(json, brd) {
+	constructor(json, board) {
 		if(json.Error) {
 			throw new AjaxError(0, `API error: ${ json.Error } (${ json.Code })`);
 		}
 		this._json = json;
-		this._brd = brd;
+		this._board = board;
 		this._posts = json.threads[0].posts;
-		this.length = aib._2channel ? json.counter_posts - 1 : json.posts_count;
+		this.length = json.posts_count - 1;
 		this.postersCount = json.unique_posters;
 	}
 	get isClosed() {
@@ -13599,35 +13864,31 @@ class MakabaPostsBuilder {
 	}
 	getPostHTML(i) {
 		const data = this._posts[i + 1];
-		const { num } = data;
-		const brd = this._brd;
-		const isNew = this._isNew;
-		const p = isNew ? 'post__' : '';
+		const { files, num } = data;
+		const board = this._board;
 		const _switch = (val, obj) => val in obj ? obj[val] : obj['@@default'];
 
 		// --- FILE ---
 		let filesHTML = '';
-		if(data.files && data.files.length !== 0) {
-			filesHTML = `<div class="${ isNew ? 'post__images post__images_type_' : 'images images-' }${
-				data.files.length === 1 ? 'single' : 'multi' }">`;
-			for(const file of data.files) {
+		if(files?.length) {
+			filesHTML = `<div class="post__images post__images_type_${
+				files.length === 1 ? 'single' : 'multi' }">`;
+			for(const file of files) {
 				const imgId = num + '-' + file.md5;
-				const { fullname = file.name, displayname: dispName = file.name } = file;
-				const isVideo = file.type === 6 || file.type === 10;
-				const imgClass = isNew ?
-					`post__file-preview${ isVideo ? ' post__file-webm' : '' }${
-						data.nsfw ? ' post__file-nsfw' : '' }` :
-					`img preview${ isVideo ? ' webm-file' : '' }`;
-				filesHTML += `<figure class="${ p }image">
-					<figcaption class="${ p }file-attr">
+				const { fullname = file.name, displayname: dispName = file.name, type } = file;
+				const isVideo = type === 6 || type === 10;
+				const imgClass = `post__file-preview${ isVideo ? ' post__file-webm' : '' }${
+					data.nsfw ? ' post__file-nsfw' : '' }`;
+				filesHTML += `<figure class="post__image">
+					<figcaption class="post__file-attr">
 						<a id="title-${ imgId }" class="desktop" target="_blank" href="` +
-							`${ file.type === 100 /* is sticker */ ? file.install : file.path }"` +
+							`${ type === 100 /* is sticker */ ? file.install : file.path }"` +
 							`${ dispName === fullname ? '' : ` title="${ fullname }"` }>${ dispName }</a>
-						<span class="${ isNew ? 'post__filezise' : 'filesize' }">(${ file.size }Кб, ` +
+						<span class="post__filezise">(${ file.size }Кб, ` +
 							`${ file.width }x${ file.height }${ isVideo ? ', ' + file.duration : '' })</span>
 					</figcaption>
-					<div id="exlink-${ imgId }"${ isNew ? '' : 'class="image-link"' }>
-						<a ${ isNew ? 'class="post__image-link" ' : '' }href="${ file.path }">
+					<div id="exlink-${ imgId }">
+						<a class="post__image-link" href="${ file.path }">
 							<img class="${ imgClass }" src="${ file.thumbnail }" alt="${ file.width }x` +
 								`${ file.height }" width="${ file.tn_width }" height="${ file.tn_height }">
 						</a>
@@ -13639,70 +13900,61 @@ class MakabaPostsBuilder {
 
 		// --- POST ---
 		const emailEl = data.email ?
-			`<a href="${ data.email }" class="${ isNew ? 'post__' : 'post-' }email">${ data.name }</a>` :
-			`<span class="${ isNew ? 'post__anon' : 'ananimas' }">${ data.name }</span>`;
+			`<a href="${ data.email }" class="post__email">${ data.name }</a>` :
+			`<span class="post__anon">${ data.name }</span>`;
 		const tripEl = !data.trip ? '' : `<span class="${ _switch(data.trip, {
-			'!!%adm%!!'        : `${ p }adm">## ${ aib._2channel ? 'Admin' : 'Abu' } ##`,
-			'!!%mod%!!'        : `${ p }mod">## Mod ##`,
-			'!!%Inquisitor%!!' : `${ p }inquisitor">## Applejack ##`,
-			'!!%coder%!!'      : `${ p }mod">## Кодер ##`,
-			'!!%curunir%!!'    : `${ p }mod">## Curunir ##`,
-			'@@default'        :
-				`${ data.trip_style ? data.trip_style : isNew ? 'post__trip' : 'postertrip' }">` + data.trip
+			'!!%adm%!!'        : 'post__adm">## Abu ##',
+			'!!%mod%!!'        : 'post__mod">## Mod ##',
+			'!!%Inquisitor%!!' : 'post__inquisitor">## Applejack ##',
+			'!!%coder%!!'      : 'post__mod">## Кодер ##',
+			'!!%curunir%!!'    : 'post__mod">## Curunir ##',
+			'@@default'        : `${ data.trip_style ? data.trip_style : 'post__trip' }">` + data.trip
 		}) }</span>`;
-		const refHref = `/${ brd }/res/${ parseInt(data.parent) || num }.html#${ num }`;
+		const refHref = `/${ board }/res/${ parseInt(data.parent) || num }.html#${ num }`;
 		let rate = '';
 		if(this._hasLikes) {
-			const likes = `<div id="like-div${ num }" class="${ isNew ?
-				`post__detailpart post__rate post__rate_type_like" title="Мне это нравится">
+			const likes = `<div id="like-div${ num }" class="post__detailpart post__rate` +
+				` post__rate_type_like" title="Мне это нравится">
 					<svg xmlns="http://www.w3.org/2000/svg" class="post__rate-icon icon">
-						<use xlink:href="#icon__thunder"></use></svg>` :
-				'like-div"> <span class="like-icon"> <i class="fa fa-bolt"></i></span>'
-			} <span id="like-count${ num }"${ isNew ? '' : 'class="like-count"' }>`;
-			const dislikes = likes.replace(/like/g, 'dislike').replace('icon__thunder', 'icon__thumbdown');
+						<use xlink:href="#icon__thunder"></use></svg> <span id="like-count${ num }">`;
+			const dislikes = likes.replaceAll('like', 'dislike').replace('icon__thunder', 'icon__thumbdown');
 			rate = `${ likes }${ data.likes || 0 }</span></div>
 				${ dislikes }${ data.dislikes || 0 }</span></div>`;
 		}
-		const isOp =  i === -1;
-		const wrapClass = !isNew ? 'post-wrapper' : isOp ? 'thread__oppost' : 'thread__post';
-		const timeReflink = `<span class="${ isNew ? 'post__time' : 'posttime' }">${ data.date }</span>
-			<span class="${ isNew ? 'post__detailpart' : 'reflink' }">` +
-				`<a id="${ num }" ${ isNew ? 'class="post__reflink" ' : '' }href="${ refHref }">` +
-					`${ aib._2channel ? 'No.' : '№' }</a>` +
-				`<a class="${ isNew ? 'post__reflink ' : '' }postbtn-reply-href" href="${ refHref }"` +
-					` name="${ num }">${ num }</a>
-			</span>`;
-		return `<div id="post-${ num }" class="${ wrapClass }">
-			<div class="post ${ isNew ? 'post_type_' : '' }${ isOp ? 'oppost' : 'reply' }` +
-				`${ filesHTML ? ' post_withimg' : '' }" id="post-body-${ num }" data-num="${ num }">
-				<div id="post-details-${ num }" class="${ isNew ? 'post__details' : 'post-details' }">
-					<input type="checkbox" name="delete" value="${ num }">
-					${ !data.subject ? '' : `<span class="${ isNew ? 'post__' : 'post-' }title">` +
-						`${ data.subject + (data.tags ? ` /${ data.tags }/` : '') }</span>` }
+		const isOp = i === -1;
+		const reflink = `<a id="${ num }" class="post__reflink" href="${ refHref }">№</a>` +
+				`<a class="post__reflink postbtn-reply-href" href="${ refHref }"` +
+					` name="${ num }">${ num }</a>`;
+		const w = el => `<span class="post__detailpart">${ el }</span>`;
+		return `<div id="post-${ num }" class="post post_type_${ isOp ? 'oppost' : 'reply' }` +
+			`${ filesHTML ? ' post_withimg' : '' }" data-num="${ num }">
+			<div id="post-details-${ num }" class="post__details">
+				<input class="turnmeoff" type="checkbox" name="delete" value="${ num }">
+				${ !data.subject ? '' : w('<span class="post__title">' +
+					`${ data.subject + (data.tags ? ` /${ data.tags }/` : '') }</span>`) }
+				${ w(`
 					${ emailEl }
-					${ data.icon ? `<span class="${ isNew ? 'post__' : 'post-' }icon">` +
+					${ data.icon ? '<span class="post__icon">' +
 						`${ data.icon }</span>` : '' }
 					${ tripEl }
-					${ data.op === 1 ? `<span class="${ p }ophui"># OP</span>&nbsp;` : '' }
-					${ isNew ? timeReflink : `<span class="posttime-reflink">
-						${ timeReflink }
-					</span>` }
-					${ rate }
-				</div>
-				${ filesHTML }
-				${ this._getPostMsg(data) }
+					${ data.op === 1 ? '<span class="post__ophui"># OP</span>&nbsp;' : '' }
+				`) }
+				${ w(`<span class="post__time">${ data.date }</span>`) }
+				${ w(reflink) }
+				${ rate }
 			</div>
+			${ filesHTML }
+			${ this._getPostMsg(data) }
 		</div>`;
 	}
 	* bannedPostsData() {
-		const p = this._isNew ? 'post__' : '';
 		for(const { banned, num } of this._posts) {
 			switch(banned) {
 			case 1:
-				yield [1, num, $add(`<span class="${ p }pomyanem">(Автор этого поста был забанен.)</span>`)];
+				yield [1, num, $add('<span class="post__pomyanem">(Автор этого поста был забанен.)</span>')];
 				break;
 			case 2:
-				yield [2, num, $add(`<span class="${ p }pomyanem">` +
+				yield [2, num, $add('<span class="post__pomyanem">' +
 					'(Автор этого поста был предупрежден.)</span>')];
 				break;
 			}
@@ -13714,22 +13966,16 @@ class MakabaPostsBuilder {
 		Object.defineProperty(this, '_hasLikes', { value });
 		return value;
 	}
-	get _isNew() {
-		const value = !!$q('.post_type_oppost');
-		Object.defineProperty(this, '_isNew', { value });
-		return value;
-	}
 	_getPostMsg(data) {
 		const _switch = (val, obj) => val in obj ? obj[val] : obj['@@default'];
 		const comment = data.comment.replace(/<script /ig, '<!--<textarea ')
 			.replace(/<\/script>/ig, '</textarea>-->');
-		const p = this._isNew ? 'post__' : '';
-		return `<blockquote id="m${ data.num }" class="${ this._isNew ? 'post__' : 'post-' }message">` +
+		return `<article id="m${ data.num }" class="post__message">` +
 			`${ comment }${ _switch(data.banned, {
-				1           : `<br><span class="${ p }pomyanem">(Автор этого поста был забанен.)</span>`,
-				2           : `<br><span class="${ p }pomyanem">(Автор этого поста был предупрежден.)</span>`,
+				1           : '<br><span class="post__pomyanem">(Автор этого поста был забанен.)</span>',
+				2           : '<br><span class="post__pomyanem">(Автор этого поста был предупрежден.)</span>',
 				'@@default' : ''
-			}) }</blockquote>`;
+			}) }</article>`;
 	}
 }
 
@@ -13772,7 +14018,7 @@ class RefMap {
 		}
 	}
 	static initRefMap(form) {
-		let post = form.firstThr && form.firstThr.op;
+		let post = form.firstThr?.op;
 		if(post && Cfg.linksNavig) {
 			this.gen(pByNum);
 			const strNums = Cfg.strikeHidd && Post.hiddenNums.size ? Post.hiddenNums : null;
@@ -13799,7 +14045,9 @@ class RefMap {
 					const postClass = post.el.classList;
 					if(!postClass.contains('de-mypost-reply')) {
 						postClass.add('de-mypost-reply');
-						updater.refToYou(pNum);
+						if(doc.hidden) {
+							updater.addReplyToYou(pNum);
+						}
 					}
 				}
 			}
@@ -13814,14 +14062,14 @@ class RefMap {
 				lPost.ref.removeLink(pNum);
 				return;
 			}
-			if(strNums && strNums.has(lNum)) {
+			if(strNums?.has(lNum)) {
 				link.classList.add('de-link-hid');
 			}
 			if(!aib.hasOPNum && DelForm.tNums.has(lNum)) {
 				link.classList.add('de-ref-op');
 			}
 			lPost.ref.hasMap = true;
-			lPost.ref.addRefNum(post, pNum, strNums && strNums.has(pNum));
+			lPost.ref.addRefNum(post, pNum, strNums?.has(pNum));
 		}
 	}
 	addRefNum(post, num, isHidden = null) {
@@ -13836,6 +14084,9 @@ class RefMap {
 				post.setVisib(true, 'reference to >>' + num);
 				post.ref.hideRef();
 			}
+		}
+		if(!isHidden && Cfg.removeHidd) {
+			$toggle(this._el, true);
 		}
 	}
 	getElByNum(num) {
@@ -13865,7 +14116,7 @@ class RefMap {
 	initPostRef(tUrl, strNums) {
 		let html = '';
 		for(const num of this._set) {
-			html += this._getHTML(num, tUrl, strNums && strNums.has(num));
+			html += this._getHTML(num, tUrl, strNums?.has(num));
 		}
 		this._createEl(html, false);
 		this._isInited = true;
@@ -13877,12 +14128,12 @@ class RefMap {
 		this._set.delete(num);
 		if(!this._set.size) {
 			this.removeMap();
-		} else {
-			const el = this.getElByNum(num);
-			if(el) {
-				$del(el.nextSibling);
-				el.remove();
-			}
+			return;
+		}
+		const el = this.getElByNum(num);
+		if(el) {
+			el.nextSibling.remove();
+			el.remove();
 		}
 	}
 	removeMap() {
@@ -13927,15 +14178,8 @@ class RefMap {
 		return value;
 	}
 	_createEl(innerHTML, isHidden) {
-		let el;
-		const { msg } = this._post;
-		const html = `<div class="de-refmap${
-			isHidden ? ' de-post-hiddencontent' : '' }">${ innerHTML }</div>`;
-		if(aib.dobrochan && (el = msg.nextElementSibling)) {
-			el.insertAdjacentHTML('beforeend', html);
-		} else {
-			msg.insertAdjacentHTML('afterend', html);
-		}
+		this._post.msg.insertAdjacentHTML('afterend', `<div class="de-refmap${
+			isHidden ? ' de-post-hiddencontent' : '' }">${ innerHTML }</div>`);
 	}
 	_getHTML(num, tUrl, isHidden) {
 		return `<a href="${ tUrl }${ aib.anchor }${ num }" class="de-link-backref${
@@ -13951,16 +14195,16 @@ class RefMap {
 class Thread {
 	constructor(el, num, prev, form) {
 		this.hasNew = false;
-		this.hidCounter = 0;
+		this.hiddenCount = 0;
 		this.isFav = false;
 		this.isHidden = false;
 		this.loadCount = 0;
 		this.next = null;
 		this.num = num;
-		const els = $Q(aib.qRPost, el);
+		const els = $Q(aib.qPost, el);
 		const len = els.length;
-		const omt = aib.t ? 1 : aib.getOmitted($q(aib.qOmitted, el), len);
-		this.pcount = omt + len;
+		const omitted = (!aib.t && +$q(aib.qOmitted, el)?.textContent?.match(/\d+/) || 0) + 1;
+		this.postsCount = omitted + len;
 		this.el = el;
 		this.prev = prev;
 		this.form = form;
@@ -13975,11 +14219,11 @@ class Thread {
 		pByEl.set(el, lastPost);
 		for(let i = 0; i < len; ++i) {
 			const pEl = els[i];
-			lastPost = new Post(pEl, this, aib.getPNum(pEl), omt + i, false, lastPost);
+			lastPost = new Post(pEl, this, aib.getPNum(pEl), omitted + i, false, lastPost);
 		}
 		this.last = lastPost;
 		el.setAttribute('de-thread', null);
-		visPosts = Math.max(visPosts, len);
+		Thread.visPosts = Math.max(Thread.visPosts, len);
 		if(localData) {
 			return;
 		}
@@ -13987,8 +14231,7 @@ class Thread {
 			<span class="de-thr-updater">[<a class="de-thr-updater-link de-abtn" href="#"></a>` +
 			(!aib.t ? ']</span>' : '<span id="de-updater-count" style="display: none;"></span>]</span>') +
 			'</div>');
-		this.btns.addEventListener('click', this);
-		this.btns.addEventListener('mouseover', this);
+		['click', 'mouseover'].forEach(e => this.btns.addEventListener(e, this));
 		[this.btnHide,, this.btnFav, this.btnUpd] = [...this.btns.children];
 		if(!aib.t && Cfg.hideReplies) {
 			this.btnReplies = $bEnd(this.btns,
@@ -14017,12 +14260,12 @@ class Thread {
 	}
 	get nextNotHidden() {
 		let thr;
-		for(thr = this.next; thr && thr.isHidden; thr = thr.next) /* empty */;
+		for(thr = this.next; thr?.isHidden; thr = thr.next) /* empty */;
 		return thr;
 	}
 	get prevNotHidden() {
 		let thr;
-		for(thr = this.prev; thr && thr.isHidden; thr = thr.prev) /* empty */;
+		for(thr = this.prev; thr?.isHidden; thr = thr.prev) /* empty */;
 		return thr;
 	}
 	get top() {
@@ -14050,12 +14293,12 @@ class Thread {
 				tPost.counterEl.textContent = tPost.count + 1;
 			}
 		}
-		this.pcount -= count;
+		this.postsCount -= count;
 		return post;
 	}
 	handleEvent(e) {
-		$pd(e);
-		const el = fixEventEl(e.target);
+		e.preventDefault();
+		const el = nav.fixEventEl(e.target);
 		const elClass = el.classList[0];
 		const nextThr = this.next;
 		let oldCoord = false;
@@ -14066,10 +14309,10 @@ class Thread {
 			case 'de-btn-hide':
 			case 'de-btn-hide-user':
 			case 'de-btn-unhide-user':
-				oldCoord = nextThr && nextThr.top;
+				oldCoord = nextThr?.top;
 				this.op.setUserVisib(!this.isHidden);
 				break;
-			case 'de-btn-reply': pr.showQuickReply(this.last, this.num, false, false, true); break;
+			case 'de-btn-reply': postform.showQuickReply(this.last, this.num, false, false, true); break;
 			case 'de-btn-replies':
 			case 'de-replies-show':
 			case 'de-replies-hide':
@@ -14077,7 +14320,7 @@ class Thread {
 				this._toggleReplies();
 				break;
 			case 'de-thr-collapse':
-			case 'de-thr-collapse-link': this.loadPosts(visPosts, true); break;
+			case 'de-thr-collapse-link': this.loadPosts(Thread.visPosts, true); break;
 			case 'de-thr-updater':
 			case 'de-thr-updater-link':
 				if(aib.t) {
@@ -14093,7 +14336,7 @@ class Thread {
 			switch(el.classList[0]) {
 			case 'de-btn-reply':
 				this.btns.title = Lng.replyToThr[lang];
-				quotedText = deWindow.getSelection().toString();
+				postform.getSelectedText();
 				return;
 			case 'de-btn-hide':
 			case 'de-btn-hide-user':
@@ -14137,35 +14380,37 @@ class Thread {
 			.then(pBuilder => pBuilder ? this._loadNewFromBuilder(pBuilder) : { newCount: 0, locked: false });
 	}
 	toggleFavState(isEnable, preview = null) {
-		let h, b, num, cnt, txt, last;
+		let host, board, num, cnt, txt, last;
 		if(preview) {
 			preview.toggleFavBtn(isEnable);
 		}
 		if(!preview || preview.num === this.num) { // Oppost or usual preview
 			this.op.toggleFavBtn(isEnable);
 			this.isFav = isEnable;
-			({ host: h, b } = aib);
+			({ host, b: board } = aib);
 			({ num } = this);
-			cnt = this.pcount;
+			cnt = this.postsCount;
 			txt = this.op.title;
 			last = aib.anchor + this.last.num;
 		} else { // Loaded preview for oppost in remote thread
-			h = aib.host;
-			({ brd: b, num } = preview);
-			cnt = preview.remoteThr.pcount;
+			({ host } = aib);
+			({ board, num } = preview);
+			cnt = preview.remoteThr.postsCount;
 			txt = preview.remoteThr.title;
 			last = aib.anchor + preview.remoteThr.lastNum;
 		}
 		readFavorites().then(favObj => {
 			if(isEnable) {
-				let f = favObj[h] || (favObj[h] = {});
-				f = f[b] || (f[b] = {});
-				f.url = aib.prot + '//' + aib.host + aib.getPageUrl(b, 0);
-				f[num] = { cnt, new: 0, you: 0, txt, url: aib.getThrUrl(b, num), last, time: Date.now() };
+				let entry = favObj[host] || (favObj[host] = {});
+				entry = entry[board] || (entry[board] = {});
+				entry.url = aib.protocol + '//' + aib.host + aib.getPageUrl(board, 0);
+				const url = aib.getThrUrl(board, num);
+				entry[num] = { cnt, new: 0, you: 0, txt, url, last, time: Date.now() };
 			} else {
-				removeFavEntry(favObj, h, b, num);
+				removeFavEntry(favObj, host, board, num);
 			}
-			sendStorageEvent('__de-favorites', [h, b, num, favObj, isEnable ? 'add' : 'delete']);
+			// Updating Favorites: add or remove a thread
+			sendStorageEvent('__de-favorites', [host, board, num, favObj, isEnable ? 'add' : 'delete']);
 			saveRenewFavorites(favObj);
 		});
 	}
@@ -14188,7 +14433,7 @@ class Thread {
 		const num = aib.getPNum(el);
 		const wrap = doc.adoptNode(aib.getPostWrap(el, false));
 		const post = new Post(el, this, num, i, false, prev);
-		parent.appendChild(wrap);
+		parent.append(wrap);
 		if(aib.t && !doc.hidden && Cfg.animation) {
 			$animate(el, 'de-post-new');
 		}
@@ -14219,8 +14464,8 @@ class Thread {
 		for(const [banId, bNum, bEl] of pBuilder.bannedPostsData()) {
 			const post = bNum ? pByNum.get(bNum) : this.op;
 			if(post && post.banned !== banId) {
-				$del($q(aib.qBan, post.el));
-				post.msg.appendChild(bEl);
+				$q(aib.qBan, post.el).remove();
+				post.msg.append(bEl);
 				post.banned = banId;
 			}
 		}
@@ -14239,7 +14484,7 @@ class Thread {
 			const temp = doc.createElement('template');
 			temp.innerHTML = aib.fixHTML(html.join(''));
 			fragm = temp.content;
-			const posts = $Q(aib.qRPost, fragm);
+			const posts = $Q(aib.qPost, fragm);
 			for(let i = 0, len = posts.length; i < len; ++i) {
 				last = this._addPost(fragm, posts[i], begin + i + 1, last, maybeVParser);
 				newVisCount -= maybeSpells.value.runSpells(last);
@@ -14267,7 +14512,7 @@ class Thread {
 			}
 		}
 		const { op, el: thrEl } = this;
-		$del($q(aib.qOmitted + ', .de-omitted', thrEl));
+		$q(aib.qOmitted + ', .de-omitted', thrEl)?.remove();
 		if(this.loadCount === 0) {
 			if(op.trunc) {
 				op.updateMsg(pBuilder.getOpMessage(), maybeSpells.value);
@@ -14279,8 +14524,8 @@ class Thread {
 		let needToHide, needToOmit, needToShow;
 		let post = op.next;
 		let needRMUpdate = false;
-		const hasPosts = post && this.pcount > 1;
-		let existed = hasPosts ? this.pcount - post.count : 0;
+		const hasPosts = post && this.postsCount > 1;
+		let existed = hasPosts ? this.postsCount - post.count : 0;
 		switch(last) {
 		case 'new': // get new posts
 			needToHide = $Q('.de-hidden', thrEl).length;
@@ -14320,7 +14565,7 @@ class Thread {
 			if(maybeVParser.hasValue) {
 				maybeVParser.value.endParser();
 			}
-			$after(op.wrap, fragm);
+			op.wrap.after(fragm);
 			DollchanAPI.notify('newpost', nums);
 			last.next = post;
 			if(post) {
@@ -14348,10 +14593,11 @@ class Thread {
 		}
 		const btns = this._moveBtnsToEnd();
 		if(!$q('.de-thr-collapse', btns)) {
-			$bEnd(btns, `<span class="de-thr-collapse"> [<a class="de-thr-collapse-link de-abtn" href="${
-				aib.getThrUrl(aib.b, this.num) }"></a>]</span>`);
+			btns.insertAdjacentHTML('beforeend',
+				`<span class="de-thr-collapse"> [<a class="de-thr-collapse-link de-abtn" href="${
+					aib.getThrUrl(aib.b, this.num) }"></a>]</span>`);
 		}
-		if(needToShow > visPosts) {
+		if(needToShow > Thread.visPosts) {
 			thrNavPanel.addThr(this);
 			btns.lastChild.style.display = 'initial';
 		} else {
@@ -14374,15 +14620,15 @@ class Thread {
 		closePopup('load-thr');
 	}
 	_loadNewFromBuilder(pBuilder) {
-		const lastOffset = pr.isVisible ? pr.top : null;
+		const lastOffset = postform.isVisible ? postform.top : null;
 		const [newPosts, newVisPosts] = this._parsePosts(pBuilder);
 		this._moveBtnsToEnd();
 		if(lastOffset !== null) {
-			scrollTo(deWindow.pageXOffset, deWindow.pageYOffset + pr.top - lastOffset);
+			scrollTo(deWindow.pageXOffset, deWindow.pageYOffset + postform.top - lastOffset);
 		}
-		if(newPosts !== 0 || Panel.isNew) {
+		if(newPosts !== 0) {
 			Panel.updateCounter(
-				pBuilder.length + 1 - (Cfg.panelCounter === 2 ? this.hidCounter : 0),
+				pBuilder.length + 1 - (Cfg.panelCounter === 2 ? this.hiddenCount : 0),
 				$Q(`.de-reply:not(.de-post-removed) ${
 					aib.qPostImg }, .de-oppost ${ aib.qPostImg }`, this.el).length,
 				pBuilder.postersCount);
@@ -14396,7 +14642,7 @@ class Thread {
 	_moveBtnsToEnd() {
 		const { btns, el } = this;
 		if(btns !== el.lastChild) {
-			el.appendChild(btns);
+			el.append(btns);
 		}
 		return btns;
 	}
@@ -14409,7 +14655,7 @@ class Thread {
 		const maybeSpells = new Maybe(SpellsRunner);
 		const maybeVParser = new Maybe(Cfg.embedYTube ? VideosParser : null);
 		const { count } = post;
-		if(count !== 0 && (aib.dobrochan || count > len || pBuilder.getPNum(count - 1) !== post.num)) {
+		if(count !== 0 && (count > len || pBuilder.getPNum(count - 1) !== post.num)) {
 			post = this.op.nextNotDeleted;
 			let i = post.count - 1;
 			let firstChangedPost = null;
@@ -14438,9 +14684,9 @@ class Thread {
 				} while(pBuilder.getPNum(i) < num);
 				const res = this._importPosts(prev, pBuilder, i - cnt, i, maybeVParser, maybeSpells);
 				newPosts += res[0];
-				this.pcount += res[0];
+				this.postsCount += res[0];
 				newVisPosts += res[1];
-				$after(prev.wrap, res[2]);
+				prev.wrap.after(res[2]);
 				res[3].next = post;
 				post.prev = res[3];
 				DollchanAPI.notify('newpost', res[4]);
@@ -14462,17 +14708,19 @@ class Thread {
 				}
 			}
 		}
-		if(len + 1 > this.pcount) {
+		if(len + 1 > this.postsCount) {
 			const res = this._importPosts(this.last, pBuilder, this.lastNotDeleted.count,
 				len, maybeVParser, maybeSpells);
 			newPosts += res[0];
 			newVisPosts += res[1];
-			(aib.qPostsParent ? $q(aib.qPostsParent, this.el) : this.el).appendChild(res[2]);
+			(aib.qPostsParent ? $q(aib.qPostsParent, this.el) : this.el).append(res[2]);
 			this.last = res[3];
 			DollchanAPI.notify('newpost', res[4]);
-			this.pcount = len + 1;
+			this.postsCount = len + 1;
 		}
-		updateFavorites(this.op.num, [this.pcount, this.last.num], 'update');
+		// Updating Favorites: successed thread loading
+		updateFavorites(this.op.num,
+			[this.postsCount, newPosts, updater.getRepliesToYou, this.last.num], 'update');
 		if(maybeVParser.hasValue) {
 			maybeVParser.value.endParser();
 		}
@@ -14491,14 +14739,15 @@ class Thread {
 		}
 		this.btnReplies.firstElementChild.className =
 			`${ isHide ? 'de-replies-show' : 'de-replies-hide' } de-abtn`;
-		$each(this.btns.children, el => el !== this.btnReplies && $toggle(el, !isHide));
-		$del($q(aib.qOmitted + ', .de-omitted', this.el));
-		i = this.pcount - 1 - (isHide ? 0 : i);
+		[...this.btns.children].forEach(el => el !== this.btnReplies && $toggle(el, !isHide));
+		$q(aib.qOmitted + ', .de-omitted', this.el)?.remove();
+		i = this.postsCount - 1 - (isHide ? 0 : i);
 		if(i) {
 			this.op.el.insertAdjacentHTML('afterend', `<span class="de-omitted">${ i }</span> `);
 		}
 	}
 }
+Thread.visPosts = 2;
 
 const thrNavPanel = {
 	addThr(thr) {
@@ -14513,13 +14762,13 @@ const thrNavPanel = {
 	handleEvent(e) {
 		switch(e.type) {
 		case 'scroll': deWindow.requestAnimationFrame(() => this._checkThreads()); break;
-		case 'mouseover': this._expandCollapse(true, fixEventEl(e.relatedTarget)); break;
-		case 'mouseout': this._expandCollapse(false, fixEventEl(e.relatedTarget)); break;
+		case 'mouseover': this._expandCollapse(true, nav.fixEventEl(e.relatedTarget)); break;
+		case 'mouseout': this._expandCollapse(false, nav.fixEventEl(e.relatedTarget)); break;
 		case 'click': this._handleClick(e); break;
 		}
 	},
 	initThrNav() {
-		const el = $bEnd(docBody, `
+		const el = $bEnd(doc.body, `
 		<div id="de-thr-navpanel" class="de-thr-navpanel-hidden" style="display: none;">
 			<svg id="de-thr-navarrow"><use xlink:href="#de-symbol-thr-nav-arrow"/></svg>
 			<div id="de-thr-navup">
@@ -14529,9 +14778,7 @@ const thrNavPanel = {
 				<svg viewBox="0 0 24 24"><use xlink:href="#de-symbol-thr-nav-down"/></svg>
 			</div>
 		</div>`);
-		el.addEventListener('mouseover', this, true);
-		el.addEventListener('mouseout', this, true);
-		el.addEventListener('click', this, true);
+		['mouseover', 'mouseout', 'click'].forEach(e => el.addEventListener(e, this, true));
 		this._el = el;
 		this._thrs = new Set();
 	},
@@ -14547,7 +14794,7 @@ const thrNavPanel = {
 
 	_currentThr : null,
 	_el         : null,
-	_toggleTO   : 0,
+	_toggleTO   : null,
 	_thrs       : null,
 	_visible    : false,
 	_checkThreads() {
@@ -14561,10 +14808,10 @@ const thrNavPanel = {
 			this._toggleNavPanel(true);
 		}
 	},
-	_expandCollapse(isExpand, rt) {
-		if(!rt || !this._el.contains(rt.farthestViewportElement || rt)) {
+	_expandCollapse(isExpand, targetEl) {
+		if(!$contains(this._el, targetEl)) {
 			clearTimeout(this._toggleTO);
-			this._toggleTO = setTimeout(() => this._el.classList.toggle('de-thr-navpanel-hidden', !isExpand),
+			this._toggleTO =setTimeout(() => this._el.classList.toggle('de-thr-navpanel-hidden', !isExpand),
 				Cfg.linksOver);
 		}
 	},
@@ -14587,7 +14834,7 @@ const thrNavPanel = {
 		return this._findCurrentThread();
 	},
 	_handleClick(e) {
-		const el = fixEventEl(e.target);
+		const el = nav.fixEventEl(e.target);
 		switch((el.tagName.toLowerCase() === 'svg' ? el.parentNode : el).id) {
 		case 'de-thr-navup':
 			scrollTo(deWindow.pageXOffset, deWindow.pageYOffset +
@@ -14610,14 +14857,15 @@ const thrNavPanel = {
 =========================================================================================================== */
 
 function initThreadUpdater(title, enableUpdate) {
-	let focusLoadTime, disabledByUser = true;
+	let focusLoadTime;
+	let disabledByUser = true;
 	let enabled = false;
 	let repliesToYou = new Set();
 	let lastECode = 200;
 	let newPosts = 0;
 	let paused = false;
 	let sendError = false;
-	const storageName = `de-lastpcount-${ aib.b }-${ aib.t }`;
+	const storageName = `de-last-postscount-${ aib.b }-${ aib.t }`;
 
 	const audio = {
 		enabled  : false,
@@ -14783,8 +15031,8 @@ function initThreadUpdater(title, enableUpdate) {
 		_blinkMS     : 800,
 		_currentIcon : null,
 		_emptyIcon   : 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==',
-		_getIconNew  : newPosts => null,
-		_getIconYou  : newPosts => null,
+		_getIconNew  : () => null,
+		_getIconYou  : () => null,
 		_hasIcons    : false,
 		_iconError   : null,
 		_iconsNew    : [],
@@ -14874,11 +15122,11 @@ function initThreadUpdater(title, enableUpdate) {
 		get canShow() {
 			return Cfg.desktNotif && this._granted;
 		},
-		checkPermission() {
+		async checkPermission() {
 			if(Cfg.desktNotif && ('permission' in Notification)) {
 				switch(Notification.permission.toLowerCase()) {
 				case 'default': this._requestPermission(); break;
-				case 'denied': saveCfg('desktNotif', 0);
+				case 'denied': await CfgSaver.save('desktNotif', 0);
 				}
 			}
 		},
@@ -14897,13 +15145,13 @@ function initThreadUpdater(title, enableUpdate) {
 			};
 			const post = Thread.first.last;
 			const toYou = repliesToYou.size;
-			const notif = new Notification(`${ aib.dm }/${ aib.b }/${ aib.t }: ${ newPosts } ${
+			const notif = new Notification(`${ aib.domain }/${ aib.b }/${ aib.t }: ${ newPosts } ${
 				Lng.newPost[lang][lngQuantity(newPosts)] }. ${
 				toYou ? `${ toYou } ${ Lng.youReplies[lang][lngQuantity(toYou)] }.` : '' }`,
 			{
 				body : Lng.latestPost[lang] + ':\n' + post.text.substring(0, 250).replace(/\s+/g, ' '),
 				icon : post.images.firstAttach ? post.images.firstAttach.src : favicon.originalIcon,
-				tag  : aib.dm + aib.b + aib.t
+				tag  : aib.domain + aib.b + aib.t
 			});
 			notif.onshow = () => setTimeout(() => notif === this._notifEl && this.closeNotif(), 12e3);
 			notif.onclick = () => deWindow.focus();
@@ -14914,14 +15162,13 @@ function initThreadUpdater(title, enableUpdate) {
 			this._notifEl = notif;
 		},
 
-		_closeTO : null,
 		_granted : true,
 		_notifEl : null,
 		_requestPermission() {
 			this._granted = false;
-			Notification.requestPermission(state => {
+			Notification.requestPermission(async state => {
 				if(state.toLowerCase() === 'denied') {
-					saveCfg('desktNotif', 0);
+					await CfgSaver.save('desktNotif', 0);
 				} else {
 					this._granted = true;
 				}
@@ -14963,7 +15210,7 @@ function initThreadUpdater(title, enableUpdate) {
 		_seconds     : 0,
 		_state       : -1,
 		get _panelButton() {
-			const value = $q('a[id^="de-panel-upd"]');
+			const value = $q('button[id^="de-panel-upd"]');
 			if(value) {
 				Object.defineProperty(this, '_panelButton', { value });
 			}
@@ -14989,7 +15236,9 @@ function initThreadUpdater(title, enableUpdate) {
 					this._makeStep();
 				}
 				lastECode = eCode;
-				updateFavorites(aib.t, getErrorMessage(err), 'error');
+				// Updating Favorites: failed thread loading
+				updateFavorites(aib.t, getErrorMessage(err),
+					aib.qClosed && $q(aib.qClosed) ? 'closed' : 'error');
 				return;
 			}
 			if(lastECode !== 200) {
@@ -15011,7 +15260,7 @@ function initThreadUpdater(title, enableUpdate) {
 					if(audio.enabled) {
 						audio.playAudio();
 					}
-					sesStorage[storageName] = Thread.first.pcount;
+					sesStorage[storageName] = Thread.first.postsCount;
 					this._delay = this._initDelay;
 				} else if(this._delay !== 12e4) {
 					this._delay = Math.min(this._delay + this._initDelay, 12e4);
@@ -15118,6 +15367,11 @@ function initThreadUpdater(title, enableUpdate) {
 					forceLoadPosts();
 				}
 			}, 200);
+			if(aib.t) {
+				const thr = Thread.first;
+				// Updating Favorites: visiting a previously inactive page
+				updateFavorites(thr.op.num, [thr.postsCount, 0, 0, thr.last.num], 'update');
+			}
 		} else if(Thread.first) {
 			Post.clearMarks();
 		}
@@ -15128,6 +15382,12 @@ function initThreadUpdater(title, enableUpdate) {
 	}
 
 	return {
+		get getRepliesToYou() {
+			return repliesToYou.size;
+		},
+		addReplyToYou(pNum) {
+			repliesToYou.add(pNum);
+		},
 		continueUpdater(needSleep = false) {
 			if(enabled && paused) {
 				updMachine.start(needSleep);
@@ -15146,7 +15406,7 @@ function initThreadUpdater(title, enableUpdate) {
 		},
 		forceLoad(e) {
 			if(e) {
-				$pd(e);
+				e.preventDefault();
 			}
 			Post.clearMarks();
 			if(enabled && paused) {
@@ -15159,11 +15419,6 @@ function initThreadUpdater(title, enableUpdate) {
 			if(enabled && !paused) {
 				updMachine.stopUpdater();
 				paused = true;
-			}
-		},
-		refToYou(pNum) {
-			if(doc.hidden) {
-				repliesToYou.add(pNum);
 			}
 		},
 		toggle() {
@@ -15277,16 +15532,17 @@ class DelForm {
 	}
 
 	static _parseClasslessThreads(formEl) {
-		let i, len, cThr = doc.createElement('div');
+		let i, len;
+		let cThr = doc.createElement('div');
 		const threads = [];
 		const fNodes = [...formEl.childNodes];
 		for(i = 0, len = fNodes.length - 1; i < len; ++i) {
 			const el = fNodes[i];
-			if(el.tagName === 'HR') {
-				formEl.insertBefore(cThr, el);
+			if(el.tagName?.toLowerCase() === 'hr') {
+				el.before(cThr);
 				const lastEl = cThr.lastElementChild;
-				if(lastEl.tagName === 'BR') {
-					formEl.insertBefore(lastEl, el);
+				if(lastEl.tagName?.toLowerCase() === 'br') {
+					el.before(lastEl);
 				}
 				try {
 					aib.getTNum(cThr);
@@ -15294,11 +15550,20 @@ class DelForm {
 				} catch(err) {}
 				cThr = doc.createElement('div');
 			} else {
-				cThr.appendChild(el);
+				cThr.append(el);
+				if(i === len - 1) {
+					let tNum;
+					try {
+						tNum = aib.getTNum(cThr);
+					} catch(err) {}
+					if(tNum) {
+						threads.push(cThr);
+					}
+				}
 			}
 		}
-		cThr.appendChild(fNodes[i]);
-		formEl.appendChild(cThr);
+		cThr.append(fNodes[i]);
+		formEl.append(cThr);
 		return threads;
 	}
 	get passEl() {
@@ -15309,12 +15574,12 @@ class DelForm {
 	addStuff() {
 		const { el } = this;
 		if(Cfg.ajaxPosting && !localData) {
-			const delBtn = aib.qDelBut ? $q(aib.qDelBut, el) : null;
+			const delBtn = aib.qDelBtn ? $q(aib.qDelBtn, el) : null;
 			if(delBtn) {
-				el.onsubmit = $pd;
+				el.onsubmit = e => e.preventDefault();
 				delBtn.onclick = e => {
-					$pd(e);
-					pr.closeReply();
+					e.preventDefault();
+					postform.closeReply();
 					$popup('delete', Lng.deleting[lang], true);
 					html5Submit(el, e.target).then(checkDelete)
 						.catch(err => $popup('delete', getErrorMessage(err)));
@@ -15368,13 +15633,23 @@ function initNavFuncs() {
 	const isChrome = isWebkit && ua.includes('Chrome/');
 	const isSafari = isWebkit && !isChrome;
 	const hasPrestoStorage = !!prestoStorage && !ua.includes('Opera Mobi');
-	const hasNewGM = /* global GM */ typeof GM !== 'undefined' && typeof GM.xmlHttpRequest === 'function';
 	const canUseFetch = 'AbortController' in deWindow; // Firefox 57+, Chrome 66+, Safari 11.1+
-	let scriptHandler, hasWebStorage = false;
-	let hasOldGM = false;
+	const hasNewGM = typeof GM !== 'undefined' && typeof GM.xmlHttpRequest === 'function';
+	let hasGMXHR, hasOldGM, hasWebStorage, scriptHandler;
 	if(hasNewGM) {
-		scriptHandler = GM.info ? `${ GM.info.scriptHandler } ${ GM.info.version }` : 'Greasemonkey';
+		const inf = GM.info;
+		const handlerName = inf ? inf.scriptHandler : '';
+		if(handlerName === 'FireMonkey') {
+			hasGMXHR = false;
+			hasOldGM = true;
+		} else {
+			hasGMXHR = typeof GM.xmlHttpRequest === 'function';
+			hasOldGM = false;
+		}
+		hasWebStorage = false;
+		scriptHandler = inf ? handlerName + ' ' + inf.version : 'Greasemonkey';
 	} else {
+		hasGMXHR = typeof GM_xmlhttpRequest === 'function';
 		try {
 			hasOldGM = (typeof GM_setValue === 'function') &&
 				(!isChrome || !GM_setValue.toString().includes('not supported'));
@@ -15391,18 +15666,6 @@ function initNavFuncs() {
 	if(!('requestAnimationFrame' in deWindow)) { // XXX: Opera Presto
 		deWindow.requestAnimationFrame = fn => setTimeout(fn, 0);
 	}
-	if(!('remove' in Element.prototype)) { // XXX: Opera Presto
-		Element.prototype.remove = function() {
-			const el = this.parentNode;
-			if(el) {
-				el.removeChild(this);
-			}
-		};
-	}
-	const nlProto = NodeList.prototype;
-	$each = 'forEach' in nlProto ?
-		(els, cb) => nlProto.forEach.call(els, cb) :
-		(els, cb) => aProto.forEach.call(els, cb);
 	let needFileHack = false;
 	try {
 		new File([''], '');
@@ -15412,7 +15675,7 @@ function initNavFuncs() {
 	} catch(err) {
 		needFileHack = true;
 	}
-	if(needFileHack && FormData) { // XXX: Firefox < 39, Chrome < 50, Safari < 11
+	if(needFileHack && FormData) { // XXX: Firefox < 39, Chrome < 50, Safari < 11 - FormData hack
 		const OrigFormData = FormData;
 		const origAppend = FormData.prototype.append;
 		FormData = function FormData(form) {
@@ -15421,7 +15684,7 @@ function initNavFuncs() {
 				if(value instanceof Blob && 'name' in value && fileName === null) {
 					return origAppend.call(this, name, value, value.name);
 				}
-				return origAppend.apply(this, arguments);
+				return origAppend.apply(this, [name, value, fileName]);
 			};
 			return rv;
 		};
@@ -15433,26 +15696,25 @@ function initNavFuncs() {
 	}
 	nav = {
 		canUseFetch,
-		canUseFetchBlob  : canUseFetch && !(isChrome && scriptHandler === 'WebExtension'),
 		canUseNativeXHR  : true,
 		firefoxVer       : isFirefox ? +(ua.match(/Firefox\/(\d+)/) || [0, 0])[1] : 0,
-		fixLink          : isSafari ? getAbsLink : url => url,
 		hasGlobalStorage : hasOldGM || hasNewGM || hasWebStorage || hasPrestoStorage,
-		hasGMXHR         : (typeof GM_xmlhttpRequest === 'function') ||
-			hasNewGM && (typeof GM.xmlHttpRequest === 'function'),
+		hasGMXHR,
 		hasNewGM,
 		hasOldGM,
 		hasPrestoStorage,
 		hasWebStorage,
-		isChrome,
-		isESNext : typeof deMainFuncOuter === 'undefined',
+		isESNext         : typeof deMainFuncOuter === 'undefined',
 		isFirefox,
-		isMsEdge : ua.includes('Edge/'),
-		isPresto : !!deWindow.opera,
+		isMsEdge         : ua.includes('Edge/'),
+		isMobile         : /Android|iPhone/i.test(ua),
+		isPresto         : !!deWindow.opera,
 		isSafari,
+		isTampermonkey   : scriptHandler.startsWith('Tampermonkey'),
+		isViolentmonkey  : scriptHandler.startsWith('Violentmonkey'),
 		isWebkit,
 		scriptHandler,
-		ua       : navigator.userAgent + (isFirefox ? ` [${ navigator.buildID }]` : ''),
+		ua               : ua + (isFirefox ? ` [${ navigator.buildID }]` : ''),
 
 		get canPlayMP3() {
 			const value = !!new Audio().canPlayType('audio/mpeg;');
@@ -15485,19 +15747,28 @@ function initNavFuncs() {
 		},
 		get viewportHeight() {
 			const value = doc.compatMode && doc.compatMode === 'CSS1Compat' ?
-				() => doc.documentElement.clientHeight : () => docBody.clientHeight;
+				() => doc.documentElement.clientHeight : () => doc.body.clientHeight;
 			Object.defineProperty(this, 'viewportHeight', { value });
 			return value;
 		},
 		get viewportWidth() {
 			const value = doc.compatMode && doc.compatMode === 'CSS1Compat' ?
-				() => doc.documentElement.clientWidth : () => docBody.clientWidth;
+				() => doc.documentElement.clientWidth : () => doc.body.clientWidth;
 			Object.defineProperty(this, 'viewportWidth', { value });
 			return value;
 		},
-		getUnsafeUint8Array(data, i, len) { // XXX: Old Greasemonkeys
+		// XXX: Opera Presto - hack for SVG events
+		get fixEventEl() {
+			const value = !this.isPresto ? el => el :
+				el => el?.correspondingUseElement?.ownerSVGElement || el;
+			Object.defineProperty(this, 'fixEventEl', { value });
+			return value;
+		},
+		// XXX: Firefox + old Greasemonkey - hack to prevent
+		//    'Accessing TypedArray data over Xrays is slow, and forbidden' errors
+		getUnsafeUint8Array(data, i, len) {
 			let Ctor = Uint8Array;
-			if(nav.isFirefox && nav.hasOldGM) {
+			if(this.isFirefox && (this.hasOldGM || this.isTampermonkey)) {
 				try {
 					if(!(new Uint8Array(data) instanceof Uint8Array)) {
 						Ctor = unsafeWindow.Uint8Array;
@@ -15513,10 +15784,10 @@ function initNavFuncs() {
 			}
 			throw new Error();
 		},
-		getUnsafeDataView(data, offset) { // XXX: Old Greasemonkeys
+		getUnsafeDataView(data, offset) { // XXX: Firefox + old Greasemonkey
 			const value = new DataView(data, offset || 0);
-			return !nav.isFirefox || !nav.hasOldGM || (value instanceof DataView) ? value :
-				new unsafeWindow.DataView(data, offset || 0);
+			return this.isFirefox && this.hasOldGM && !(value instanceof DataView) ?
+				new unsafeWindow.DataView(data, offset || 0) : value;
 		}
 	};
 }
@@ -15526,48 +15797,55 @@ function initNavFuncs() {
 =========================================================================================================== */
 
 class BaseBoard {
-	constructor(prot, dm) {
+	constructor(protocol, domain) {
+		// Imageboard-specific booleans
+		this._4chan = false;
+		this.kohlchan = false;
+		this.makaba = false;
+
 		// Query paths
 		this.cReply = 'reply';
 		this.qBan = null;
 		this.qClosed = null;
-		this.qDelBut = 'input[type="submit"]';
+		this.qDelBtn = 'input[type="submit"]';
+		this.qDelForm = '#delform, form[name="delform"]';
 		this.qDelPassw = 'input[type="password"], input[name="password"]';
-		this.qDForm = '#delform, form[name="delform"]';
 		this.qError = 'h1, h2, font[size="5"]';
 		this.qForm = '#postform';
 		this.qFormFile = 'tr input[type="file"]';
 		this.qFormPassw = 'tr input[type="password"]';
 		this.qFormRedir = 'input[name="postredir"][value="1"]';
 		this.qFormRules = '.rules, #rules';
-		this.qFormSpoiler = 'input[type="checkbox"][name="spoiler"]'; // Ernstchan
+		this.qFormSpoiler = 'input[type="checkbox"][name="spoiler"]';
 		this.qFormSubm = 'tr input[type="submit"]';
 		this.qFormTd = 'td';
 		this.qFormTr = 'tr';
-		this.qFormTxta = 'tr:not([style*="none"]) textarea:not([style*="display:none"])'; // Makaba
-		this.qImgInfo = '.filesize';
+		this.qFormTxta = 'tr:not([style*="none"]) textarea:not([style*="display:none"])';
 		this.qOmitted = '.omittedposts';
 		this.qOPost = '.oppost';
-		this.qPosterId = '.postInfo .posteruid span, .poster_hash';
 		this.qPages = 'table[border="1"] > tbody > tr > td:nth-child(2) > a:last-of-type';
+		this.qPost = '.reply';
 		this.qPostHeader = '.de-post-btns';
 		this.qPostImg = '.thumb, .ca_thumb, img[src*="thumb"], img[src*="/spoiler"], img[src^="blob:"]';
+		this.qPostImgInfo = '.filesize';
 		this.qPostMsg = 'blockquote';
 		this.qPostName = '.postername, .commentpostername';
 		this.qPostSubj = '.filetitle';
 		this.qPostTrip = '.postertrip';
 		this.qPostRef = '.reflink';
 		this.qPostsParent = null;
-		this.qRPost = '.reply';
 		this.qTrunc = '.abbrev, .abbr, .shortened';
-		this._qOPostEnd = 'form > table, div > table, div[id^="repl"]';
 
 		// Other propertioes
+		let { port } = deWindow.location;
+		port = port ? ':' + port : '';
 		this.anchor = '#';
 		this.b = '';
-		this.dm = dm;
+		this.captchaRu = false;
+		this.domain = domain + port;
 		this.docExt = null;
 		this.firstPage = 0;
+		this.formHeaders = false;
 		this.formParent = 'parent';
 		this.hasAltCaptcha = false;
 		this.hasArchive = false;
@@ -15576,50 +15854,43 @@ class BaseBoard {
 		this.hasPicWrap = false;
 		this.hasRefererErr = false;
 		this.hasTextLinks = false;
-		this.host = deWindow.location.hostname;
+		this.host = deWindow.location.hostname + port;
 		this.JsonBuilder = null;
 		this.jsonSubmit = false;
 		this.markupBB = false;
 		this.multiFile = false;
 		this.page = 0;
-		this.prot = prot;
+		this.protocol = protocol;
 		this.res = 'res/';
-		this.ru = false;
 		this.t = false;
 		this.timePattern = 'w+dd+m+yyyy+hh+ii+ss';
-
-		// Imageboard-specific booleans
-		this._02ch = false;
-		this._2channel = false;
-		this._4chan = false;
-		this.dobrochan = false;
-		this.kohlchan = false;
-		this.makaba = false;
 	}
 	get qFormMail() {
-		return cssMatches('tr:not([style*="none"]) input:not([type="hidden"]):not([style*="none"])',
+		return $match('tr:not([style*="none"]) input:not([type="hidden"]):not([style*="none"])',
 			'[name="email"]', '[name="em"]', '[name="field2"]', '[name="sage"]');
 	}
 	get qFormName() {
-		return cssMatches('tr:not([style*="none"]) input:not([type="hidden"]):not([style*="none"])',
+		return $match('tr:not([style*="none"]) input:not([type="hidden"]):not([style*="none"])',
 			'[name="name"]', '[name="field1"]');
 	}
 	get qFormSubj() {
-		return cssMatches('tr:not([style*="none"]) input:not([type="hidden"]):not([style*="none"])',
+		return $match('tr:not([style*="none"]) input:not([type="hidden"]):not([style*="none"])',
 			'[name="subject"]', '[name="field3"]');
 	}
 	get qImgNameLink() {
 		const value = cssMatches(this.qImgInfo.split(', ').join(' a, ') + ' a',
 			'[href$=".jpg"]', '[href$=".jpeg"]', '[href$=".png"]', '[href$=".gif"]', '[href$=".webm"]',
 			'[href$=".webp"]', '[href$=".mp4"]', '[href$=".m4v"]', '[href$=".ogv"]', '[href$=".apng"]',
-			'[href$=".web"]', '[href^="blob:"]');
+			', [href^="blob:"]');
 		Object.defineProperty(this, 'qImgNameLink', { value });
 		return value;
 	}
-	get qMsgImgLink() { // Sets here only
-		const value = cssMatches(this.qPostMsg.split(', ').join(' a, ') + ' a',
-			'[href$=".jpg"]', '[href$=".jpeg"]', '[href$=".png"]', '[href$=".gif"]');
-		Object.defineProperty(this, 'qMsgImgLink', { value });
+	get qPostImgNameLink() {
+		const value = $match(this.qPostImgInfo.split(', ').join(' a, ') + ' a',
+			'[href$=".jfif"]', '[href$=".jpg"]', '[href$=".jpeg"]', '[href$=".png"]', '[href$=".gif"]',
+			'[href$=".webm"]', '[href$=".webp"]', '[href$=".mov"]', '[href$=".mp4"]', '[href$=".m4v"]',
+			'[href$=".ogv"]', '[href$=".apng"]', ', [href^="blob:"]');
+		Object.defineProperty(this, 'qPostImgNameLink', { value });
 		return value;
 	}
 	get qThread() {
@@ -15627,22 +15898,25 @@ class BaseBoard {
 		Object.defineProperty(this, 'qThread', { value });
 		return value;
 	}
-	get captchaAfterSubmit() { // Kohlchan
+	get captchaAfterSubmit() {
 		return null;
 	}
 	get captchaInit() {
 		return null;
 	}
-	get captchaLang() { // _410chan
-		return this.ru ? 2 : 1;
+	get captchaLang() {
+		return this.captchaRu ? 2 : 1;
 	}
 	get captchaUpdate() {
 		return null;
 	}
-	get catalogUrl() { // Iichan
-		return `${ this.prot }//${ this.host }/${ this.b }/catalog.html`;
+	get catalogUrl() {
+		return `${ this.protocol }//${ this.host }/${ this.b }/catalog.html`;
 	}
 	get changeReplyMode() {
+		return null;
+	}
+	get clearFileInputs() {
 		return null;
 	}
 	get css() {
@@ -15651,7 +15925,7 @@ class BaseBoard {
 	get deleteTruncMsg() {
 		return null;
 	}
-	get fixDeadLinks() { // _4chan
+	get fixDeadLinks() {
 		return null;
 	}
 	get fixHTMLHelper() {
@@ -15660,10 +15934,10 @@ class BaseBoard {
 	get fixFileInputs() {
 		return null;
 	}
-	get fixKCUnixFilenames() { // Kohlchan
+	get fixKCUnixFilenames() {
 		return null;
 	}
-	get getImgRedirectSrc() { // Archived
+	get getImgRedirectSrc() {
 		return null;
 	}
 	get getSubmitData() {
@@ -15672,9 +15946,9 @@ class BaseBoard {
 	get isArchived() {
 		return false;
 	}
-	get lastPage() { // Makaba
+	get lastPage() {
 		const el = $q(this.qPages);
-		let value = el && +aProto.pop.call(el.textContent.match(/\d+/g) || []) || 0;
+		let value = el && +Array.prototype.pop.call(el.textContent.match(/\d+/g) || []) || 0;
 		if(this.page === value + 1) {
 			value++;
 		}
@@ -15684,36 +15958,38 @@ class BaseBoard {
 	get markupTags() {
 		return this.markupBB ? ['b', 'i', 'u', 's', 'spoiler', 'code'] : ['**', '*', '', '^H', '%%', '`'];
 	}
-	get observeContent() { // Makaba
+	get observeContent() {
 		return null;
 	}
-	get reCrossLinks() { // Sets here only
-		const value = new RegExp(`>https?:\\/\\/[^\\/]*${ this.dm }\\/([a-z0-9]+)\\/${
-			quoteReg(this.res) }(\\d+)(?:[^#<]+)?(?:#i?(\\d+))?<`, 'g');
+	get handlePostClick() {
+		return null;
+	}
+	get postersCount() {
+		return '';
+	}
+	get reCrossLinks() {
+		const value = new RegExp(`>https?:\\/\\/[^\\/]*${ this.domain }\\/([a-z0-9]+)\\/${
+			escapeRegExp(this.res) }(\\d+)(?:[^#<]+)?(?:#i?(\\d+))?<`, 'g');
 		Object.defineProperty(this, 'reCrossLinks', { value });
 		return value;
 	}
 	get reportForm() {
 		return null;
 	}
-	get sendHTML5Post() { // Lynxchan
+	get sendHTML5Post() {
 		return null;
 	}
-	get stormWallFixAjax() { // Iichan
+	get stormWallFixAjax() {
 		return null;
 	}
-	get stormWallFixCaptcha() { // Iichan
+	get stormWallFixCaptcha() {
 		return null;
 	}
-	get stormWallFixSubmit() { // Iichan
+	get stormWallFixSubmit() {
 		return null;
 	}
-	get stormWallHelper() { // Iichan
+	get stormWallHelper() {
 		return null;
-	}
-	disableRedirection(el) { // Dobrochan
-		$hide($qParent(el, aib.qFormTr));
-		el.checked = true;
 	}
 	fixHTML(data, isForm = false) {
 		if(!(dTime || Spells.reps || Cfg.crossLinks || Cfg.decodeLinks ||
@@ -15747,7 +16023,8 @@ class BaseBoard {
 			str = Spells.replace(str);
 		}
 		if(Cfg.crossLinks) {
-			str = str.replace(aib.reCrossLinks, (_, b, tNum, pNum) => `>&gt;&gt;/${ b }/${ pNum || tNum }<`);
+			str = str.replace(this.reCrossLinks,
+				(_, board, tNum, pNum) => `>&gt;&gt;/${ board }/${ pNum || tNum }<`);
 		}
 		if(Cfg.decodeLinks) {
 			str = str.replace(/>https?:\/\/[^<]+</ig, match => {
@@ -15763,7 +16040,7 @@ class BaseBoard {
 		if(isForm) {
 			const newForm = $bBegin(data, str);
 			$hide(data);
-			deWindow.addEventListener('load', () => $del($id('de-dform-old')));
+			deWindow.addEventListener('load', () => $id('de-dform-old').remove());
 			return newForm;
 		}
 		data.innerHTML = str;
@@ -15781,45 +16058,53 @@ class BaseBoard {
 			let m = src.match(Videos.ytReg);
 			if(m) {
 				videos.push([isPost ? data : this.getPostOfEl(el), m, true]);
-				$del(el);
-			}
-			if(Cfg.addVimeo && (m = src.match(Videos.vimReg))) {
+				el.remove();
+			} else if(Cfg.addVimeo && (m = src.match(Videos.vimReg))) {
 				videos.push([isPost ? data : this.getPostOfEl(el), m, false]);
-				$del(el);
+				el.remove();
 			}
 		}
 		return videos;
 	}
-	getBanId(postEl) { // Makaba
+	getAbsLink(url) {
+		return (url[1] === '/' ? this.protocol :
+			url[0] === '/' ? this.protocol + '//' + this.host : '') + url;
+	}
+	getBanId(postEl) {
 		return this.qBan && $q(this.qBan, postEl) ? 1 : 0;
 	}
 	getCapParent(el) {
-		return $qParent(el, this.qFormTr);
+		return el.closest(this.qFormTr);
 	}
 	getCaptchaSrc(src, tNum) {
 		const temp = src.replace(/pl$/, 'pl?key=mainpage&amp;dummy=')
 			.replace(/dummy=[\d.]*/, 'dummy=' + Math.random());
 		return tNum ? temp.replace(/mainpage|res\d+/, 'res' + tNum) : temp.replace(/res\d+/, 'mainpage');
 	}
+	getEmptyFile(field, name) {
+		return {
+			el    : field,
+			name,
+			type  : 'application/octet-stream',
+			value : new File([''], '')
+		};
+	}
 	getImgInfo(wrap) {
-		const el = $q(this.qImgInfo, wrap);
+		const el = $q(this.qPostImgInfo, wrap);
 		return el ? el.textContent : '';
 	}
 	getImgRealName(wrap) {
-		const el = $q(this.qImgNameLink, wrap);
+		const el = $q(this.qPostImgNameLink, wrap);
 		return el ? el.title || el.textContent : '';
 	}
 	getImgSrcLink(img) {
-		return $parent(img, 'A');
+		return img.closest('a');
 	}
 	getImgWrap(img) {
-		return ($parent(img, 'A') || img).parentNode;
+		return (img.closest('a') || img).parentNode;
 	}
 	getJsonApiUrl() {}
-	getOmitted(el) {
-		return +(el && (el.textContent || '').match(/\d+/)) + 1;
-	}
-	getOp(thr) { // Arhivach
+	getOp(thr) {
 		let op = localData ? $q('.de-oppost', thr) : $q(this.qOPost, thr);
 		if(op) {
 			return op;
@@ -15827,39 +16112,38 @@ class BaseBoard {
 		op = thr.ownerDocument.createElement('div');
 		op.classList.add('de-oppost');
 		let el;
-		const opEnd = $q(this._qOPostEnd, thr);
+		const opEnd = $q(this.qOPostEnd, thr);
 		while((el = thr.firstChild) && (el !== opEnd)) {
-			op.appendChild(el);
+			op.append(el);
 		}
-		if(thr.hasChildNodes()) {
-			thr.insertBefore(op, thr.firstChild);
-		} else {
-			thr.appendChild(op);
-		}
+		thr.prepend(op);
 		return op;
 	}
-	getPageUrl(b, p) {
-		return fixBrd(b) + (p > 0 ? p + this.docExt : '');
+	getPageUrl(board, page) {
+		return fixBoardName(board) + (page > 0 ? page + this.docExt : '');
 	}
 	getPNum(post) {
 		return +post.id.match(/\d+/);
 	}
 	getPostElOfEl(el) {
-		const sel = this.qRPost + ', [de-thread], .de-pview';
+		const sel = this.qPost + ', [de-thread], .de-pview';
 		while(el && !nav.matchesSelector(el, sel)) {
 			el = el.parentElement;
 		}
 		return el;
 	}
-	getPostOfEl(el) { // Sets here only
+	getPostOfEl(el) {
 		return pByEl.get(this.getPostElOfEl(el));
 	}
 	getPostWrap(el, isOp) {
 		if(isOp) {
 			return el;
 		}
-		Object.defineProperty(this, 'getPostWrap',
-			{ value: el.tagName === 'TD' ? (el, isOp) => isOp ? el : $parent(el, 'TABLE') : el => el });
+		Object.defineProperty(this, 'getPostWrap', {
+			value: el.tagName.toLowerCase() === 'td' ?
+				(el, isOp) => isOp ? el : el.closest('table') :
+				el => el
+		});
 		return this.getPostWrap(el, isOp);
 	}
 	getSage(post) {
@@ -15869,19 +16153,19 @@ class BaseBoard {
 		const el = $q('a[href^="mailto:"], a[href="sage"]', post);
 		return !!el && /sage/i.test(el.href);
 	}
-	getThrUrl(b, tNum) { // Arhivach
-		return this.prot + '//' + this.host + fixBrd(b) + this.res + tNum + this.docExt;
+	getThrUrl(board, tNum) {
+		return this.protocol + '//' + this.host + fixBoardName(board) + this.res + tNum + this.docExt;
 	}
 	getTNum(thr) {
 		return +$q('input[type="checkbox"]', thr).value;
 	}
-	insertYtPlayer(msg, playerHtml) { // Dobrochan
-		return $bBegin(msg, playerHtml);
+	insertMarkupButtons(postForm, el) {
+		(Cfg.txtBtnsLoc ? $id('de-resizer-text') || postForm.txta : postForm.subm).after(el);
 	}
 	isAjaxStatusOK(status) {
 		return status === 200 || status === 206;
 	}
-	isIgnoreError(txt) { // Lynxchan
+	isIgnoreError(txt) {
 		return /successful|uploaded|updating|post deleted|post created|обновл|удален[о.]/i.test(txt);
 	}
 	parseURL() {
@@ -15893,12 +16177,15 @@ class BaseBoard {
 			this.page = this.firstPage;
 		} else { // We are on board
 			const temp = url.match(/\/?(\d+)[^/]*?$/);
-			this.page = temp && +temp[1] || this.firstPage;
+			this.page = +temp?.[1] || this.firstPage;
 			this.b = url.replace(temp && this.page ? temp[0] : /\/(?:[^/]+\.[a-z]+)?$/, '');
 		}
 		if(this.docExt === null) {
 			this.docExt = (url.match(/\.[a-z]+$/) || ['.html'])[0];
 		}
+	}
+	removeMarkupButtons(el) {
+		el?.remove();
 	}
 	updateSubmitBtn(el) {
 		el.value = Lng.reply[lang];
@@ -15917,19 +16204,19 @@ function getImageBoard(checkDomains, checkEngines) {
 	ibEngines.push(['form[action$="wakaba.pl"]', BaseBoard]);
 
 	class Kusaba extends BaseBoard {
-		constructor(prot, dm) {
-			super(prot, dm);
-			this.kusaba = true;
+		constructor(...args) {
+			super(...args);
 
 			this.qError = 'h1, h2, div[style*="1.25em"]';
 			this.qFormRedir = 'input[name="redirecttothread"][value="1"]';
 
+			this.formHeaders = true;
 			this.formParent = 'replythread';
 			this.markupBB = true;
 		}
 		get css() {
-			return `.extrabtns > a, .extrabtns > span, #newposts_get, .replymode,
-					.ui-resizable-handle, blockquote + a { display: none !important; }
+			return `.extrabtns > a, .extrabtns > span, #newposts_get, .replymode, .ui-resizable-handle,
+					blockquote + a { display: none; }
 				.ui-wrapper { display: inline-block; width: auto !important;
 					height: auto !important; padding: 0 !important; }`;
 		}
@@ -15949,7 +16236,9 @@ function getImageBoard(checkDomains, checkEngines) {
 		init() {
 			const el = $id('posttypeindicator');
 			if(el) {
-				[el.previousSibling, el.nextSibling, el].forEach($del);
+				el.previousSibling?.remove();
+				el.nextSibling?.remove();
+				el.remove();
 			}
 			return false;
 		}
@@ -15957,27 +16246,26 @@ function getImageBoard(checkDomains, checkEngines) {
 	ibEngines.push(['script[src*="kusaba"]', Kusaba], ['form#delform[action$="/board.php"]', Kusaba]);
 
 	class Tinyboard extends BaseBoard {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 
 			this.cReply = 'post reply';
 			this.qClosed = '.fa-lock';
-			this.qDForm = 'form[name*="postcontrols"]';
+			this.qDelForm = 'form[name*="postcontrols"]';
 			this.qForm = 'form[name="post"]';
 			this.qFormPassw = 'input[name="password"]:not([type="hidden"])';
 			this.qFormRedir = null;
-			this.qImgInfo = '.fileinfo';
 			this.qOmitted = '.omitted';
+			this.qOPostEnd = '.post.reply';
 			this.qPages = '.pages';
 			this.qPostHeader = '.intro';
+			this.qPostImgInfo = '.fileinfo';
 			this.qPostMsg = '.body';
 			this.qPostName = '.name';
 			this.qPostRef = '.post_no + a';
 			this.qPostSubj = '.subject';
 			this.qPostTrip = '.trip';
 			this.qTrunc = '.toolong';
-			this._origInputs = null;
-			this._qOPostEnd = '.post.reply';
 
 			this.firstPage = 1;
 			this.formParent = 'thread';
@@ -15985,8 +16273,9 @@ function getImageBoard(checkDomains, checkEngines) {
 			this.hasRefererErr = true;
 			this.jsonSubmit = true;
 			this.timePattern = 'nn+dd+yy++w++hh+ii+ss';
+			this._origInputs = null;
 		}
-		get qImgNameLink() {
+		get qPostImgNameLink() {
 			return 'p.fileinfo > a:first-of-type';
 		}
 		get css() {
@@ -15998,15 +16287,15 @@ function getImageBoard(checkDomains, checkEngines) {
 					.fileinfo > .unimportant { white-space: nowrap; }` : '' }`;
 		}
 		get markupTags() {
-			return ["'''", "''", '__', '~~', '**', '[code'];
+			return ['\'\'\'', '\'\'', '__', '~~', '**', '[code'];
 		}
 		async changeReplyMode(form, tNum) {
 			if(!this._origInputs && !$q('input[name="hash"]', form)) {
 				// Board without antibot protection
-				pr.subm.value = Lng.reply[lang];
+				postform.subm.value = Lng.reply[lang];
 				const pageInp = $q('input[name="page"]', form);
 				if(tNum) {
-					$del(pageInp);
+					pageInp?.remove();
 				} else if(!pageInp) {
 					form.insertAdjacentHTML('beforeend', '<input name="page" value="1" type="hidden">');
 				}
@@ -16017,11 +16306,11 @@ function getImageBoard(checkDomains, checkEngines) {
 				'input[type="hidden"]:not(.de-input-hidden)';
 			if(!$q('input[name="thread"]', form)) {
 				// Switching from the thread creation to post reply mode occurs. Saving the original fields.
-				this._origInputs = [doc.createElement('div'), pr.subm.value];
-				$each($Q(query, form), el => this._origInputs[0].appendChild(el));
+				this._origInputs = [doc.createElement('div'), postform.subm.value];
+				$Q(query, form).forEach(el => this._origInputs[0].append(el));
 			} else if(!tNum) {
 				// Switching from the post reply to thread creation occurs. Restoring the original fields.
-				pr.subm.value = this._origInputs[1];
+				postform.subm.value = this._origInputs[1];
 				$delAll(query, form);
 				form.insertAdjacentHTML('beforeend', this._origInputs[0].innerHTML);
 				this._origInputs = null;
@@ -16030,27 +16319,27 @@ function getImageBoard(checkDomains, checkEngines) {
 			// Post reply mode. Loading a thread with a form that contains the correct hidden fields.
 			const errFn = () => {
 				$popup('load-form', Lng.errFormLoad[lang]);
-				pr.closeReply();
+				postform.closeReply();
 			};
 			$popup('load-form', Lng.loading[lang], true);
-			await ajaxLoad(aib.getThrUrl(this.b, tNum), false).then(loadedDoc => {
+			await ajaxLoad(this.getThrUrl(this.b, tNum), false).then(loadedDoc => {
 				const loadedForm = $q(this.qForm, loadedDoc);
 				if(!loadedForm) {
 					errFn();
 					return;
 				}
-				pr.subm.value = $q(this.qFormSubm, loadedDoc).value;
+				postform.subm.value = $q(this.qFormSubm, loadedDoc).value;
 				$delAll(query, form);
-				$each($Q(query, loadedForm), el => form.appendChild(doc.adoptNode(el)));
+				$Q(query, loadedForm).forEach(el => form.append(doc.adoptNode(el)));
 				closePopup('load-form');
 			}, errFn);
 		}
 		fixHTML(data, isForm) {
 			const formEl = super.fixHTML(data, isForm);
-			$each($Q('br.clear', formEl), brEl => {
+			$Q('br.clear', formEl).forEach(brEl => {
 				const hr = brEl.nextElementSibling;
-				if(hr && hr.tagName === 'HR') {
-					$after(brEl.parentNode, hr);
+				if(hr?.tagName.toLowerCase() === 'hr') {
+					brEl.parentNode.after(hr);
 				}
 				brEl.remove();
 			});
@@ -16066,11 +16355,11 @@ function getImageBoard(checkDomains, checkEngines) {
 		}
 		getImgRealName(wrap) {
 			const el = $q('.postfilename', wrap) ||
-				$q('.unimportant > a[download]', wrap) || $q(this.qImgNameLink, wrap);
+				$q('.unimportant > a[download]', wrap) || $q(this.qPostImgNameLink, wrap);
 			return el.title || el.textContent;
 		}
-		getPageUrl(b, p) {
-			return p > 1 ? fixBrd(b) + p + this.docExt : fixBrd(b);
+		getPageUrl(board, page) {
+			return page > 1 ? fixBoardName(board) + page + this.docExt : fixBoardName(board);
 		}
 		getSubmitData({ error, id }) {
 			return { error, postNum: id && +id };
@@ -16079,8 +16368,8 @@ function getImageBoard(checkDomains, checkEngines) {
 			return +$q('input[type="checkbox"]', thr).name.match(/\d+/);
 		}
 		init() {
-			$script('window.FormData = void 0');
-			const formEl = $q('form[name="post"]');
+			$script('window.FormData = void 0;');
+			const formEl = $q(this.qForm);
 			if(formEl) {
 				formEl.insertAdjacentHTML('beforeend',
 					'<input class="de-input-hidden" name="json_response" value="1" type="hidden">');
@@ -16095,8 +16384,8 @@ function getImageBoard(checkDomains, checkEngines) {
 	ibEngines.push(['form[name*="postcontrols"]', Tinyboard]);
 
 	class Vichan extends Tinyboard {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 
 			this.qDelPassw = '#password';
 			this.qPostImg = '.post-image[alt]:not(.deleted)';
@@ -16114,12 +16403,12 @@ function getImageBoard(checkDomains, checkEngines) {
 		}
 		fixFileInputs(el) {
 			el.innerHTML = Array.from({ length: 5 }, (val, i) =>
-				`<div${ i ? ' style="display: none;"' : '' }>` +
-				`<input type="file" name="file${ i ? i + 1 : '' }"></div>`
+				`<div class="de-file-wrap"${ i ? ' style="display: none;"' : '' }>
+				<input type="file" name="file${ i ? i + 1 : '' }"></div>`
 			).join('');
 		}
 		fixHTMLHelper(str) {
-			return str.replace(/"\/player\.php\?v=([^&]+)&[^"]+"/g, '"$1"');
+			return str.replace(/"(?:\/vichan)?\/player\.php\?v=([^&]+)&[^"]+"/g, '"$1"');
 		}
 		init() {
 			super.init();
@@ -16129,29 +16418,29 @@ function getImageBoard(checkDomains, checkEngines) {
 				return true;
 			}
 			$script('highlightReply = Function.prototype;');
-			setTimeout(() => $del($id('updater')), 0);
-			const textarea = $id('body');
-			if(textarea) {
-				textarea.removeAttribute('id');
-			}
+			setTimeout(() => $id('updater')?.remove(), 0);
+			$id('body')?.removeAttribute('id');
 			return false;
 		}
 	}
 	ibEngines.push(['tr#upload', Vichan]);
 
 	class TinyIB extends BaseBoard {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 
+			this.qDelForm = $id('posts') ? '#posts' : '#delform';
 			this.qError = 'body[align=center] div, div[style="margin-top: 50px;"]';
 			this.qPostImg = 'img.thumb, video.thumb';
 			this.qPostMsg = '.message';
+
+			this.hasCatalog = true;
 		}
 		get css() {
-			return '.replymode { display: none; }';
+			return '.backlinks, .replymode { display: none; }';
 		}
 		fixHTMLHelper(str) {
-			return str.replace(/="\.\.\//g, `="/${ this.b }/`);
+			return str.replace(/="\.\.\//g, this.b ? `="/${ this.b }/` : '="/');
 		}
 		getCaptchaSrc(src) {
 			return src.replace(/\?[^?]+$|$/, '?' + Math.random());
@@ -16170,64 +16459,41 @@ function getImageBoard(checkDomains, checkEngines) {
 			return super.getImgRealName(wrap);
 		}
 		init() {
-			defaultCfg.addTextBtns = 0;
-			$each($Q('.message > .omittedposts'),
-				el => $replace(el, '<span class="abbrev">Post too long. <a href="#">Click to view.</a>'));
+			$Q('.message > .omittedposts').forEach(el => {
+				el.insertAdjacentHTML('afterend',
+					'<span class="abbrev">Post too long. <a href="#">Click to view.</a>');
+				el.remove();
+			});
 			return false;
 		}
 	}
 	ibEngines.push(['form[action$="imgboard.php?delete"]', TinyIB]);
 
-	class newTinyIB extends TinyIB {
-		constructor(prot, dm) {
-			super(prot, dm);
-
-			this.hasCatalog = true;
-			this.markupBB = true;
-			this.multiFile = true;
-			this.timePattern = 'yy+nn+dd+w+hh+ii+ss';
-		}
-		get fixHTMLHelper() {
-			return null;
-		}
-		fixFileInputs(el) {
-			const str = '><input type="file" name="file[]"></div>';
-			el.innerHTML = '<div' + str + ('<div style="display: none;"' + str).repeat(3);
-		}
-		getImgRealName(wrap) {
-			return $q('.filesize > a', wrap).textContent;
-		}
-		init() {
-			return false;
-		}
-	}
-	ibEngines.push(['body.tinyib', newTinyIB]);
-
 	class Lynxchan extends BaseBoard {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 
 			this.cReply = 'innerPost';
-			this.qDForm = 'form[action$="contentActions.js"]';
-			this.qDelBut = '#deleteFormButton';
+			this.qDelBtn = '#deleteFormButton';
+			this.qDelForm = 'form[action$="contentActions.js"]';
 			this.qError = '#errorLabel, #labelMessage';
 			this.qForm = '.form-post, form[action$="newThread.js"], form[action$="replyThread.js"]';
 			this.qFormPassw = 'input[name="password"]';
 			this.qFormRules = '.form-post > .small';
 			this.qFormSubm = '#formButton, #de-postform-submit';
-			this.qImgInfo = '.uploadDetails';
 			this.qOmitted = '.labelOmission';
 			this.qOPost = '.innerOP';
+			this.qOPostEnd = '.divPosts';
 			this.qPages = '#divPages';
+			this.qPost = '.innerPost, .markedPost';
 			this.qPostHeader = '.postInfo, .de-post-btns';
 			this.qPostImg = '.imgLink > img, img[src*="/.media/"]';
+			this.qPostImgInfo = '.uploadDetails';
 			this.qPostMsg = '.divMessage';
 			this.qPostRef = '.linkQuote';
 			this.qPostSubj = '.labelSubject';
 			this.qPostsParent = '.divPosts';
-			this.qRPost = '.innerPost, .markedPost';
 			this.qTrunc = '.contentOmissionIndicator';
-			this._qOPostEnd = '.divPosts';
 
 			this.firstPage = 1;
 			this.formParent = 'threadId';
@@ -16237,7 +16503,7 @@ function getImageBoard(checkDomains, checkEngines) {
 
 			this._hasNewAPI = false;
 		}
-		get qImgNameLink() {
+		get qPostImgNameLink() {
 			return '.originalNameLink';
 		}
 		get qThread() {
@@ -16252,7 +16518,7 @@ function getImageBoard(checkDomains, checkEngines) {
 				.form-post button, .form-post input, .form-post img { width: initial; }`;
 		}
 		get markupTags() {
-			return ["'''", "''", '__', '~~', '**', '[code'];
+			return ['\'\'\'', '\'\'', '__', '~~', '**', '[code'];
 		}
 		captchaUpdate() {
 			$script('reloadCaptcha();');
@@ -16264,12 +16530,11 @@ function getImageBoard(checkDomains, checkEngines) {
 				action.replace('replyThread', 'newThread'));
 		}
 		fixFileInputs(el) {
-			const str = '><input name="files" type="file"></div>';
-			const maxEl = $id('labelMaxFiles');
+			const str = ' class="de-file-wrap"><input name="files" type="file"></div>';
 			el.innerHTML = '<div' + str +
-				('<div style="display: none;"' + str).repeat((maxEl ? +maxEl.textContent : 3) - 1);
+				('<div style="display: none;"' + str).repeat((+$id('labelMaxFiles')?.textContent || 3) - 1);
 		}
-		getCapParent(el) {
+		getCapParent() {
 			return $id('captchaDiv');
 		}
 		getImgRealName(wrap) {
@@ -16279,10 +16544,10 @@ function getImageBoard(checkDomains, checkEngines) {
 			return $q('.originalNameLink', this.getImgWrap(img));
 		}
 		getImgWrap(img) {
-			return $parent(img, 'FIGURE');
+			return img.closest('figure');
 		}
-		getPageUrl(b, p) {
-			return fixBrd(b) + (p > 1 ? p + this.docExt : 'index.html');
+		getPageUrl(board, page) {
+			return fixBoardName(board) + (page > 1 ? page + this.docExt : 'index.html');
 		}
 		getPNum(post) {
 			return +$q('.deletionCheckBox', post).name.split('-')[2];
@@ -16313,10 +16578,11 @@ function getImageBoard(checkDomains, checkEngines) {
 						{ value: Function.prototype, writable: false, configurable: false });
 				}`);
 			const submEl = $id('formButton');
-			if(submEl && submEl.type === 'button') {
+			if(submEl) {
 				this._hasNewAPI = true;
-				$replace(submEl, `<button id="de-postform-submit" type="submit">${
+				submEl.insertAdjacentHTML('afterend', `<button id="de-postform-submit" type="submit">${
 					submEl.innerHTML }</button>`);
+				submEl.remove();
 			}
 			const formEl = $q(this.qForm);
 			if(formEl && !$q('td', formEl)) {
@@ -16324,7 +16590,7 @@ function getImageBoard(checkDomains, checkEngines) {
 				const els = $Q('#captchaDiv, #divUpload, #fieldEmail, #fieldMessage, #fieldName,' +
 					' #fieldPostingPassword, #fieldSubject');
 				for(let i = 0, len = els.length; i < len; ++i) {
-					$bEnd(table, '<tr><th></th><td></td></tr>').lastChild.appendChild(els[i]);
+					$bEnd(table, '<tr><th></th><td></td></tr>').lastChild.append(els[i]);
 				}
 			}
 			return false;
@@ -16352,15 +16618,6 @@ function getImageBoard(checkDomains, checkEngines) {
 					reader.onload = () => resolve(reader.result);
 					reader.onerror = err => reject(err);
 				});
-				const getCookies = () => {
-					const obj = {};
-					const cookies = doc.cookie.split(';');
-					for(let i = 0, len = cookies.length; i < len; ++i) {
-						const parts = cookies[i].split('=');
-						obj[parts.shift().trim()] = decodeURI(parts.join('='));
-					}
-					return obj;
-				};
 				const dataObj = { files: [] };
 				const files = [];
 				data.forEach(async (value, key) => {
@@ -16407,28 +16664,28 @@ function getImageBoard(checkDomains, checkEngines) {
 	ibEngines.push(['form[action$="contentActions.js"]', Lynxchan]);
 
 	class FoolFuuka extends BaseBoard {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 
 			this.cReply = 'post_wrapper';
-			this.qDForm = '#main';
-			this.qImgInfo = '.post_file_metadata, .thread_image_box > .post_file';
+			this.qDelForm = '#main';
 			this.qOmitted = '.omitted_text';
+			this.qOPostEnd = '.posts';
 			this.qPages = '.paginate > ul > li:nth-last-child(3)';
+			this.qPost = '.post[id]';
 			this.qPostHeader = 'header';
 			this.qPostImg = '.post_image, .thread_image';
+			this.qPostImgInfo = '.post_file_metadata, .thread_image_box > .post_file';
 			this.qPostMsg = '.text';
 			this.qPostRef = '.post_data > a[data-function="quote"]';
 			this.qPostSubj = '.post_title';
 			this.qPostsParent = '.posts';
-			this.qRPost = '.post[id]';
-			this._qOPostEnd = '.posts';
 
 			this.docExt = '';
 			this.firstPage = 1;
 			this.res = 'thread/';
 		}
-		get qImgNameLink() {
+		get qPostImgNameLink() {
 			return '.post_file_filename';
 		}
 		get qThread() {
@@ -16448,8 +16705,8 @@ function getImageBoard(checkDomains, checkEngines) {
 		getImgWrap(img) {
 			return img.parentNode.parentNode.parentNode;
 		}
-		getPageUrl(b, p) {
-			return fixBrd(b) + (p > 1 ? `page/${ p }/` : '');
+		getPageUrl(board, page) {
+			return fixBoardName(board) + (page > 1 ? `page/${ page }/` : '');
 		}
 		getTNum(thr) {
 			return +thr.getAttribute('data-thread-num');
@@ -16458,7 +16715,7 @@ function getImageBoard(checkDomains, checkEngines) {
 			defaultCfg.ajaxUpdThr = 0;
 			const el = $q('.search_box');
 			if(el) {
-				docBody.appendChild(el);
+				doc.body.append(el);
 			}
 			return false;
 		}
@@ -16472,119 +16729,60 @@ function getImageBoard(checkDomains, checkEngines) {
 
 	// DOMAINS
 	class _0chan extends Kusaba {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 
+			this.qDelForm = '#delform_instant';
+			this.qPostHeader = '.posthead';
+
+			this.captchaRu = true;
+			this.formHeaders = false;
 			this.hasCatalog = true;
-		}
-		get css() {
-			return `.content > hr, .extrabtns, .replieslist { display: none; }
-				form { position: initial; }`;
-		}
-	}
-	ibDomains['0chan.cc'] = _0chan;
-
-	class _02ch extends Kusaba {
-		constructor(prot, dm) {
-			super(prot, dm);
-			this._02ch = true;
-
-			this.hasCatalog = true;
-			this._capUpdPromise = null;
-		}
-		captchaUpdate(cap) {
-			return cap.updateHelper('/captcha_update.php', xhr => {
-				cap.parentEl.innerHTML = xhr.responseText;
-				cap.textEl = $id('recaptcha_response_field');
-				cap.initImage($q('img', cap.parentEl));
-				cap.initTextEl();
-			});
-		}
-	}
-	ibDomains['02ch.su'] = _02ch;
-
-	class _2__ch extends BaseBoard {
-		constructor(prot, dm) {
-			super(prot, dm);
-
-			this.qPages = 'table[border="1"] td > a:last-of-type';
-			this.qPostImg = 'img.thumb';
-			this._qOPostEnd = 'table:not(.postfiles)';
-
-			this.docExt = '.html';
-			this.hasPicWrap = true;
-			this.jsonSubmit = true;
-			this.markupBB = true;
 			this.multiFile = true;
-			this.ru = true;
-		}
-		get qThread() {
-			return '.threadz';
 		}
 		get captchaInit() {
-			$id('captchadiv').innerHTML =
-				`<img src="${ this.getCaptchaSrc() }" style="vertical-align: bottom;" id="imgcaptcha">`;
+			$script('Captcha.init(); Captcha.initForm(document.getElementById("postform"));');
 			return null;
 		}
 		get css() {
-			return 'span[id$="_display"], #fastload { display: none; }';
+			return `.content > hr, .extrabtns, .postbutt, .replymode { display: none; }
+				form { position: initial; }`;
+		}
+		captchaUpdate() {
+			$script('var captchaTimeout = 29.5; Captcha.state = "init";');
+			return null;
 		}
 		fixFileInputs(el) {
-			const str = '><input type="file" name="file"></div>';
+			const str = ' class="de-file-wrap"><input type="file" name="file"></div>';
 			el.innerHTML = '<div' + str + ('<div style="display: none;"' + str).repeat(3);
 		}
-		fixHTMLHelper(str) {
-			return str.replace(/data-original="\//g, 'src="/');
-		}
-		getCaptchaSrc() {
-			return `/${ this.b }/captcha.fpl?${ Math.random() }`;
-		}
-		getImgWrap(img) {
-			return img.parentNode.parentNode.parentNode;
-		}
-		getOmitted(el, len) {
-			let txt;
-			return el && (txt = el.textContent) ? +txt.match(/\d+/) - len : 1;
-		}
-		getPageUrl(b, p) {
-			return `${ fixBrd(b) }${ p > 0 ? p : 0 }.memhtml`;
-		}
-		getSubmitData(json) {
-			let error = null;
-			let postNum = null;
-			if(json.post) {
-				postNum = +json.post;
-			} else {
-				error = Lng.error[lang];
-				if(json.error) {
-					error += ': ' + json.error.text;
+		fixVideo(isPost, data) {
+			$Q('.video-embed', isPost ? data.el : data).forEach(el => {
+				(isPost ? data : this.getPostOfEl(el)).msg
+					.prepend($q('.de-video-link', el), doc.createElement('br'));
+				const parent = el.parentNode;
+				el.remove();
+				if(!parent.firstElementChild) {
+					parent.remove();
 				}
-			}
-			return { error, postNum };
+			});
+			return [];
 		}
-		init() {
-			const btnEl = $q('#postform input[type="button"]');
-			if(btnEl) {
-				$replace(btnEl, '<input type="submit" value="Отправить">');
-			}
-			const dFormEl = $q(this.qDForm);
-			$delAll('input[type="hidden"]', dFormEl);
-			dFormEl.appendChild($q('.userdelete'));
-			return false;
+		getTNum(thr) {
+			return +thr.getAttribute('data-threadid');
 		}
 	}
-	ibDomains['2--ch.ru'] = _2__ch;
-	ibDomains['2-ch.su'] = _2__ch;
+	ibDomains['2.0-chan.ru'] = _0chan;
 
 	class /* _2ch */ Makaba extends BaseBoard {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 			this.makaba = true;
 
 			this.cReply = 'de-reply-class';
 			this.qBan = '.post__pomyanem';
-			this.qClosed = '.sticky-img[src$="locked.png"]';
-			this.qDForm = '#posts-form';
+			this.qClosed = 'use[*|href="#icon__closed"]';
+			this.qDelForm = '#posts-form, #js-posts';
 			this.qFormFile = '.postform__raw.filer input[type="file"]';
 			this.qFormRedir = null;
 			this.qFormRules = '.rules';
@@ -16592,20 +16790,19 @@ function getImageBoard(checkDomains, checkEngines) {
 			this.qFormTd = '.postform__raw';
 			this.qFormTr = '.postform__raw';
 			this.qFormTxta = '#shampoo';
-			this.qImgInfo = '.post__file-attr';
 			this.qOmitted = '.thread__missed';
 			this.qOPost = '.post_type_oppost';
+			this.qPost = '.post_type_reply[data-num]';
 			this.qPostHeader = '.post__details';
 			this.qPostImg = '.post__file-preview';
+			this.qPostImgInfo = '.post__file-attr';
 			this.qPostMsg = '.post__message';
 			this.qPostName = '.post__anon, .post__email';
 			this.qPostRef = '.post__reflink:nth-child(2)';
 			this.qPostSubj = '.post__title';
-			this.qRPost = '.post_type_reply[data-num]';
 			this.qTrunc = null;
 
 			this.formParent = 'thread';
-			this.hasAltCaptcha = true;
 			this.hasArchive = true;
 			this.hasCatalog = true;
 			this.hasOPNum = true;
@@ -16615,7 +16812,7 @@ function getImageBoard(checkDomains, checkEngines) {
 			this.markupBB = true;
 			this.multiFile = true;
 			this.timePattern = 'dd+nn+yy+w+hh+ii+ss';
-			this._capUpdPromise = null;
+			this._isBeta = false;
 		}
 		get qFormMail() {
 			return 'input[name="email"]';
@@ -16626,24 +16823,36 @@ function getImageBoard(checkDomains, checkEngines) {
 		get qFormSubj() {
 			return 'input[name="subject"]';
 		}
-		get qImgNameLink() {
+		get qPostImgNameLink() {
 			return '.file-attr > .desktop, .post__file-attr > .desktop';
 		}
 		get css() {
-			return `.js-post-findimg, .media-expand-button, .media-thumbnail, .newpost,
-					.post__btn:not(.icon_type_active), .post__number, .post__refmap, .postform-hr,
-					.thread-nav > :not(.search) { display: none !important; }
-				#down-nav-arrow, #up-nav-arrow { z-index: 0; }
-				.postform__raw_flex { flex-direction: column; align-items: flex-start; }
+			return `.js-post-findimg, .js-post-saveimg, .media-expand-button, .media-thumbnail, .newpost,
+					.post__btn:not(.icon_type_active), .post__number, .post__refmap
+					{ display: none !important; }
+				._captcha-container { margin: 0 !important; }
+				._captcha-keyboard-button { width: 35px !important; height: 35px !important;
+					padding: 0 !important; }
+				._captcha-keyboard-selected-stub { display: none !important; }
+				.de-fullimg-wrap-inpost { margin-right: 16px; }
+				.de-refmap { margin: 0 16px 4px; }
 				.de-pview > .post__details { margin-left: 4px; }
 				.de-reply-class { background: var(--theme_default_postbg);
 					border: 1px solid var(--theme_default_border); border-radius: 3px; }
+				#down-nav-arrow, #up-nav-arrow { z-index: 0; }
+				.header__opts_sticky { z-index: 10; }
 				.oekaki-height, .oekaki-width { width: 36px !important; }
+				.post_type_hidden { opacity: unset; cursor: default; }
+				.post_type_hidden .post__message:not(.de-post-hiddencontent),
+					.post_type_hidden .post__images:not(.de-post-hiddencontent) { display: block !important; }
 				.post_type_reply { max-width: 100%; }
+				.postarea { display: initial !important; }
 				.postform { width: auto; }
 				.postform__sticker-btn, .postform__sticker-prev { bottom: ` +
 					`${ !Cfg.txtBtnsLoc || !Cfg.addTextBtns ? 3 :
 					Cfg.addTextBtns === 1 ? 28 : Cfg.addTextBtns === 2 ? 19 : 25 }px !important; }
+				.post__message { padding-left: 0px; margin-left: 16px; min-width: 15%; word-wrap: normal;
+					word-break: normal; }
 				${ Cfg.addSageBtn ? `.options__box[onclick="ToggleSage()"]
 					{ display: none !important; }` : '' }
 				${ Cfg.addTextBtns ? '.js-postform-mu { display: none; }' : '' }
@@ -16666,6 +16875,9 @@ function getImageBoard(checkDomains, checkEngines) {
 		get markupTags() {
 			return ['B', 'I', 'U', 'S', 'SPOILER', '', 'SUP', 'SUB'];
 		}
+		get postersCount() {
+			return $q('span[title="Постеры"]')?.innerHTML.match(/\d+$/)[0] || '';
+		}
 		get reportForm() {
 			const value = (pNum, tNum) => ($q('input[type="button"]', $popup(
 				'edit-report',
@@ -16679,104 +16891,43 @@ function getImageBoard(checkDomains, checkEngines) {
 					return;
 				}
 				const formData = new FormData();
-				formData.append('task', 'report');
-				formData.append('board', this.b);
-				formData.append('thread', tNum);
-				formData.append('posts', pNum);
-				formData.append('comment', inpEl.value);
+				const data = { board: this.b, thread: tNum, post: pNum, comment: inpEl.value };
+				for(const key in data) {
+					if($hasProp(data, key)) {
+						formData.append(key, data[key]);
+					}
+				}
 				closePopup('edit-report');
 				$popup('report', Lng.sending[lang], true);
-				$ajax('/makaba/makaba.fcgi?json=1', { method: 'POST', data: formData }).then(xhr => {
+				$ajax('/user/report', {
+					method      : 'POST',
+					data        : formData,
+					success() {},
+					contentType : false,
+					processData : false
+				}).then(xhr => {
 					let obj;
 					try {
 						obj = JSON.parse(xhr.responseText);
-					} catch(e) {}
-					$popup('report', !obj ? Lng.error[lang] + ': ' + xhr.responseText :
-						(obj.message || Lng.succReported[lang]) + ': ' + obj.message_title);
+					} catch(err) {}
+					$popup('report', obj.result === 1 ? Lng.succReported[lang] :
+						Lng.error[lang] + ': ' + obj.error.message);
 				});
 			});
 			Object.defineProperty(this, 'reportForm', { value });
 			return value;
 		}
-		captchaInit(cap) {
-			/* const value = Cfg.altCaptcha ? 'recaptcha' : 'invisible_recaptcha';
-			$q('.captcha-box, .captcha').innerHTML = `<div id="captcha-widget-main"></div>
-				<input name="captcha_type" value="${ value }" type="hidden">`;
-			return null; */
-			const box = $q('.captcha-box, .captcha');
-			if(Cfg.altCaptcha) {
-				box.innerHTML = `<div id="captcha-widget-main"></div>
-					<input name="captcha_type" value="recaptcha" type="hidden">`;
-				return null;
-			}
-			const img = box.firstChild;
-			if(!img || img.tagName !== 'IMG') {
-				box.innerHTML = `<img>
-					<input name="2chcaptcha_value" maxlength="6" type="text" style="display: block;">
-					<input name="2chcaptcha_id" type="hidden">`;
-				const [img, inp] = [...box.children];
-				img.onclick = () => this.updateCaptcha(cap);
-				inp.tabIndex = 999;
-				cap.textEl = inp;
-			}
+		captchaInit() {
+			$script(`const loadCapFn =
+				() => new EmojiCaptcha({ createWarningFn: generateWarning }).requestController();`);
 			return null;
 		}
-		captchaUpdate(cap) {
-			/* const url = `/api/captcha/${ Cfg.altCaptcha ? 'recaptcha' : 'invisible_recaptcha' }/id`; */
-			const url = `/api/captcha/${ Cfg.altCaptcha ? 'recaptcha' : '2chcaptcha' }/id`;
-			return cap.updateHelper(url, xhr => {
-				const box = $q('.captcha-box, .captcha');
-				let data = xhr.responseText;
-				try {
-					data = JSON.parse(data);
-				} catch(err) {}
-				if(cap.isSubmitWait && data.result !== 1) {
-					pr.subm.click();
-				}
-				switch(data.result) {
-				case 0: box.textContent = 'Пасскод недействителен. Перелогиньтесь.'; break;
-				case 2: box.textContent = 'Вы - пасскодобоярин.'; break;
-				case 3: return CancelablePromise.reject(new CancelError()); // Captcha is disabled
-				case 1: // Captcha is enabled
-					if(!Cfg.altCaptcha) {
-						if(!cap.isSubmitWait) {
-							const img = box.firstChild;
-							img.src = '';
-							img.src = `/api/captcha/2chcaptcha/show?id=${ data.id }`;
-							box.lastChild.value = data.id;
-							break;
-						}
-						$q('.captcha__key').value = data.id;
-						$script($id('captcha-widget').hasChildNodes() ?
-							`grecaptcha.reset(deCapWidget);
-							grecaptcha.execute(deCapWidget);` :
-							`deCapWidget = grecaptcha.render('captcha-widget', {
-								sitekey : '${ data.id }',
-								theme   : 'light',
-								size    : 'invisible',
-								callback: function() {
-									var el = document.getElementById('captcha-widget-main');
-									el.innerHTML = '<input type="hidden" name="g-recaptcha-response">';
-									el.firstChild.value = grecaptcha.getResponse();
-									document.getElementById('submit').click();
-								}
-							});
-							grecaptcha.execute(deCapWidget);`);
-						break;
-					} else if(data.type === 'recaptcha') {
-						$q('.captcha__key').value = data.id;
-						if(!$id('captcha-widget-main').hasChildNodes()) {
-							$script(`globRecapWidget = grecaptcha.render('captcha-widget-main', { sitekey: "${
-								data.id }" });`);
-						} else {
-							$script('grecaptcha.reset(globRecapWidget);');
-						}
-						break;
-					}
-					/* falls through */
-				default: box.innerHTML = data;
-				}
-			});
+		captchaUpdate() {
+			$script('loadCapFn();');
+			return null;
+		}
+		clearFileInputs() {
+			$delAll('.sticker-input, .postform__sticker-img');
 		}
 		deleteTruncMsg(post, el) {
 			el.previousSibling.remove();
@@ -16785,7 +16936,8 @@ function getImageBoard(checkDomains, checkEngines) {
 		}
 		fixFileInputs(el) {
 			el.innerHTML = Array.from({ length: 8 }, (val, i) =>
-				`<div${ i ? ' style="display: none;"' : '' }><input type="file" name="formimages[]"></div>`
+				`<div class="de-file-wrap"${ i ? ' style="display: none;"' : '' }>
+				<input type="file" name="file[]"></div>`
 			).join('');
 		}
 		getBanId(postEl) {
@@ -16793,53 +16945,94 @@ function getImageBoard(checkDomains, checkEngines) {
 			return !el ? 0 : el.textContent.includes('предупрежден') ? 2 : 1;
 		}
 		getImgWrap(img) {
-			return $parent(img, 'FIGURE');
+			return img.closest('figure');
 		}
-		getJsonApiUrl(brd, tNum) {
-			return `/${ brd }/res/${ tNum }.json`;
+		getJsonApiUrl(board, tNum) {
+			return `/${ board }/res/${ tNum }.json`;
 		}
 		getPNum(post) {
 			return +post.getAttribute('data-num');
 		}
 		getPostWrap(el) {
-			return el.parentNode;
+			return this._isBeta ? el : el.parentNode;
 		}
 		getSage(post) {
-			this.getSage = !$q('span[id^="id_tag_"]') ? super.getSage : post => {
-				return !$q('span[id^="id_tag_"], .post__ophui', post);
-			};
+			this.getSage = $q('span[id^="id_tag_"]') ?
+				post => !$q('span[id^="id_tag_"], .post__ophui', post) : super.getSage;
 			return this.getSage(post);
+		}
+		fixHTMLHelper(str) {
+			return str.replace(/<a href="https?:\/\/[^"]*"([^>]*)>(https?:\/\/[^<]+)<\/a>([^<$\s\n]+)/ig,
+				'<a href="$2$3"$1>$2$3</a>');
 		}
 		getSubmitData(json) {
 			let error = null;
 			let postNum = null;
-			if(json.Status === 'OK') {
-				postNum = +json.Num;
-			} else if(json.Status === 'Redirect') {
-				postNum = +json.Target;
+			if(json.result === 1) {
+				postNum = +json.num;
+				if(json.thread > 0) {
+					postNum = +json.thread;
+				}
 			} else {
-				error = Lng.error[lang] + ': ' + json.Reason;
+				error = Lng.error[lang] + ': ' + json.error.message;
 			}
 			return { error, postNum };
 		}
+		handlePostClick(post, el, e) {
+			// Click on like/dislike elements
+			let temp;
+			let c = el.classList;
+			if(c.contains('post__rate') || c[0] === 'like-div' || c[0] === 'dislike-div' ||
+				(temp = el.parentNode) && (
+					(c = temp.classList).contains('post__rate') ||
+					c[0] === 'like-div' ||
+					c[0] === 'dislike-div') ||
+				(temp = temp.parentNode) && (
+					(c = temp.className) === 'like-div' ||
+					c === 'dislike-div')
+			) {
+				const task = temp.id.split('-')[0];
+				const num = +temp.id.match(/\d+/);
+				$ajax(`/api/${ task }?board=${ aib.b }&num=${ num }`).then(xhr => {
+					const obj = JSON.parse(xhr.responseText);
+					if(obj.result !== 1) {
+						$popup('err-2chlike', Lng.error[lang] + ': ' + obj.error.message);
+						return;
+					}
+					temp.classList.add(`${ task }-div-checked`, `post__rate_${ task }d`);
+					const countEl = $q(`.${ task }-count, #${ task }-count${ num }`, temp);
+					countEl.textContent = +countEl.textContent + 1;
+				}, () => $popup('err-2chlike', Lng.noConnect[lang]));
+			}
+			// Click on "truncated message" link
+			if(el.classList.contains('expand-large-comment')) {
+				post._getFullMsg(el, false);
+				e.preventDefault();
+				e.stopPropagation();
+			}
+		}
 		init() {
-			if($q('section.posts')) { // Old Makaba engine
+			if($id('js-posts')) { // New Makaba engine
+				this._isBeta = true;
+				$Q('.thread__missed').forEach(el =>
+					el.innerHTML = el.innerHTML.replace(/ (\d+) постов/, (m, i) => ` ${ i - 1 } постов`));
+			} else if($q('section.posts')) { // Old Makaba engine
 				this.cReply = 'post reply';
 				this.qBan = '.pomyanem';
 				this.qFormFile = 'tr input[type="file"]';
 				this.qFormRules = '.rules-area';
 				this.qFormTd = 'td';
 				this.qFormTr = 'tr';
-				this.qImgInfo = '.file-attr';
 				this.qOmitted = '.mess-post';
 				this.qOPost = '.oppost';
+				this.qPost = '.post.reply[data-num]';
 				this.qPostHeader = '.post-details';
 				this.qPostImg = '.preview';
+				this.qPostImgInfo = '.file-attr';
 				this.qPostMsg = '.post-message';
 				this.qPostName = '.ananimas, .post-email';
 				this.qPostRef = '.reflink';
 				this.qPostSubj = '.post-title';
-				this.qRPost = '.post.reply[data-num]';
 				this.hasArchive = false;
 				const { css } = this;
 				Object.defineProperty(this, 'css', {
@@ -16847,38 +17040,34 @@ function getImageBoard(checkDomains, checkEngines) {
 					get          : () => `${ css }
 						#ABU-alert-wait, .ABU-refmap, .fa-media-icon, .kupi-passcode-suka, .logo + hr,
 						.media-expand-button, #media-thumbnail, .message-byte-len, .nav-arrows, .norm-reply,
-						.postform-hr, .postpanel > :not(img), .posts > hr, .reflink::before,
-						.thread-nav > :not(.search), .toolbar-area { display: none !important; }
+						.postform-hr, .postpanel > :not(img), .posts > hr, .reflink::before, .thread-nav,
+						.toolbar-area { display: none !important; }
 						${ Cfg.addSageBtn ? `.box[onclick="ToggleSage()"] {
 							display: none !important; }` : '' }
 						${ Cfg.imgNames === 2 ? `.filesize { display: inline !important; }
 							.file-attr { margin-bottom: 1px; }` : '' }`
 				});
-			} else {
-				const infEl = $q('.postform .filer__limits');
-				const optEl = $q('.postform .options');
-				if(infEl && optEl) {
-					optEl.appendChild(infEl);
-				}
 			}
 			$script(`(function() {
 				function fixGlobalFunc(name) {
 					Object.defineProperty(window, name,
 						{ value: Function.prototype, writable: false, configurable: false });
 				}
-				fixGlobalFunc("$alert");
-				fixGlobalFunc("autorefresh_start"); // Old makaba only
+				${ this._isBeta ? '' : 'fixGlobalFunc("autorefresh_start");' }
 				fixGlobalFunc("linkremover");
 				fixGlobalFunc("Media");
-				fixGlobalFunc("MExpandMedia");
-				MExpandMedia.close = Function.prototype;
 				window.FormData = void 0;
-				$(function() { $(window).off(); });
 			})();`);
-			$each($Q('.autorefresh'), el => {
+			$Q('.autorefresh').forEach(el => {
 				const inpEl = $q('input', el);
 				if(inpEl.checked) {
 					inpEl.click();
+				}
+			});
+			$Q('.js-update-thread, #postbtn-favorite-bottom').forEach(el => {
+				let node;
+				while((node = el.nextSibling) && node.title !== 'Всего постов в треде') {
+					node.remove();
 				}
 				el.remove();
 			});
@@ -16888,84 +17077,41 @@ function getImageBoard(checkDomains, checkEngines) {
 			}
 			return false;
 		}
+		insertMarkupButtons(postForm, el) {
+			const formEl = Cfg.txtBtnsLoc ? $id('de-resizer-text') || postForm.txta : postForm.subm;
+			const posEl = formEl.parentNode;
+			posEl.insertAdjacentHTML('afterend', '<div class="postform__raw"></div>');
+			posEl.nextSibling.appendChild(el);
+		}
 		observeContent(checkDomains, dataPromise) {
-			if($q('#posts-form > .thread, form[de-form] > .thread')) {
+			if($q('#posts-form > .thread, #js-posts > .thread, [de-form] > .thread')) {
 				return true;
 			}
 			const initObserver = new MutationObserver(mutations => {
-				const el = mutations[0].addedNodes[0];
-				if(el && el.className === 'thread') {
+				if(mutations[0].addedNodes[0]?.className === 'thread') {
 					initObserver.disconnect();
 					runMain(checkDomains, dataPromise);
 				}
 			});
-			const el = $q('#posts-form, form[de-form]');
+			const el = $q('#posts-form, #js-posts, [de-form]');
 			if(el) {
 				initObserver.observe(el, { childList: true });
 			}
 			return false;
 		}
-	}
-	ibDomains['2ch.hk'] = Makaba;
-	ibDomains['2ch.pm'] = Makaba;
-	ibDomains['2ch.re'] = Makaba;
-	ibDomains['2ch.wf'] = Makaba;
-
-	class _2chan extends BaseBoard {
-		constructor(prot, dm) {
-			super(prot, dm);
-
-			this.qDForm = 'form:not([enctype])';
-			this.qForm = '#fm';
-			this.qFormRedir = null;
-			this.qFormRules = '.chui';
-			this.qOmitted = 'font[color="#707070"]';
-			this.qPostImg = 'a[href$=".jpg"] > img, a[href$=".png"] > img, a[href$=".gif"] > img';
-			this.qPostRef = '.del';
-			this.qRPost = 'td:nth-child(2)';
-
-			this.docExt = '.htm';
-			this.formParent = 'resto';
-		}
-		get qImgNameLink() {
-			return 'a[href$=".jpg"], a[href$=".png"], a[href$=".gif"]';
-		}
-		get qThread() {
-			return '.thre';
-		}
-		get css() {
-			return `.ftbl { width: auto; margin: 0; }
-				.reply { background: #f0e0d6; }
-				span { font-size: inherit; }`;
-		}
-		getPageUrl(b, p) {
-			return fixBrd(b) + (p > 0 ? p + this.docExt : 'futaba.htm');
-		}
-		getPNum(post) {
-			return +$q('input', post).name;
-		}
-		getPostElOfEl(el) {
-			while(el && el.tagName !== 'TD' && !el.hasAttribute('de-thread')) {
-				el = el.parentElement;
-			}
-			return el;
-		}
-		getTNum(thr) {
-			return +$q('input[type="checkbox"]', thr).name.match(/\d+/);
-		}
-		init() {
-			$del($q('base', doc.head)); // <base> is not compartible with SVG
-			return false;
+		removeMarkupButtons(el) {
+			el?.parentNode.remove();
 		}
 	}
-	ibDomains['2chan.net'] = _2chan;
+	ibDomains['2ch.hk'] = ibDomains['2ch.life'] = Makaba;
 
 	class _2channel extends Makaba {
-		constructor(prot, dm) {
-			super(prot, dm);
-			this._2channel = true;
+		constructor(...args) {
+			super(...args);
 
-			this.hasAltCaptcha = false;
+			this.qClosed = '.icon-lock';
+
+			this.JsonBuilder = null;
 		}
 		get reportForm() {
 			return null;
@@ -16974,7 +17120,7 @@ function getImageBoard(checkDomains, checkEngines) {
 			return this.captchaUpdate(cap);
 		}
 		captchaUpdate(cap) {
-			const url = `/api/captcha/service_id?board=${ this.b }&thread=` + pr.tNum;
+			const url = `/api/captcha/service_id?board=${ this.b }&thread=` + postform.tNum;
 			return cap.updateHelper(url, xhr => {
 				const box = $q('.captcha');
 				let data = xhr.responseText;
@@ -17001,13 +17147,14 @@ function getImageBoard(checkDomains, checkEngines) {
 		}
 		fixFileInputs(el) {
 			el.innerHTML = Array.from({ length: 4 }, (val, i) =>
-				`<div${ i ? ' style="display: none;"' : '' }><input type="file" name="formimages[]"></div>`
+				`<div class="de-file-wrap"${ i ? ' style="display: none;"' : '' }>
+				<input type="file" name="formimages[]"></div>`
 			).join('');
 		}
 		fixHTMLHelper(str) {
 			return str.replace(/src="[^>]+" data-src="/g, 'src="');
 		}
-		getCapParent(el) {
+		getCapParent() {
 			return $q('.captcha');
 		}
 		init() {
@@ -17026,7 +17173,7 @@ function getImageBoard(checkDomains, checkEngines) {
 			});
 			let el = $q('.captcha');
 			if(el) {
-				$before($q('.freply__files-and-captcha'), el);
+				$q('.freply__files-and-captcha').before(el);
 			}
 			el = $id('postform');
 			if(el) {
@@ -17035,17 +17182,16 @@ function getImageBoard(checkDomains, checkEngines) {
 			return false;
 		}
 	}
-	ibDomains['2channel.moe'] = _2channel;
-	ibDomains['2channel5xx5xchx.onion'] = _2channel;
+	ibDomains['2channel.moe'] = ibDomains['2channel5xx5xchx.onion'] = _2channel;
 
 	class _2chRip extends BaseBoard {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 
+			this.captchaRu = true;
 			this.jsonSubmit = true;
-			this.ru = true;
 
-			this._capUpdPromise = null;
+			this.captchaUpdPromise = null;
 		}
 		get css() {
 			return `small[id^="rfmap_"], #submit_button, .qreply_btn { display: none; }
@@ -17066,25 +17212,25 @@ function getImageBoard(checkDomains, checkEngines) {
 		}
 		init() {
 			$script('postFormSubmit = Function.prototype;');
-			$bEnd($id('postform'), '<input type="hidden" name="json" value="1">');
+			$id('postform').insertAdjacentHTML('beforeend', '<input type="hidden" name="json" value="1">');
 			return false;
 		}
 	}
-	ibDomains['2ch.rip'] = _2chRip;
-	ibDomains['dva-ch.net'] = _2chRip;
+	ibDomains['2ch.rip'] = ibDomains['dva-ch.net'] = _2chRip;
 
 	class _410chan extends Kusaba {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 
+			this.qClosed = '.post-badge-locked';
 			this.qFormRedir = 'input#noko';
 			this.qPages = '.pgstbl > table > tbody > tr > td:nth-child(2)';
 
-			this.ru = true;
+			this.captchaRu = true;
+			this.captchaUpdPromise = null;
 			this.hasCatalog = true;
 			this.markupBB = false;
 			this.timePattern = 'dd+nn+yyyy++w++hh+ii+ss';
-			this._capUpdPromise = null;
 		}
 		get captchaLang() {
 			return 0;
@@ -17094,6 +17240,7 @@ function getImageBoard(checkDomains, checkEngines) {
 				#resizer { display: none; }
 				form > span { margin-top: 5px; }
 				.de-thr-hid { display: inherit; }
+				.post-badge { display: inline-block !important; }
 				.reflink::after { content: none !important; }
 				.spoiler-image:hover::after { content: none !important; }
 				.topmenu { z-index: 1; }`;
@@ -17117,37 +17264,36 @@ function getImageBoard(checkDomains, checkEngines) {
 			});
 		}
 		getCaptchaSrc(src) {
-			return src.replace(/\?[^?]+$|$/, `?board=${ aib.b }&${ Math.random() }`);
+			return src.replace(/\?[^?]+$|$/, `?board=${ this.b }&${ Math.random() }`);
 		}
 		getSage(post) {
-			const el = $q('.filetitle', post);
-			return !!el && el.textContent.includes('\u21E9');
+			return !!$q('.filetitle', post)?.textContent.includes('\u21E9');
 		}
 	}
 	ibDomains['410chan.org'] = _410chan;
 
 	class _4chan extends BaseBoard {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 			this._4chan = true;
 
 			this.cReply = 'post reply';
 			this.qBan = 'strong[style="color: red;"]';
-			this.qClosed = '.archivedIcon';
-			this.qDelBut = '.deleteform > input[type="submit"]';
+			this.qClosed = '.archivedIcon, .closedIcon';
+			this.qDelBtn = '.deleteform > input[type="submit"]';
 			this.qError = '#errmsg';
 			this.qForm = 'form[name="post"]';
 			this.qFormRedir = null;
-			this.qImgInfo = '.fileText';
 			this.qOmitted = '.summary.desktop';
 			this.qOPost = '.op';
+			this.qOPostEnd = '.replyContainer';
 			this.qPages = '.pagelist > .pages:not(.cataloglink) > a:last-of-type';
 			this.qPostHeader = '.postInfo';
 			this.qPostImg = '.fileThumb > img:not(.fileDeletedRes)';
+			this.qPostImgInfo = '.fileText';
 			this.qPostName = '.name';
 			this.qPostRef = '.postInfo > .postNum';
 			this.qPostSubj = '.subject';
-			this._qOPostEnd = '.replyContainer';
 
 			this.anchor = '#p';
 			this.docExt = '';
@@ -17162,15 +17308,26 @@ function getImageBoard(checkDomains, checkEngines) {
 		get qFormSubj() {
 			return 'input[name="sub"]';
 		}
-		get qImgNameLink() {
+		get qPostImgNameLink() {
 			return '.fileText > a';
 		}
 		get captchaUpdate() {
 			let value = null;
 			if($id('captchaFormPart')) {
-				value = () => {
-					$replace($id('t-root'), '<div id="t-root"></div>');
+				value = cap => {
+					const containerEl = $id('t-root');
+					if(!containerEl) {
+						cap.hasCaptcha = false;
+						return;
+					}
+					containerEl.insertAdjacentHTML('afterend', '<div id="t-root"></div>');
+					containerEl.remove();
 					$script('initTCaptcha();');
+					setTimeout(() => {
+						cap.textEl = $id('t-resp');
+						cap.textEl.tabIndex = 999;
+						cap.initTextEl();
+					}, 1e3);
 					return null;
 				};
 			}
@@ -17182,6 +17339,12 @@ function getImageBoard(checkDomains, checkEngines) {
 					.postMenuBtn, #togglePostFormLink { display: none !important; }
 				#bottomReportBtn { display: initial !important; }
 				#g-recaptcha { height: initial; }
+				.post-hidden:not(#quote-preview) input, .post-hidden:not(#quote-preview) .replyContainer,
+					.post-hidden:not(#quote-preview) .summary, .post-hidden:not(#quote-preview) .op .file,
+					.post-hidden:not(#quote-preview) .file, .post-hidden .wbtn, .post-hidden .postNum span,
+					.post-hidden:not(#quote-preview) .backlink, div.post-hidden:not(#quote-preview) div.file,
+					div.post-hidden:not(#quote-preview) blockquote.postMessage { display: unset; }
+				.post-hidden .extButton, .post-hidden:not(#quote-preview) .postInfo { opacity: unset; }
 				.postForm { display: table !important; width: auto !important; }
 				textarea { margin-right: 0 !important; }
 				${ Cfg.widePosts ? '.sideArrows { display: none; }' : '' }`;
@@ -17190,36 +17353,56 @@ function getImageBoard(checkDomains, checkEngines) {
 			return ['', '', '', '', $q('input[type="checkbox"][name="spoiler"]') ? '[spoiler' : '',
 				this.b === 'g' ? '[code' : ''];
 		}
+		get postersCount() {
+			const value = $q('span[class="ts-ips"]')?.innerHTML || '';
+			if(!value) {
+				$script(`setTimeout(function() {
+					document.getElementById("de-panel-info-posters").textContent = window.unique_ips || "";
+				}, 0)`);
+			}
+			return value;
+		}
 		fixDeadLinks(str) {
 			return str.replace(/<span class="deadlink">&gt;&gt;(\d+)<\/span>/g,
 				'<a class="de-ref-del deadlink" href="#p$1">&gt;&gt;$1</a>');
 		}
 		fixHTMLHelper(str) {
 			return str.replace(/<span>([^<]+)(?:<\/?wbr>)?([^<]+)<\/span> \[<a [^>]+>Embed<\/a>\]/g, '$1$2')
-				.replace(/<\/?wbr>/g, '').replace(/( \(OP\)| →)<\/a/g, '</a');
+				.replace(/<\/?wbr>/g, '')
+				.replace(/( \(OP\)| →)<\/a/g, '</a')
+				.replace(/is2\.4chan/g, 'i.4cdn');
 		}
-		fixVideo(isPost, data) {
+		fixVideo() {
 			return [];
 		}
 		getImgInfo(wrap) {
-			const el = $q(this.qImgInfo, wrap);
+			const el = $q(this.qPostImgInfo, wrap);
 			return el ? el.lastChild.textContent : '';
 		}
 		getImgRealName(wrap) {
-			const el = $q(this.qImgNameLink, wrap);
+			const el = $q(this.qPostImgNameLink, wrap);
 			return el ? el.title || el.parentNode.title || el.textContent : '';
 		}
-		getJsonApiUrl(brd, tNum) {
-			return `//a.4cdn.org/${ brd }/thread/${ tNum }.json`;
+		getJsonApiUrl(board, tNum) {
+			return `/${ board }/thread/${ tNum }.json`;
 		}
 		getImgWrap(img) {
 			return img.parentNode.parentNode;
 		}
-		getPageUrl(b, p) {
-			return fixBrd(b) + (p > 1 ? p : '');
+		getPageUrl(board, page) {
+			return fixBoardName(board) + (page > 1 ? page : '');
 		}
 		getPostWrap(el) {
 			return el.parentNode;
+		}
+		handlePostClick(post, el, e) {
+			if(el.classList.contains('de-img-name')) {
+				post._downloadImageByLink(el, e);
+			}
+		}
+		reportForm(pNum) {
+			$script(`Report.open('${ pNum }', '${ this.b }');`);
+			return true;
 		}
 		getSage(post) {
 			return !!$q('.id_Heaven, .useremail[href^="mailto:sage"]', post);
@@ -17243,57 +17426,42 @@ function getImageBoard(checkDomains, checkEngines) {
 		init() {
 			Cfg.findImgFile = 0;
 			Cfg.txtBtnsLoc = 0;
-			const el = $id('styleSelector');
-			if(el) {
-				el.setAttribute('onchange', 'setActiveStyleSheet(this.value);');
-			}
+			$id('styleSelector')?.setAttribute('onchange', 'setActiveStyleSheet(this.value);');
 			return false;
 		}
 	}
-	ibDomains['4chan.org'] = _4chan;
-	ibDomains['4channel.org'] = _4chan;
+	ibDomains['4chan.org'] = ibDomains['4channel.org'] = _4chan;
 
-	class _55chan extends Vichan {
-		constructor(prot, dm) {
-			super(prot, dm);
-
-			this.qFormRules = '.regras';
-
-			this._capUpdPromise = null;
-		}
-		get qImgNameLink() {
-			return '.fileinfo > a:last-of-type';
-		}
-		get qThread() {
-			return 'div[data-board]';
-		}
-		get css() {
-			return `${ super.css }
-				input.delete, #post-moderation-fields { display: initial !important; }`;
-		}
-		captchaInit(cap) {
-			$q('td', cap.parentEl).innerHTML = `<input placeholder="${ Lng.cap[lang] }" class="captcha_text` +
-				`" type="text" name="captcha_text" size="25" maxlength="8" autocomplete="off">
-				<input class="captcha_cookie de-input-hidden" name="captcha_cookie" type="hidden">
-				<div class="captcha_html"></div>`;
-			cap.textEl = $q('.captcha_text', cap.parentEl);
-			return this.captchaUpdate(cap, true);
-		}
-		captchaUpdate(cap) {
-			return cap.updateHelper(
-				'/8chan-captcha/entrypoint.php?mode=get&extra=abcdefghijklmnopqrstuvwxyz',
-				xhr => {
-					const obj = JSON.parse(xhr.responseText);
-					$q('.captcha_cookie', cap.parentEl).value = obj.cookie;
-					$q('.captcha_html', cap.parentEl).innerHTML = obj.captchahtml;
-					const img = $q('img', cap.parentEl);
-					if(img) {
-						cap.initImage(img);
-					}
-				});
+	class _7chan extends Kusaba {
+		init() {
+			return true;
 		}
 	}
-	ibDomains['55chan.org'] = _55chan;
+	ibDomains['7chan.org'] = _7chan;
+
+	class _8chan extends Lynxchan {
+		get css() {
+			return `${ super.css }
+				.reloadCaptchaButton { display: none !important; }
+				${ Cfg.addSageBtn ? '#useSageSpan { display: none; }' : '' }`;
+		}
+		captchaUpdate() {
+			$script('captchaUtils.reloadCaptcha();');
+			return null;
+		}
+	}
+	ibDomains['8chan.moe'] = _8chan;
+
+	class _8kun extends Vichan {
+		getEmptyFile(field, name) {
+			return {
+				el    : field,
+				name,
+				value : undefined
+			};
+		}
+	}
+	ibDomains['8kun.top'] = _8kun;
 
 	class Archived extends FoolFuuka {
 		getImgRedirectSrc(url) {
@@ -17303,25 +17471,25 @@ function getImageBoard(checkDomains, checkEngines) {
 	ibDomains['archived.moe'] = Archived;
 
 	class Arhivach extends BaseBoard {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 
 			this.cReply = 'post';
-			this.qDelBut = null;
+			this.qDelBtn = null;
+			this.qDelForm = 'body > .container-fluid';
 			this.qDelPassw = null;
-			this.qDForm = 'body > .container-fluid';
+			this.qPost = '.post[postid]:not(:first-child)';
 			this.qPostHeader = '.post_head';
 			this.qPostImg = '.post_image > img';
 			this.qPostMsg = '.post_comment_body';
 			this.qPostRef = '.post_id, .post_head > b';
 			this.qPostSubj = '.post_subject';
-			this.qRPost = '.post[postid]:not([postid=""])';
 
 			this.docExt = '';
 			this.hasOPNum = true;
 			this.res = 'thread/';
 		}
-		get qImgNameLink() {
+		get qPostImgNameLink() {
 			return '.img_filename';
 		}
 		get qThread() {
@@ -17341,8 +17509,11 @@ function getImageBoard(checkDomains, checkEngines) {
 			const links = $Q('.expand_image', formEl);
 			for(let i = 0, len = links.length; i < len; ++i) {
 				const link = links[i];
-				link.href = link.getAttribute('onclick').match(/https?:\/[^']+/)[0];
-				link.removeAttribute('onclick');
+				const href = link.getAttribute('onclick')?.match(/(?:https?:\/|\/storage)[^']+/);
+				if(href) {
+					link.href = href[0];
+					link.removeAttribute('onclick');
+				}
 			}
 			return formEl;
 		}
@@ -17350,7 +17521,7 @@ function getImageBoard(checkDomains, checkEngines) {
 			return wrap.title;
 		}
 		getImgWrap(img) {
-			return $parent(img, 'A').parentNode;
+			return img.closest('a').parentNode;
 		}
 		getOp(el) {
 			return $q('.post:first-child', el);
@@ -17383,168 +17554,77 @@ function getImageBoard(checkDomains, checkEngines) {
 			return false;
 		}
 	}
-	ibDomains['arhivach.net'] = Arhivach;
-	ibDomains['arhivach.ng'] = Arhivach;
-	ibDomains['arhivachovtj2jrp.onion'] = Arhivach;
+	ibDomains['arhivach.top'] = ibDomains['arhivach.xyz'] = ibDomains['arhivachovtj2jrp.onion'] = Arhivach;
 
-	ibDomains['desuchan.moe'] = BaseBoard;
-	ibDomains['desuchan.net'] = BaseBoard;
-
-	class CrystalCafe extends Tinyboard {
-		constructor(prot, dm) {
-			super(prot, dm);
-
-			this.qRPost = '.post.reply';
+	class Dobrochan extends Vichan {
+		get css() {
+			return `${ super.css }
+				#de-pform input[type="text"] { float: none !important; }`;
 		}
-		get qImgNameLink() {
-			return '.fileinfo > a[title]';
+		get markupTags() {
+			return ['**', '*', '', '~~', '%%', ''];
 		}
-		getImgInfo(wrap) {
-			return $q(this.qImgNameLink, wrap).title;
-		}
-		getTNum(thr) {
-			return +thr.id.match(/\d+/);
+		captchaUpdate() {
+			$script('load_captcha("/vichan/inc/captcha/entrypoint.php", "abcdefghijklmnopqrstuvwxyz");');
+			return null;
 		}
 	}
-	ibDomains['crystal.cafe'] = CrystalCafe;
+	ibDomains['dobrochan.net'] = Dobrochan;
 
-	class Dobrochan extends BaseBoard {
-		constructor(prot, dm) {
-			super(prot, dm);
-			this.dobrochan = true;
+	class Dollchan extends TinyIB {
+		constructor(...args) {
+			super(...args);
 
-			this.qClosed = 'img[src="/images/locked.png"]';
-			this.qDForm = 'form[action*="delete"]';
-			this.qError = '.post-error, h2';
-			this.qFormRedir = 'select[name="goto"]';
-			this.qImgInfo = '.fileinfo';
-			this.qOmitted = '.abbrev > span:last-of-type';
-			this.qPages = '.pages > tbody > tr > td';
-			this.qPostMsg = '.postbody';
-			this.qPostSubj = '.replytitle';
-			this.qTrunc = '.abbrev > span:first-of-type';
-
-			this.anchor = '#i';
-			this.formParent = 'thread_id';
-			this.hasPicWrap = true;
-			this.JsonBuilder = DobrochanPostsBuilder;
+			this.qPages = '.pagelist';
+			this.markupBB = true;
 			this.multiFile = true;
-			this.ru = true;
-			this.timePattern = 'dd+m+?+?+?+?+?+yyyy++w++hh+ii-?s?s?';
+			this.timePattern = 'yy+nn+dd+w+hh+ii+ss';
 		}
-		get css() {
-			return `.de-video-obj-inline { margin-left: 5px; }
-				.delete > img, .popup, .reply_, .search_google, .search_iqdb { display: none; }
-				.delete { background: none; }
-				.delete_checkbox { position: static !important; }`;
-		}
-		captchaInit(cap) {
-			if(!cap.textEl) {
-				$hide($q('img', cap.parentEl));
-				$show(cap.parentEl);
-			}
-			return null;
-		}
-		captchaUpdate(cap, isErr) {
-			const img = $q('img', cap.parentEl);
-			if(!img) {
-				return null;
-			}
-			if(cap.textEl) {
-				const src = img.getAttribute('src').split('/').slice(0, -1).join('/') +
-					`/${ Date.now() }.png`;
-				img.src = '';
-				img.src = src;
-				cap.textEl.value = '';
-			} else if(isErr) {
-				const el = img.parentNode;
-				el.innerHTML = '';
-				el.appendChild(img);
-				img.insertAdjacentHTML('afterend', '<br><input placeholder="Капча" autocomplete="off"' +
-					' id="captcha" name="captcha" size="35" type="text">');
-				$show(img);
-				cap.isAdded = false;
-				cap.originHTML = cap.parentEl.innerHTML;
-				cap.addCaptcha();
-			}
-			return null;
-		}
-		deleteTruncMsg(post, el, isInit) {
-			[el.previousSibling, el.nextSibling, el].forEach($del);
-			if(isInit) {
-				$replace(post.msg.firstElementChild, $q('.alternate > div', post.el));
+		get captchaInit() {
+			const switchCaptcha = status => {
+				const hasPasscode = status === 'validpasscode';
+				$toggle($id('captchablock').lastElementChild, !hasPasscode);
+				$toggle($id('validcaptchablock'), hasPasscode);
+				$toggle($id('invalidcaptchablock'), status === 'invalidpasscode');
+				if(!hasPasscode) {
+					const captchaInput = $id('captcha');
+					if(captchaInput) {
+						captchaInput.value = '';
+					}
+				}
+			};
+			if(getCookies().passcode === '1') {
+				$ajax(this.protocol + '//' + this.host + '/' + this.b + '/imgboard.php?passcode&check').then(
+					xhr => switchCaptcha(xhr.responseText === 'OK' ? 'validpasscode' : 'invalidpasscode'),
+					() => switchCaptcha('invalidpasscode'));
 			} else {
-				const sRunner = new SpellsRunner();
-				post.updateMsg($q('.alternate > div', post.el), sRunner);
-				sRunner.endSpells();
+				switchCaptcha('showcaptcha');
 			}
+			return null;
 		}
-		disableRedirection(el) {
-			$hide($parent(el, 'TR'));
-			el.selectedIndex = 1;
+		get fixHTMLHelper() {
+			return null;
 		}
 		fixFileInputs(el) {
-			$each($Q('input[type="file"]', el), el => el.removeAttribute('onchange'));
-			el.firstElementChild.value = 1;
+			const str = ' class="de-file-wrap"><input type="file" name="file[]"></div>';
+			el.innerHTML = '<div' + str + ('<div style="display: none;"' + str).repeat(3);
 		}
-		getImgSrcLink(img) {
-			// There can be a censored <img> without <a> parent
-			const el = img.parentNode;
-			return el.tagName === 'A' ? el :
-				$q('.fileinfo > a', img.previousElementSibling ? el : el.parentNode);
-		}
-		getImgWrap(img) {
-			const el = img.parentNode;
-			return el.tagName === 'A' ? (el.previousElementSibling ? el : el.parentNode).parentNode :
-				img.previousElementSibling ? el : el.parentNode;
-		}
-		getJsonApiUrl(brd, tNum) {
-			return `/api/thread/${ brd }/${ tNum }/all.json?new_format&message_html&board`;
-		}
-		getOmitted(el) {
-			while(el) {
-				const m = el.textContent.match(/(\d+) posts are omitted/);
-				if(m) {
-					return +m[1] + 1;
-				}
-				el = el.previousElementSibling;
-			}
-			return 1;
-		}
-		getPageUrl(b, p) {
-			return fixBrd(b) + (p > 0 ? p + this.docExt : 'index.xhtml');
-		}
-		getTNum(thr) {
-			return +$q('a[name]', thr).name.match(/\d+/);
+		getImgRealName(wrap) {
+			return $q('.filesize > a', wrap).textContent;
 		}
 		init() {
-			if(deWindow.location.pathname === '/settings') {
-				$q('input[type="button"]').addEventListener('click',
-					() => readCfg().then(() => saveCfg('__hanarating', $id('rating').value)));
-				return true;
-			}
-			$script('UploadProgress = Function.prototype;');
-			const el = $id('postform');
-			if(el) {
-				el.appendChild($q('.rules'));
-			}
 			return false;
 		}
-		insertYtPlayer(msg, playerHtml) {
-			const prev = msg.previousElementSibling;
-			return $bBegin(prev.tagName === 'BR' ? prev : msg, playerHtml);
-		}
 	}
-	ibDomains['dobrochan.com'] = Dobrochan;
-	ibDomains['dobrochan.net'] = Dobrochan;
-	ibDomains['dobrochan.org'] = Dobrochan;
-	ibDomains['dobrochan.ru'] = Dobrochan;
+	ibDomains['dollchan.net'] = Dollchan;
 
 	class Endchan extends Lynxchan {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 
 			this.qTrunc = '.contentOmissionIndicator > p';
+
+			this.jsonSubmit = false;
 		}
 		get css() {
 			return `${ super.css }
@@ -17554,19 +17634,31 @@ function getImageBoard(checkDomains, checkEngines) {
 		}
 		init() {
 			super.init();
-			$each($Q('.imgLink > img[src^="/.youtube/"]'), el => $del($parent(el, 'FIGURE')));
-			$each($Q('.youtube_wrapper'), el => {
+			$Q('.imgLink > img[src^="/.youtube/"]').forEach(el => el.closest('figure').remove());
+			$Q('.youtube_wrapper').forEach(el => {
 				const src = $q('a', el).href;
-				$del($bBegin(el, `<a href="${ src }">${ src }</a>`).nextSibling);
+				$bBegin(el, `<a href="${ src }">${ src }</a>`).nextSibling.remove();
 			});
+			this._hasNewAPI = false;
 			return false;
 		}
+
+		getSubmitData(jsonString) {
+			const { status, data } = JSON.parse(jsonString);
+			return {
+				error   : status === 'error' ? data : null,
+				postNum : status === 'ok' ? +data : null
+			};
+		}
 	}
-	ibDomains['endchan.net'] = Endchan;
+	ibDomains['endchan.net'] = ibDomains['endchan.gg'] = ibDomains['endchan.org'] =
+		ibDomains['endchancxfbnrfgauuxlztwlckytq7rgeo5v6pc2zd4nyqo3khfam4ad.onion'] =
+		ibDomains['enxx3byspwsdo446jujc52ucy2pf5urdbhqw3kbsfhlfjwmbpj5smdad.onion'] =
+		ibDomains['kqrtg5wz4qbyjprujkz33gza7r73iw3ainqp1mz5zmu16symcdwy.loki'] = Endchan;
 
 	class Ernstchan extends BaseBoard {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 
 			this.cReply = 'post';
 			this.qError = '.error > .info';
@@ -17574,19 +17666,20 @@ function getImageBoard(checkDomains, checkEngines) {
 			this.qFormSpoiler = 'input[type="checkbox"][name="spoilered"]';
 			this.qOPost = '.thread_OP';
 			this.qPages = '.pagelist > li:nth-last-child(2)';
+			this.qPost = '.thread_reply';
 			this.qPostHeader = '.post_head';
 			this.qPostMsg = '.text';
 			this.qPostSubj = '.subject';
 			this.qPostTrip = '.tripcode';
-			this.qRPost = '.thread_reply';
 			this.qTrunc = '.tldr';
+
 			this.docExt = '';
 			this.firstPage = 1;
 			this.markupBB = true;
 			this.multiFile = true;
 			this.res = 'thread/';
 		}
-		get qImgNameLink() {
+		get qPostImgNameLink() {
 			return '.filename > a';
 		}
 		get css() {
@@ -17595,7 +17688,7 @@ function getImageBoard(checkDomains, checkEngines) {
 				#de-win-reply { float:left; margin-left:2em }`;
 		}
 		fixFileInputs(el) {
-			const str = `><input name="file" type="file">
+			const str = ` class="de-file-wrap"><input name="file" type="file">
 				<input type="hidden" name="spoilered" value="0">
 				<input type="checkbox" name="spoilered" value="1"></div>`;
 			el.innerHTML = '<div' + str + ('<div style="display: none;"' + str).repeat(3);
@@ -17603,8 +17696,8 @@ function getImageBoard(checkDomains, checkEngines) {
 		getImgWrap(img) {
 			return img.parentNode.parentNode.parentNode;
 		}
-		getPageUrl(b, p) {
-			return p > 1 ? fixBrd(b) + 'page/' + p : fixBrd(b);
+		getPageUrl(board, page) {
+			return page > 1 ? fixBoardName(board) + 'page/' + page : fixBoardName(board);
 		}
 		getPostElOfEl(el) {
 			while(el && !nav.matchesSelector(el, '.post')) {
@@ -17616,8 +17709,8 @@ function getImageBoard(checkDomains, checkEngines) {
 	ibDomains['ernstchan.xyz'] = Ernstchan;
 
 	class Gensokyo extends Kusaba {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 
 			this.hasRefererErr = true;
 		}
@@ -17625,8 +17718,8 @@ function getImageBoard(checkDomains, checkEngines) {
 	ibDomains['gensokyo.4otaku.org'] = Gensokyo;
 
 	class Iichan extends BaseBoard {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 
 			this.hasArchive = true;
 			this.hasCatalog = true;
@@ -17641,7 +17734,7 @@ function getImageBoard(checkDomains, checkEngines) {
 			return 'input[name="nya3"]';
 		}
 		get catalogUrl() {
-			return `${ this.prot }//${ this.host }/${ this.b }/catalogue.html`;
+			return `${ this.protocol }//${ this.host }/${ this.b }/catalogue.html`;
 		}
 		get css() {
 			return `${ !this.t ? '' : 'hr + #de-main { margin-top: -32px; } .logo { margin-bottom: 14px; }' }
@@ -17658,7 +17751,7 @@ function getImageBoard(checkDomains, checkEngines) {
 		stormWallFixCaptcha(url, img) {
 			img.onload = img.onerror = () => {
 				if(!(img.naturalHeight + img.naturalWidth)) {
-					this.stormWallHelper(url, null, emptyFn, () => {
+					this.stormWallHelper(url, null, Function.prototype, () => {
 						img.src = '';
 						img.src = url;
 					});
@@ -17666,8 +17759,8 @@ function getImageBoard(checkDomains, checkEngines) {
 			};
 		}
 		stormWallFixSubmit(url, text, ajaxParams) {
-			return this.stormWallHelper(url, text, () => $DOM(text),
-				() => $ajax(url, ajaxParams).then(xhr => $DOM(xhr.responseText)));
+			return this.stormWallHelper(url, text, () => $createDoc(text),
+				() => $ajax(url, ajaxParams).then(xhr => $createDoc(xhr.responseText)));
 		}
 		stormWallHelper(url, text, fnOK, fnRes) {
 			const stormWallTxt = '<script src="https://static.stormwall.pro/';
@@ -17704,19 +17797,83 @@ function getImageBoard(checkDomains, checkEngines) {
 			let el = $q(this.qFormSpoiler);
 			if(el) {
 				$hide(el = el.parentNode);
-				$del(el.previousSibling);
+				el.previousSibling.remove();
 			}
 			return false;
 		}
 	}
-	ibDomains['iichan.hk'] = Iichan;
+	ibDomains['iichan.hk'] = ibDomains['iichan.lol'] =
+		ibDomains['iichan.moe'] = ibDomains['ii.yakuji.moe'] = Iichan;
+
+	class Ivchan extends BaseBoard {
+		constructor(...args) {
+			super(...args);
+
+			this.qClosed = 'img[src="/images/locked.png"]';
+			this.qDelForm = 'form[action*="delete"]';
+			this.qError = '.post-error, h2';
+			this.qFormRedir = 'select[name="goto"]';
+			this.qOmitted = '.abbrev > span:last-of-type';
+			this.qPages = '.pages > tbody > tr > td';
+			this.qPostImgInfo = '.fileinfo';
+			this.qPostMsg = '.postbody';
+			this.qPostSubj = '.replytitle';
+			this.qTrunc = '.abbrev > span:first-of-type';
+
+			this.anchor = '#i';
+			this.captchaRu = true;
+			this.formParent = 'thread_id';
+			this.hasPicWrap = true;
+			this.multiFile = true;
+			this.timePattern = 'dd+m+?+?+?+?+?+yyyy++w++hh+ii-?s?s?';
+		}
+		get css() {
+			return `.de-video-obj-inline { margin-left: 5px; }
+				.delete > img, .popup, .reply_, .search_google, .search_iqdb { display: none; }
+				.delete { background: none; }
+				.delete_checkbox { position: static !important; }`;
+		}
+		deleteTruncMsg(post, el, isInit) {
+			el.previousSibling?.remove();
+			el.nextSibling?.remove();
+			el.remove();
+			if(isInit) {
+				post.msg.replaceWith($q('.alternate', post.el));
+			} else {
+				const sRunner = new SpellsRunner();
+				post.updateMsg($q('.alternate', post.el), sRunner);
+				sRunner.endSpells();
+			}
+			post.msg.classList.remove('alternate');
+		}
+		getImgSrcLink(img) {
+			// There can be a censored <img> without <a> parent
+			const el = img.parentNode;
+			return el.tagName.toLowerCase() === 'a' ? el :
+				$q('.fileinfo > a', img.previousElementSibling ? el : el.parentNode);
+		}
+		getImgWrap(img) {
+			const el = img.parentNode;
+			return el.tagName.toLowerCase() === 'a' ?
+				(el.previousElementSibling ? el : el.parentNode).parentNode :
+				img.previousElementSibling ? el : el.parentNode;
+		}
+		getPageUrl(board, page) {
+			return fixBoardName(board) + (page > 0 ? page + this.docExt : 'index.xhtml');
+		}
+		getTNum(thr) {
+			return +$q('a[name]', thr).name.match(/\d+/);
+		}
+	}
+	ibDomains['ivchan.net'] = Ivchan;
 
 	class Kohlchan extends Lynxchan {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 			this.kohlchan = true;
 
 			this.qFormRules = '#rules_row';
+			this.qPostImg = '.uploadCell > a > img';
 
 			this.hasTextLinks = true;
 			this.markupBB = true;
@@ -17731,9 +17888,9 @@ function getImageBoard(checkDomains, checkEngines) {
 			if(locStorage.unixFilenames === 'true') {
 				value = post => {
 					const containerEl = $q('div.panelUploads', post.el);
-					const imgLinks = $Q('a.imgLink:not(.unixLink)', containerEl);
+					const imgLinks = $Q('.de-img-link:not(.unixLink)', containerEl);
 					let timetext = new Date(containerEl.parentElement.parentElement
-						.querySelectorAll('span.labelCreated')[0].textContent.replace(/-/g, '/')).getTime();
+						.querySelectorAll('span.labelCreated')[0].textContent.replaceAll('-', '/')).getTime();
 					timetext = timetext + timetext % 999;
 					for(let j = 0; j < imgLinks.length; j++) {
 						const imgLink = imgLinks[j];
@@ -17793,8 +17950,8 @@ function getImageBoard(checkDomains, checkEngines) {
 					e.preventDefault();
 				}
 			};
-			if(pr.isQuick) {
-				pr.setReply(true, false);
+			if(postform.isQuick) {
+				postform.setReply(true, false);
 			}
 			updater.sendErrNotif();
 			updater.continueUpdater();
@@ -17804,7 +17961,7 @@ function getImageBoard(checkDomains, checkEngines) {
 			return $q('.originalNameLink', wrap).title;
 		}
 		getSage(post) {
-			return !!$q('.sage', post).hasChildNodes();
+			return $q('.sage', post).hasChildNodes();
 		}
 		init() {
 			if(!this.host.includes('nocsp.') && this.host.includes('kohlchan.net')) {
@@ -17818,17 +17975,32 @@ function getImageBoard(checkDomains, checkEngines) {
 				deWindow.location.reload();
 				return true;
 			}
+			$Q('.imgLink').forEach(el => (el.className = 'de-img-link'));
 			return super.init();
 		}
+		sendHTML5Post(form, data, needProgress, hasFiles) {
+			const oekakiEl = $id('wPaint');
+			if(oekakiEl?.hasChildNodes() && oekakiEl.style.display !== 'none') {
+				hasFiles = true;
+				const mime = { type: 'image/png' };
+				const files = [new File([
+					new Blob([ContentLoader.getDataFromCanvas($q('.wPaint-canvas', oekakiEl))], mime)
+				], 'oekaki.png', mime), ...data.getAll('files').slice(0, -1)];
+				data.delete('files');
+				for(const file of files) {
+					data.append('files', file);
+				}
+			}
+			return super.sendHTML5Post(form, data, needProgress, hasFiles);
+		}
 	}
-	ibDomains['kohlchan.net'] = Kohlchan;
-	ibDomains['kohlchanagb7ih5g.onion'] = Kohlchan;
-	ibDomains['kohlchanvwpfx6hthoti5fvqsjxgcwm3tmddvpduph5fqntv5affzfqd.onion'] = Kohlchan;
-	ibDomains['kohlkanal.net'] = Kohlchan;
+	ibDomains['kohlchan.net'] = ibDomains['kohlchan.top'] = ibDomains['kohlchanagb7ih5g.onion'] =
+		ibDomains['kohlchanvwpfx6hthoti5fvqsjxgcwm3tmddvpduph5fqntv5affzfqd.onion'] =
+		ibDomains['kohlkanal.net'] = Kohlchan;
 
 	class Kropyvach extends Vichan {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 
 			this.markupBB = true;
 		}
@@ -17841,19 +18013,9 @@ function getImageBoard(checkDomains, checkEngines) {
 	}
 	ibDomains['kropyva.ch'] = Kropyvach;
 
-	class Kurisach extends Kusaba {
-		constructor(prot, dm) {
-			super(prot, dm);
-
-			this.hasCatalog = true;
-			this.ru = true;
-		}
-	}
-	ibDomains['kurisa.ch'] = Kurisach;
-
 	class Lainchan extends Vichan {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 
 			this.qOPost = '.op';
 		}
@@ -17868,7 +18030,7 @@ function getImageBoard(checkDomains, checkEngines) {
 		}
 		init() {
 			super.init();
-			$each($Q('.files + .post.op'), el => el.insertBefore(el.previousElementSibling, el.firstChild));
+			$Q('.files + .post.op').forEach(el => el.prepend(el.previousElementSibling));
 			return false;
 		}
 	}
@@ -17894,17 +18056,17 @@ function getImageBoard(checkDomains, checkEngines) {
 	ibDomains['nowere.net'] = Nowere;
 
 	class Ponyach extends BaseBoard {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 
 			this.qBan = 'font[color="#FF0000"]';
-			this.qImgInfo = '.filesize[style="display: inline;"]';
+			this.qPostImgInfo = '.filesize[style="display: inline;"]';
 
 			this.formParent = 'replythread';
 			this.jsonSubmit = true;
 			this.multiFile = true;
 		}
-		get qImgNameLink() {
+		get qPostImgNameLink() {
 			return 'a:first-of-type';
 		}
 		getImgInfo(wrap) {
@@ -17935,9 +18097,10 @@ function getImageBoard(checkDomains, checkEngines) {
 	ibDomains['ponyach.ru'] = Ponyach;
 
 	class Ponychan extends Tinyboard {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 
+			this.qClosed = 'img[title="Locked"]';
 			this.qOPost = '.opContainer';
 
 			this.jsonSubmit = false;
@@ -17953,22 +18116,64 @@ function getImageBoard(checkDomains, checkEngines) {
 		}
 		init() {
 			super.init();
-			$each($Q('img[data-mature-src]'), el => (el.src = el.getAttribute('data-mature-src')));
+			$Q('img[data-mature-src]').forEach(el => (el.src = el.getAttribute('data-mature-src')));
 			return false;
 		}
 	}
 	ibDomains['ponychan.net'] = Ponychan;
 
-	class Synch extends Tinyboard {
-		constructor(prot, dm) {
-			super(prot, dm);
+	class Rfch extends Vichan {
+		get css() {
+			return `${ super.css }
+				#coll-hide, #coll-show { display: none; }
+				form[name="post"], form[name="post"] > table > tbody > tr:first-child
+					{ display: block !important; }`;
+		}
+	}
+	ibDomains['rfch.rocks'] = Rfch;
 
-			this.qImgInfo = '.unimportant';
+	class Spirech extends Vichan {
+		constructor(...args) {
+			super(...args);
+
+			this.qForm = 'form[name="post"], form[name="de-post"]';
+			this.qFormRules = '#post-info';
+
+			this.jsonSubmit = true;
+			this.markupBB = true;
+		}
+		get css() {
+			return `${ super.css }
+				.favorite-button, .stylebuttons, #symbols-left + br { display: none !important; }
+				#post-info { width: auto }`;
+		}
+		get markupTags() {
+			return ['b', 'i', 'u', 's', 'spoiler', 'code', 'sup', 'sub'];
+		}
+		captchaUpdate() {
+			$script(`load_captcha("/inc/captcha/entrypoint.php", "abcdefghijklmnopqrstuvwxyz");
+				actually_load_captcha("/inc/captcha/entrypoint.php", "abcdefghijklmnopqrstuvwxyz");`);
+			return null;
+		}
+		init() {
+			super.init();
+			$script('$("textarea#body").on("change input propertychange", countSymbols); countSymbols();');
+			$q('form[name="post"]').name = 'de-post';
+		}
+	}
+	ibDomains['spirech.org'] = ibDomains['old52qbrspw6jivvrcjlybucxatpnzwea3oxrsw75be4ka53qfqhrnid.onion'] =
+		Spirech;
+
+	class Synch extends Tinyboard {
+		constructor(...args) {
+			super(...args);
+
 			this.qPages = '.pagination';
+			this.qPostImgInfo = '.unimportant';
 
 			this.markupBB = true;
 		}
-		get qImgNameLink() {
+		get qPostImgNameLink() {
 			return '.file-info > a';
 		}
 		get css() {
@@ -17996,24 +18201,24 @@ function getImageBoard(checkDomains, checkEngines) {
 			const formEl = super.fixHTML(data, isForm);
 			const els = $Q('.btn-group', formEl);
 			for(let i = 0, len = els.length; i < len; ++i) {
-				$replace(els[i], $q('a', els[i]));
+				els[i].replaceWith($q('a', els[i]));
 			}
 			return formEl;
 		}
 	}
-	ibDomains['syn-ch.ru'] = Synch;
-	ibDomains['syn-ch.com'] = Synch;
-	ibDomains['syn-ch.org'] = Synch;
+	ibDomains['syn-ch.ru'] = ibDomains['syn-ch.com'] = ibDomains['syn-ch.com.ua'] =
+		ibDomains['syn-ch.org'] = Synch;
 
 	class Warosu extends BaseBoard {
-		constructor(prot, dm) {
-			super(prot, dm);
+		constructor(...args) {
+			super(...args);
 
-			this.qDForm = '.content';
+			this.qDelForm = '.content';
 			this.qForm = '.subreply';
+			this.qFormSubm = '.g-recaptcha';
+			this.qPostImgInfo = '.fileinfo';
 			this.qPostRef = '.js';
-			this.qImgInfo = 'span';
-			this.qOPost = 'div[itemscope]';
+			this.qOPost = '.comment';
 
 			this.res = 'thread/';
 		}
@@ -18021,43 +18226,40 @@ function getImageBoard(checkDomains, checkEngines) {
 			return '.quoted-by { display: none !important; }';
 		}
 		getTNum(thr) {
-			return +$q('div[itemscope]', thr).id.match(/\d+/);
-		}
-		fixHTMLHelper(str) {
-			return str.replace(/\/post\/(\d+)"/g, '/#$1"');
+			return +$q('.comment', thr).id.match(/\d+/);
 		}
 	}
 	ibDomains['warosu.org'] = Warosu;
 
 	const wLoc = deWindow.location;
-	const prot = wLoc.protocol;
-	let dm = localData && localData.dm;
+	const { protocol } = wLoc;
+	let domain = localData?.domain;
 	if(checkDomains) {
-		if(!dm) {
+		if(!domain) {
 			const ibKeys = Object.keys(ibDomains);
 			let i = ibKeys.length;
 			const host = wLoc.hostname.toLowerCase();
 			while(i--) {
-				dm = ibKeys[i];
-				if(host === dm || host.endsWith('.' + dm)) {
-					return new ibDomains[dm](prot, dm);
+				domain = ibKeys[i];
+				if(host === domain || host.endsWith('.' + domain)) {
+					return new ibDomains[domain](protocol, domain);
 				}
 			}
-		} else if(dm in ibDomains) {
-			return new ibDomains[dm](prot, dm);
+		} else if(domain in ibDomains) {
+			return new ibDomains[domain](protocol, domain);
 		}
 	}
-	if(!dm) {
-		dm = wLoc.hostname;
+	if(!domain) {
+		domain = wLoc.hostname;
 	}
-	if(!dm || !checkEngines) {
+	if(!domain || !checkEngines) {
 		return null;
 	}
-	dm = dm.match(/(?:(?:[^.]+\.)(?=org\.|net\.|com\.))?[^.]+\.[^.]+$|^\d+\.\d+\.\d+\.\d+$|localhost/)[0];
+	domain = domain.match(/(?:(?:[^.]+\.)(?=org\.|net\.|com\.))?[^.]+\.[^.]+$|^\d+\.\d+\.\d+\.\d+$|localhost/)[0];
 	for(let i = ibEngines.length - 1; i >= 0; --i) {
 		const [path, Ctor] = ibEngines[i];
 		if($q(path, doc)) {
-			return new Ctor(prot, dm);
+			return new Ctor(protocol, domain);
 		}
 	}
 	return null;
@@ -18095,7 +18297,7 @@ const DollchanAPI = {
 	},
 
 	_handleMessage({ data: arg }) {
-		if(!arg || !arg.name) {
+		if(!arg?.name) {
 			return;
 		}
 		let rv = null;
@@ -18125,46 +18327,69 @@ const DollchanAPI = {
 	}
 };
 
-// Checking for Dollchan updates from github
-function checkForUpdates(isManual, lastUpdateTime) {
+// Checking for Dollchan updates from Github
+async function checkForUpdates(isManual, lastUpdateTime) {
 	if(!isManual) {
 		if(Date.now() - +lastUpdateTime < [0, 1, 2, 7, 14, 30][Cfg.updDollchan] * 1e3 * 60 * 60 * 24) {
-			return Promise.reject();
+			throw new Error('Itʼs not time for an update yet');
 		}
 	}
-	return $ajax(
-		gitRaw + 'src/modules/Wrap.js', { 'Content-Type': 'text/plain' }, true
-	).then(({ responseText }) => {
-		const v = responseText.match(/const version = '([0-9.]+)';/);
-		const remoteVer = v && v[1] ? v[1].split('.') : null;
-		if(!remoteVer) {
-			return Promise.reject();
-		}
-		const currentVer = version.split('.');
-		const src = `${ gitRaw }${ nav.isESNext ? 'src/' : '' }Dollchan_Extension_Tools.${
-			nav.isESNext ? 'es6.' : '' }user.js`;
-		saveCfgObj('lastUpd', Date.now());
-		const link = `<a style="color: blue; font-weight: bold;" href="${ src }">`;
-		const chLogLink = `<a target="_blank" href="${ gitWiki }${
-			lang === 1 ? 'versions-en' : 'versions' }">\r\n${ Lng.changeLog[lang] }<a>`;
-		for(let i = 0, len = Math.max(currentVer.length, remoteVer.length); i < len; ++i) {
-			if((+remoteVer[i] || 0) > (+currentVer[i] || 0)) {
-				return `${ link }${ Lng.updAvail[lang].replace('%s', v[1]) }</a>${ chLogLink }`;
-			} else if((+remoteVer[i] || 0) < (+currentVer[i] || 0)) {
-				break;
-			}
-		}
+	let responseText;
+	try {
+		({ responseText } = await $ajax(gitRaw + 'src/modules/Wrap.js',
+			{ 'Content-Type': 'text/plain' }, true));
+	} catch(err) {
 		if(isManual) {
-			const c = responseText.match(/const commit = '([0-9abcdef]+)';/)[1];
-			const vc = version + '.' + c;
-			return c === commit ? Lng.haveLatestCommit[lang].replace('%s', vc) :
-				`${ Lng.haveLatestStable[lang].replace('%s', version) }\r\n${
-					Lng.newCommitsAvail[lang].replace('%s', `${ link }${ vc }</a>${ chLogLink }`) }`;
+			return `<div style="color: red; font-weigth: bold;">${ Lng.noConnect[lang] }</div>`;
+		} else {
+			throw new Error(Lng.noConnect[lang]);
 		}
-		return Promise.reject();
-	}, () => !isManual ?
-		Promise.reject() : `<div style="color: red; font-weigth: bold;">${ Lng.noConnect[lang] }</div>`
-	);
+	}
+	const v = responseText.match(/const version = '([0-9.]+)';/);
+	const remoteVer = v?.[1]?.split('.');
+	if(!remoteVer) {
+		throw new Error('Canʼt get remote version');
+	}
+	const currentVer = version.split('.');
+	const src = `${ gitRaw }${
+		nav.isESNext ? 'src/Dollchan_Extension_Tools.es6' : 'Dollchan_Extension_Tools' }.user.js`;
+	await CfgSaver.saveObj('lastUpd', () => Date.now());
+	const link = `<a style="color: blue; font-weight: bold;" href="${ src }">`;
+	const chLogLink = `<a target="_blank" href="${ gitWiki }${
+		lang === 1 ? 'versions-en' : 'versions' }">\r\n${ Lng.changeLog[lang] }<a>`;
+	for(let i = 0, len = Math.max(currentVer.length, remoteVer.length); i < len; ++i) {
+		if((+remoteVer[i] || 0) > (+currentVer[i] || 0)) {
+			return `${ link }${ Lng.updAvail[lang].replace('%s', v[1]) }</a>${ chLogLink }`;
+		} else if((+remoteVer[i] || 0) < (+currentVer[i] || 0)) {
+			break;
+		}
+	}
+	if(isManual) {
+		const c = responseText.match(/const commit = '([0-9abcdef]+)';/)[1];
+		const vc = version + '.' + c;
+		return c === commit ? Lng.haveLatestCommit[lang].replace('%s', vc) :
+			`${ Lng.haveLatestStable[lang].replace('%s', version) }\r\n${
+				Lng.newCommitsAvail[lang].replace('%s', `${ link }${ vc }</a>${ chLogLink }`) }`;
+	}
+	throw new Error();
+}
+
+
+// Donation message after Dollchan update
+function showDonateMsg() {
+	const item = (name, value) =>
+		`<div>- <i>${ name }</i>: <i style="font: 14px monospace; color: green;">${ value }</i></div>`;
+	$popup('donate', Lng.donateMsg[lang] + `:<br style="margin-bottom: 8px;"><!--
+		--><div class="de-logo"><svg><use xlink:href="#de-symbol-panel-logo"/></svg></div><!--
+		--><div style="display: inline-flex; flex-direction: column; gap: 6px; vertical-align: top;">` +
+			item('BTC', '1BmVjk3DMPZeJUqBtqZRUCmL234Wc3Bc9Y') +
+			item('BTC (SegWit)', 'bc1qleycjdph5v3g26ewy7x37n5a4kwegjgttpjwzw') +
+			item('ETH (ERC20)', '0xffa96732ae8df25c34444c70c0d59c752a47aafa') +
+			item('YooMoney RUB', '410012122418236') +
+			item('Mastercard', '5375411208220306') +
+			`<div>- <a href="https://send.monobank.ua/jar/A7Saf6YAaz" target="_blank">${
+				Lng.donateOnline[lang] }</a></div>` +
+		'</div>');
 }
 
 function initPage() {
@@ -18174,7 +18399,10 @@ function initPage() {
 		}
 		if(!localData) {
 			Cfg.stats.view++;
-			saveCfgObj(aib.dm, Cfg);
+			CfgSaver.saveObj(aib.domain, loadedCfg => {
+				loadedCfg.stats.view++;
+				return loadedCfg;
+			});
 		}
 	} else {
 		thrNavPanel.initThrNav();
@@ -18214,7 +18442,7 @@ function scrollPage() {
 /* eslint-disable max-len */
 
 function addSVGIcons() {
-	docBody.insertAdjacentHTML('beforeend', `
+	doc.body.insertAdjacentHTML('beforeend', `
 	<div id="de-svg-icons">
 	<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
 	<defs>
@@ -18475,17 +18703,16 @@ function addSVGIcons() {
 /* eslint-disable max-len */
 
 function scriptCSS() {
-	const cont = (id, src) => `${ id }::before { content: ""; display: inline-block; vertical-align: -3px; padding: 16px 16px 0 0; margin-right: 4px; background: url(${ src }) no-repeat center; background-size: contain; }`;
+	const contentIcon = (id, src) => `${ id }::before { content: ""; display: inline-block; vertical-align: -3px; padding: 16px 16px 0 0; margin-right: 4px; background: url(${ src }) no-repeat center; background-size: contain; white-space: initial; }`;
 
 	let x = `
 	/* Main panel */
 	#de-panel { position: fixed; right: 0; bottom: 0; z-index: 9999; border-radius: 15px 0 0 0; cursor: default; display: flex; min-height: 25px; color: #F5F5F5; }
 	#de-panel-logo { flex: none; margin: auto 3px auto 0; cursor: pointer; }
 	#de-panel-buttons { flex: 0 1 auto; display: flex; flex-flow: row wrap; align-items: center; padding: 0 0 0 2px; margin: 0; border-left: 1px solid #616b86; }
-	.de-panel-button { display: block; flex: none; margin: 0 1px; padding: 0; transition: all .3s ease; }
+	.de-panel-button { display: block; flex: none; margin: 0 1px; padding: 0 !important; min-width: auto; transition: all .3s ease; border: none !important; background-color: transparent !important; color: inherit !important; cursor: pointer; }
+	.de-panel-button, #de-panel-logo, #de-panel-logo-svg, .de-panel-svg { width: 25px; height: 25px; }
 	.de-panel-button-active { stroke: #32ff32 !important; fill: #32ff32 !important; }
-	a.de-panel-button, a.de-panel-button:hover { color: inherit !important; }
-	.de-panel-svg, #de-panel-logo, .de-panel-logo-svg, .de-panel-button { width: 25px; height: 25px; }
 	#de-panel-expimg, #de-panel-maskimg, #de-panel-preimg { stroke: currentColor; fill: currentColor; }
 	#de-panel-goback { transform: rotate(180deg); will-change: transform; }
 	#de-panel-godown { transform: rotate(90deg); will-change: transform; }
@@ -18494,8 +18721,9 @@ function scriptCSS() {
 	#de-panel-upd-warn { fill: #fff441; }
 	#de-panel-upd-off { fill: #ff3232; }
 	#de-panel-audio-on > .de-panel-svg > .de-use-audio-off, #de-panel-audio-off > .de-panel-svg > .de-use-audio-on { display: none; }
-	#de-panel-info { display: flex; flex: none; padding: 0 6px; margin-left: 2px; border-left: 1px solid #616b86; font: 18px serif; }
-	#de-panel-info-icount::before, #de-panel-info-acount:not(:empty)::before { content: "/"; }
+	#de-panel-info { display: flex; flex: none; margin-left: 2px; font: 18px arial; }
+	#de-panel-info > span { background-color: #fff2; margin-right: 4px; padding: 0 1px; border: 1px solid #fff3; border-radius: 4px; }
+	#de-panel-info > span:empty { display: none; }
 	#de-svg-icons, #de-svg-icons > svg { height: 0; width: 0; position: fixed; }
 	.de-svg-fill { stroke: none; fill: currentColor; }
 	.de-svg-stroke { stroke: currentColor; fill: none; }
@@ -18504,25 +18732,26 @@ function scriptCSS() {
 	/* Panel theme */
 	.de-img-btn, #de-panel, .de-win-head ${ [
 		/* Gradient darkblue */
-		'{ background: linear-gradient(to bottom, #7b849b, #616b86 8%, #3a414f 52%, rgba(0,0,0,0) 52%), linear-gradient(to bottom, rgba(0,0,0,0) 48%, #121212 52%, #1f2740 100%); }',
+		'{ background: linear-gradient(to bottom, #7b849b, #616b86 8%, #121212 60%, #1f2740 100%); }',
 		/* Gradient blue */
-		`{ background: linear-gradient(to bottom, #4b90df, #3d77be 20%, #376cb0 28%, #295591 52%, rgba(0,0,0,0) 52%), linear-gradient(to bottom, rgba(0,0,0,0) 48%, #183d77 52%, #1f4485 72%, #264c90 80%, #325f9e 100%); }
-		#de-panel-buttons, #de-panel-info { border-color: #8fbbed; }`,
+		`{ background: linear-gradient(to bottom, #4b90df, #183d77 60%, #325f9e 100%); }
+		#de-panel-buttons { border-color: #8fbbed; }`,
 		/* Solid grey */
 		`{ background-color: #777; }
-		#de-panel-buttons, #de-panel-info { border-color: #ccc; }
-		.de-panel-svg:hover { border: 2px solid #444; border-radius: 5px; box-sizing: border-box; transition: none; }`,
+		#de-panel-buttons { border-color: #ccc; }`,
 		/* Transparent blue */
 		'{ background-color: rgba(0,20,80,.72); }',
 		/* Square dark */
 		`{ background: none; background-color: #333; border-radius: 0 !important; }
 		#de-win-reply.de-win { border-radius: 0 !important; }
-		#de-panel-buttons, #de-panel-info { border-color: #666; }`
+		#de-panel-buttons { border-color: #666; }`,
+		/* Gradient pink */
+		`{ background: linear-gradient(to bottom, #e854ca, #8c1273 60%, #832da2 100%); }
+		#de-panel-buttons { border-color: #c15dad; }`
 	][Cfg.scriptStyle] }
-	.de-logo { background: linear-gradient(to bottom, #7b849b, #616b86 8%, #3a414f 52%, rgba(0,0,0,0) 52%), linear-gradient(to bottom, rgba(0,0,0,0) 48%, #121212 52%, #1f2740 100%); }
-	${ Cfg.scriptStyle === 2 ?
-		'.de-panel-svg:hover { border: 2px solid #444; border-radius: 5px; box-sizing: border-box; transition: none; }' :
-		'.de-panel-button:hover { background-color: rgba(255,255,255,.15); box-shadow: 0 0 3px rgba(143,187,237,.5); }' }\r\n`;
+	.de-logo { background: linear-gradient(to bottom, #7b849b, #616b86 8%, #121212 60%, #1f2740 100%) }
+	.de-panel-svg:hover, #de-panel-logo-svg:hover { margin: -2px; width: 29px; height: 29px; color: #d0e7ff !important; }
+	.de-panel-button:hover { background-color: rgba(255,255,255,.15) !important; box-shadow: 0 0 3px rgba(200,200,200,0.5); color: inherit !important; }\r\n`;
 
 	if(Cfg.disabled) {
 		$css(x).id = 'de-css';
@@ -18538,24 +18767,25 @@ function scriptCSS() {
 	.de-resizer-right { width: 6px; top: 0px; bottom: 0px; right: -3px; cursor: ew-resize; }
 	.de-resizer-top { height: 6px; top: -3px; left: 0; right: 0; cursor: ns-resize; }
 	.de-win > .de-win-head { cursor: move; }
-	.de-win-buttons { position: absolute; right: 0; margin: 0 2px 0 0; font-size: 0; cursor: pointer; }
+	.de-win-buttons { margin: 0 2px 0 0; font-size: 0; white-space: nowrap; cursor: pointer; }
 	.de-win-buttons > svg { transition: background .3s ease, box-shadow .3s ease; }
-	.de-win-buttons > svg:hover { background-color: rgba(255,255,255,.2); box-shadow: 0 0 2px rgba(255,255,255,.4); }
-	.de-win-inpost > .de-win-head > .de-win-buttons > svg:hover { background-color: rgba(64,64,64,.15); box-shadow: 0 0 2px rgba(64,64,64,.3); }
+	.de-win-buttons > svg:hover { background-color: rgba(255,255,255,.2); box-shadow: 0 0 2px rgba(255,255,255,.4); color: #d0e7ff; }
+	.de-win-inpost > .de-win-head > .de-win-buttons > svg:hover { background-color: rgba(64,64,64,.15); box-shadow: 0 0 2px rgba(64,64,64,.3); color: inherit; }
 	#de-win-cfg { width: 355px; }
-	#de-win-cfg, #de-win-fav, #de-win-hid, #de-win-vid { position: fixed; max-height: 92%; overflow-x: hidden; overflow-y: auto; }
+	#de-win-cfg, #de-win-fav, #de-win-hid, #de-win-vid { position: fixed; max-width: calc(100vw - (100vw - 100%)); max-height: calc(100vh - 25px); overflow-x: hidden; overflow-y: auto; }
 	#de-win-cfg > .de-win-body { float: none; display: block; width: auto; min-width: 0; max-width: 100% !important; padding: 0 !important; margin: 0 !important; border: none; }
 	#de-win-fav > .de-win-body, #de-win-hid > .de-win-body, #de-win-vid > .de-win-body { padding: 6px; border: 1px solid gray; }
 	#de-win-hid { max-width: 60%; }
+	.de-win-title { width: 100%; }
 	#de-win-vid > .de-win-body { display: flex; flex-direction: column; align-items: center; }
 	#de-win-vid .de-entry { white-space: normal; }
-	.de-win-head { position: relative; padding: 2px; border-radius: 10px 10px 0 0; color: #F5F5F5; font: bold 14px/16px arial; text-align: center; cursor: default; }
+	.de-win-head { display: flex; height: 16px; padding: 2px; border-radius: 10px 10px 0 0; color: #F5F5F5; font: bold 14px/16px arial; text-align: center; cursor: default; }
 
 	/* Settings window */
 	.de-block { display: block; }
 	#de-btn-spell-add { margin-left: auto; }
 	#de-cfg-bar { display: flex; margin: 0; padding: 0; }
-	.de-cfg-body { min-height: 354px; padding: 9px 7px 7px; margin-top: -1px; font: 13px/15px arial !important; -moz-box-sizing: content-box; box-sizing: content-box; }
+	.de-cfg-body { min-height: 355px; padding: 9px 7px 7px; margin-top: -1px; font: 13px/15px arial !important; -moz-box-sizing: content-box; box-sizing: content-box; }
 	.de-cfg-body, #de-cfg-buttons { border: 1px solid #183d77; border-top: none; }
 	.de-cfg-button { padding: 0 ${ nav.isFirefox ? '2' : '4' }px !important; margin: 0 4px; height: 21px; font: 12px arial !important; }
 	#de-cfg-button-debug { padding: 0 2px; font: 13px/15px arial; }
@@ -18564,8 +18794,9 @@ function scriptCSS() {
 	.de-cfg-chkbox { ${ nav.isPresto ? '' : 'vertical-align: -1px !important; ' }margin: 2px 1px !important; }
 	#de-cfg-info { display: flex; flex-direction: column; }
 	input[type="text"].de-cfg-inptxt { width: auto; height: auto; min-height: 0; padding: 0 2px !important; margin: 1px 4px 1px 0 !important; font: 13px arial !important; border-width: 1px; }
-	.de-cfg-inptxt, .de-cfg-label, .de-cfg-select { display: inline; width: auto; height: auto !important; font: 13px/15px arial !important; }
+	.de-cfg-inptxt, .de-cfg-label, .de-cfg-select { display: inline-block; width: auto; height: 19px !important; font: 13px/15px arial !important; }
 	.de-cfg-label { padding: 0; margin: 0; }
+	.de-cfg-needreload::after  { content: "* "; color: red; }
 	.de-cfg-select { padding: 0 2px; margin: 1px 0; font: 13px arial !important; float: none; appearance: auto; }
 	.de-cfg-tab { flex: 1 0 auto; display: block !important; margin: 0 !important; float: none !important; width: auto !important; min-width: 0 !important; padding: 4px 0 !important; box-shadow: none !important; border: 1px solid #444 !important; border-radius: 4px 4px 0 0 !important; opacity: 1; font: bold 12px arial; text-align: center; cursor: default; background-image: linear-gradient(to bottom, rgba(132,132,132,.35) 0%, rgba(79,79,79,.35) 50%, rgba(40,40,40,.35) 50%, rgba(80,80,80,.35) 100%) !important; }
 	.de-cfg-tab:hover { background-image: linear-gradient(to top, rgba(132,132,132,.35) 0%, rgba(79,79,79,.35) 50%, rgba(40,40,40,.35) 50%, rgba(80,80,80,.35) 100%) !important; }
@@ -18600,7 +18831,13 @@ function scriptCSS() {
 		.de-cfg-tab { border-color: #001450 !important; }`,
 		/* Square dark */
 		`#de-cfg-bar { background-color: #222; }
-		.de-cfg-body, #de-cfg-buttons { border-color: #666; }`
+		.de-cfg-body, #de-cfg-buttons, { border-color: #666; }
+		#de-spell-rowmeter { background-color: #555; }`,
+		/* Gradient pink */
+		`#de-cfg-bar { background-color: #832da2; }
+		.de-cfg-body, #de-cfg-buttons { border-color: #c125a1 !important; }
+		.de-cfg-tab { border-color: #832da2 !important; }
+		#de-spell-rowmeter { background-color: #844b83; }`
 	][Cfg.scriptStyle] }
 
 	/* Favorites window */
@@ -18620,9 +18857,10 @@ function scriptCSS() {
 	.de-fav-inf-icon { margin-bottom: -3px; }
 	.de-fav-inf-new { color: #424f79; }
 	.de-fav-inf-new::after { content: " +"; }
-	.de-fav-inf-old { color: #4f7942; }
+	.de-fav-inf-total { color: #4f7942; }
 	.de-fav-inf-you { padding: 0 4px; margin-right: 4px; border-radius: 3px; color: #fff; background-color: #424f79; opacity: 0.65; }
 	.de-fav-link { flex: none; margin-left: 2px; text-decoration: none; border: none; }
+	.de-fav-table { overflow-x: hidden; overflow-y: auto; max-height: calc(100vh - 91px); }
 	.de-fav-table-unfold > .de-fold-block > .de-fav-entries { display: initial !important; }
 	.de-fav-unavail { color: #cf4436; }
 	.de-fold-block { border: 1px solid rgba(120,120,120,.8); border-radius: 2px; }
@@ -18630,20 +18868,21 @@ function scriptCSS() {
 
 	/* Post panel */
 	.de-btn-hide > .de-btn-unhide-use, .de-btn-hide-user > .de-btn-unhide-use, .de-btn-unhide > .de-btn-hide-use, .de-btn-unhide-user > .de-btn-hide-use { display: none; }
-	.de-btn-expthr, .de-btn-fav, .de-btn-fav-sel, .de-btn-hide, .de-btn-hide-user, .de-btn-img, .de-btn-reply, .de-btn-sage, .de-btn-stick, .de-btn-stick-on, .de-btn-unhide, .de-btn-unhide-user, .de-win-btn-clear, .de-win-btn-close, .de-win-btn-toggle { margin: 0 2px -3px 0 !important; cursor: pointer; width: 16px; height: 16px; }${
-	!pr.form && !pr.oeForm ? '.de-btn-reply { display: none; }' : '' }
+	.de-btn-expthr, .de-btn-fav, .de-btn-fav-sel, .de-btn-hide, .de-btn-hide-user, .de-btn-img, .de-btn-reply, .de-btn-sage, .de-btn-stick, .de-btn-stick-on, .de-btn-unhide, .de-btn-unhide-user, .de-win-btn-clear, .de-win-btn-close, .de-win-btn-toggle { margin: 0 2px 0 0 !important; cursor: pointer; width: 16px; height: 16px; vertical-align: -3px; }${
+	!postform.form && !postform.oeForm ? '.de-btn-reply { display: none; }' : '' }
+	.de-btn-img { vertical-align: top; }
 	.de-post-btns { margin-left: 4px; }
 	.de-post-btns-back { fill: inherit; stroke: none; }
 	.de-post-note:not(:empty) { color: inherit; margin: 0 4px; vertical-align: 1px; font: italic bold 12px serif; }
 	.de-thread-note { font-style: italic; }
 
 	/* Sauce buttons */
-	${ cont('.de-src-google', 'data:image/gif;base64,R0lGODlhEAAQAMQAAIy0+tHh/gJc8Qlh8UyM9H2r9/3///7//x+OfACSJy+mTZHQos3Te////f///v3HAP+uAPzWjvWTWeUTAPSdl/79/f////39/f///wAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABgALAAAAAAQABAAAAVuICaKh2Eax6hih+W+bqoaLjXdE+UaY2vhwInrInLhdBYbDEOL3GBQS4X2gEiiUBoEAhMIBl6CpaHlvrxocaO1XUQBgsLYxUgkot7AGONS2N0WCwgCYhZFfXaJCQguDiMvC34JCoCOKlgvK49QKyEAOw==') }
-	${ cont('.de-src-yandex', 'data:image/gif;base64,R0lGODlhEAAQAMQAAP////v7+/r5+fb29vHx8eLi4tnZ2dTU1NDQ0MvLy8fHx8TExPzJv/immvlXRvq0re4UEdeGhtbFxcnJyby8vKampm5ubv///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABcALAAAAAAQABAAAAVx4CWOZCkOQKqq5uoCQhnMQuPcc2CQuc3YuQBJQHQ8BA8HkUgYDZ6Qx+ABeVoVIoL2RmhAtODmpUD23iDkdEFkaBsiEAfE3a6IDngJJALH4ycjCIJyCXCCgiQJhXuLigl2IwqSk5QUJRQLmZqaFiaeniEAOw==') }
-	${ cont('.de-src-tineye', 'data:image/gif;base64,R0lGODlhEAAQAMQAAP///wAAAAwOEhg4UDZ7skGNxkuf3Vycxx4nLerw9DlSX2FnanO21Epxg4LO62KOnpXj+ZGcmb7CvbZ6RfxmAIxBCzsGAP///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABcALAAAAAAQABAAAAWlYGIUZGGc6HgkxzSRozIgdHMUx0NR5hH8v8VjeFsoDAyFpcKcQByMnIGgYDAikmxkOLQWqNAGQhAQLBC/BgSXC0QivwgAgFbjHLQ5XDKXBBRrBA80WAABRgkJPwxfDw2HCYYBfHABDSQMDgoIEgs/ZgoPDmuYEFEHmQ6jT5ckBKirEE8HCgEWJQe5ZwJjQBYRBwQMsk8RFgJkP04sVrHGNAEVEAAhADs=') }
-	${ cont('.de-src-saucenao', 'data:image/gif;base64,R0lGODlhEAAQAIAAAP///wAAACwAAAAAEAAQAAACJ4yPacDtvpQCkU1KT0P75i49mbSAZACd6HN2pmbBI7pe9K1+4q5KBQA7') }
-	${ cont('.de-src-iqdb', 'data:image/gif;base64,R0lGODlhEAAQAMQAAP//////AP8A//8AAAD//wD/AAAA/wAAANx/hV1ISW9YWvLOd/u0T+WlTNaqcKdtMv/r1mxML7OCVoxtUbmmlfPRuKKGeHpcTvK3nEEvKGpRTCcbGU48OYVua3tkYv///yH5BAEAAB8ALAAAAAAQABAAAAW4INV5ZDcmibM0iVJRnukpmnJJDdNwnDWSk4vCNMnpGJXfwqHReDQJTuTxmEhmqoTFEtRsNhltRTFZTBKUl2IzAmeE2csFA8kcKADLl5NgSDgaGRYAFVYQABkRgAxnGhcdEJEVhxYSDhwNEQkaEhSRGBgIGBUOGBwXERkcExyeFaGjr4E8qgcHDpKgkQpRGhwZYA4Vw6CvPBOpwD0ODlMSoxcJOQ8ZyhccBxkSkRRFDw4SD1/jF5MQIQA7') }
-	${ cont('.de-src-tracemoe', 'data:image/gif;base64,R0lGODlhEAAPALMAAAAAAP///9fY18HBwTg4ODw1No6PjoFnZhoBAXNGRf/V1KmRkf///wAAAAAAAAAAACH5BAEAAAwALAAAAAAQAA8AAAQ5EMhJq7046w0I9hMhBAIoiSQ4BiS1tgQrg7EceIM8UDm7S4aBwRIcYgoFjmSxQHASCkWCc6gelJkIADs=') }
+	${ contentIcon('.de-src-google', 'data:image/gif;base64,R0lGODlhEAAQAMQAAIy0+tHh/gJc8Qlh8UyM9H2r9/3///7//x+OfACSJy+mTZHQos3Te////f///v3HAP+uAPzWjvWTWeUTAPSdl/79/f////39/f///wAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABgALAAAAAAQABAAAAVuICaKh2Eax6hih+W+bqoaLjXdE+UaY2vhwInrInLhdBYbDEOL3GBQS4X2gEiiUBoEAhMIBl6CpaHlvrxocaO1XUQBgsLYxUgkot7AGONS2N0WCwgCYhZFfXaJCQguDiMvC34JCoCOKlgvK49QKyEAOw==') }
+	${ contentIcon('.de-src-yandex', 'data:image/gif;base64,R0lGODlhEAAQAMQAAP////v7+/r5+fb29vHx8eLi4tnZ2dTU1NDQ0MvLy8fHx8TExPzJv/immvlXRvq0re4UEdeGhtbFxcnJyby8vKampm5ubv///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABcALAAAAAAQABAAAAVx4CWOZCkOQKqq5uoCQhnMQuPcc2CQuc3YuQBJQHQ8BA8HkUgYDZ6Qx+ABeVoVIoL2RmhAtODmpUD23iDkdEFkaBsiEAfE3a6IDngJJALH4ycjCIJyCXCCgiQJhXuLigl2IwqSk5QUJRQLmZqaFiaeniEAOw==') }
+	${ contentIcon('.de-src-tineye', 'data:image/gif;base64,R0lGODlhEAAQAMQAAP///wAAAAwOEhg4UDZ7skGNxkuf3Vycxx4nLerw9DlSX2FnanO21Epxg4LO62KOnpXj+ZGcmb7CvbZ6RfxmAIxBCzsGAP///wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABcALAAAAAAQABAAAAWlYGIUZGGc6HgkxzSRozIgdHMUx0NR5hH8v8VjeFsoDAyFpcKcQByMnIGgYDAikmxkOLQWqNAGQhAQLBC/BgSXC0QivwgAgFbjHLQ5XDKXBBRrBA80WAABRgkJPwxfDw2HCYYBfHABDSQMDgoIEgs/ZgoPDmuYEFEHmQ6jT5ckBKirEE8HCgEWJQe5ZwJjQBYRBwQMsk8RFgJkP04sVrHGNAEVEAAhADs=') }
+	${ contentIcon('.de-src-saucenao', 'data:image/gif;base64,R0lGODlhEAAQAIAAAP///wAAACwAAAAAEAAQAAACJ4yPacDtvpQCkU1KT0P75i49mbSAZACd6HN2pmbBI7pe9K1+4q5KBQA7') }
+	${ contentIcon('.de-src-iqdb', 'data:image/gif;base64,R0lGODlhEAAQAMQAAP//////AP8A//8AAAD//wD/AAAA/wAAANx/hV1ISW9YWvLOd/u0T+WlTNaqcKdtMv/r1mxML7OCVoxtUbmmlfPRuKKGeHpcTvK3nEEvKGpRTCcbGU48OYVua3tkYv///yH5BAEAAB8ALAAAAAAQABAAAAW4INV5ZDcmibM0iVJRnukpmnJJDdNwnDWSk4vCNMnpGJXfwqHReDQJTuTxmEhmqoTFEtRsNhltRTFZTBKUl2IzAmeE2csFA8kcKADLl5NgSDgaGRYAFVYQABkRgAxnGhcdEJEVhxYSDhwNEQkaEhSRGBgIGBUOGBwXERkcExyeFaGjr4E8qgcHDpKgkQpRGhwZYA4Vw6CvPBOpwD0ODlMSoxcJOQ8ZyhccBxkSkRRFDw4SD1/jF5MQIQA7') }
+	${ contentIcon('.de-src-tracemoe', 'data:image/gif;base64,R0lGODlhEAAPALMAAAAAAP///9fY18HBwTg4ODw1No6PjoFnZhoBAXNGRf/V1KmRkf///wAAAAAAAAAAACH5BAEAAAwALAAAAAAQAA8AAAQ5EMhJq7046w0I9hMhBAIoiSQ4BiS1tgQrg7EceIM8UDm7S4aBwRIcYgoFjmSxQHASCkWCc6gelJkIADs=') }
 
 	/* Posts counter */
 	.de-post-counter { margin: 0 4px 0 2px; vertical-align: 1px; font: bold 11px tahoma; color: #4f7942; cursor: default; }
@@ -18653,11 +18892,12 @@ function scriptCSS() {
 
 	/* Text markup buttons */
 	.de-markup-back { fill: #f0f0f0; stroke: #808080; }
-	#de-txt-panel { display: block; font-weight: bold; cursor: pointer; }
+	#de-txt-panel { display: block; font-weight: bold; white-space: nowrap; cursor: pointer; }
 	#de-txt-panel > div { display: inline-block; }
+	#de-txt-panel > div > button { margin-right: 2px; min-width: 23px; }
 	#de-txt-panel > div > svg { width: 23px; height: 22px; margin: 0 1px; }\r\n`;
 
-	if('animation' in docBody.style) {
+	if('animation' in doc.body.style) {
 		x += `
 		/* Show/hide animation */
 		@keyframes de-open { 0% { transform: translateY(-100%); } 100% { transform: translateY(0); } }
@@ -18704,7 +18944,10 @@ function scriptCSS() {
 	.de-fullimg-link:hover { color: #fff !important; background: rgba(64,64,64,.6); }
 	.de-fullimg-load { position: absolute; z-index: 2; width: 50px; height: 50px; top: 50%; left: 50%; margin: -25px; }
 	.de-fullimg-rotated { transform-origin: top left; width: auto !important; max-width: none !important; }
-	.de-fullimg-video-hack { width: 100%; height: calc(100% - 40px); position: absolute; z-index: 1; cursor: pointer; }
+	.de-fullimg-scale { color: #fff; font: bold 12px tahoma; cursor: default; }
+	.de-fullimg-video-hack { ${ nav.isWebkit && nav.isMobile ?
+		'width: 30px; top: 0; right: 0; color: #fff; font-size: 2em;' :
+		'width: 100%;' } height: calc(100% - 40px); position: absolute; z-index: 1; cursor: pointer; }
 	.de-fullimg-wrap { position: relative; margin-bottom: 24px; }
 	.de-fullimg-wrap-center, .de-fullimg-wrap-link, .de-fullimg-video > video { width: 100%; height: 100%; max-height: 100%; }
 	.de-fullimg-wrap-center > .de-fullimg-wrap-link > .de-fullimg { height: 100%; }
@@ -18718,13 +18961,13 @@ function scriptCSS() {
 	.de-img-btn-none { display: none; }
 	#de-img-btn-prev { left: 0; margin-top: -18px; transform: scaleX(-1); }
 	#de-img-btn-rotate { right: 0; margin-top: 20px; }
-	.de-webm-title { color: #ffe100 !important; }
+	.de-webm-title { color: #ffe100 !important; font: bold 12px tahoma; }
 
 	/* Embedders */
-	${ cont('.de-video-link.de-ytube', 'https://youtube.com/favicon.ico') }
-	${ cont('.de-video-link.de-vimeo', 'https://vimeo.com/favicon.ico') }
-	${ cont('.de-img-arch', 'data:image/gif;base64,R0lGODlhEAAQALMAAF82SsxdwQMEP6+zzRA872NmZQesBylPHYBBHP///wAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAAkALAAAAAAQABAAQARTMMlJaxqjiL2L51sGjCOCkGiBGWyLtC0KmPIoqUOg78i+ZwOCUOgpDIW3g3KJWC4t0ElBRqtdMr6AKRsA1qYy3JGgMR4xGpAAoRYkVDDWKx6NRgAAOw==') }
-	${ cont('.de-img-audio', 'data:image/gif;base64,R0lGODlhEAAQAKIAAGya4wFLukKG4oq3802i7Bqy9P///wAAACH5BAEAAAYALAAAAAAQABAAQANBaLrcHsMN4QQYhE01OoCcQIyOYQGooKpV1GwNuAwAa9RkqTPpWqGj0YTSELg0RIYM+TjOkgba0sOaAEbGBW7HTQAAOw==') }
+	${ contentIcon('.de-video-link.de-ytube', 'https://youtube.com/favicon.ico') }
+	${ contentIcon('.de-video-link.de-vimeo', 'https://vimeo.com/favicon.ico') }
+	${ contentIcon('.de-img-arch', 'data:image/gif;base64,R0lGODlhEAAQALMAAF82SsxdwQMEP6+zzRA872NmZQesBylPHYBBHP///wAAAAAAAAAAAAAAAAAAAAAAACH5BAEAAAkALAAAAAAQABAAQARTMMlJaxqjiL2L51sGjCOCkGiBGWyLtC0KmPIoqUOg78i+ZwOCUOgpDIW3g3KJWC4t0ElBRqtdMr6AKRsA1qYy3JGgMR4xGpAAoRYkVDDWKx6NRgAAOw==') }
+	${ contentIcon('.de-img-audio', 'data:image/gif;base64,R0lGODlhEAAQAKIAAGya4wFLukKG4oq3802i7Bqy9P///wAAACH5BAEAAAYALAAAAAAQABAAQANBaLrcHsMN4QQYhE01OoCcQIyOYQGooKpV1GwNuAwAa9RkqTPpWqGj0YTSELg0RIYM+TjOkgba0sOaAEbGBW7HTQAAOw==') }
 	.de-current::after { content: " \u25CF"; }
 	.de-img-arch, .de-img-audio { margin-left: 4px; color: inherit; text-decoration: none; font-weight: bold; }
 	.de-mp3 { margin: 5px 20px; }
@@ -18744,7 +18987,7 @@ function scriptCSS() {
 	a.de-video-player:hover::after { background-color: rgba(255,0,0,.7); }
 	.de-video-title[de-time]::after { content: " [" attr(de-time) "]"; color: red; }
 	.de-video-title[de-time].de-current::after { content: " [" attr(de-time) "] \u25CF"; color: red; }
-	.de-vocaroo > embed { display: inline-block; }
+	.de-vocaroo { display: block; }
 	video { background: black; }
 
 	/* File inputs */
@@ -18760,16 +19003,18 @@ function scriptCSS() {
 	.de-file-input + .de-file-utils { margin-left: 4px; }
 	.de-file-off > .de-file-img > div::after { content: "${ Lng.dropFileHere[lang] }"; display: block; width: 80px; margin: 0 auto; font: 11px arial; opacity: .8; white-space: initial; }
 	.de-file-rarmsg { margin: 0 2px; vertical-align: 4px; font: bold 11px tahoma; cursor: default; }
-	.de-file-btn-del, .de-file-btn-rar, .de-file-btn-ren, .de-file-btn-txt { margin: 0 1px; cursor: pointer; }
+	.de-file-btn-del, .de-file-btn-rar, .de-file-btn-ren, .de-file-btn-txt { margin: 0 1px; width: 16px; height: 16px; cursor: pointer; }
 	.de-file-btn-del > svg, .de-file-btn-rar > svg, .de-file-btn-ren > svg, .de-file-btn-txt > svg { width: 16px; height: 16px; }
 	.de-file-spoil { margin: 0 3px; vertical-align: 1px; }
-	.de-file-txt-add { font-weight: bold; width: 21px; padding: 0 !important; }
-	.de-file-txt-input { border: 1px solid #9c9c9c; padding: 2px; font: 12px/16px sans-serif; }
+	.de-file-txt-add { margin-left: 2px; padding: 0 !important; width: 22px; font-weight: bold; }
+	.de-file-txt-input { flex-grow: 1; border: 1px solid #9c9c9c; padding: 2px; font: 12px/16px sans-serif; }
 	.de-file-txt-noedit { background: rgba(255,255,255,.5); cursor: pointer; }
-	.de-file-utils { display: inline-block; float: none; vertical-align: -3px; }
+	.de-file-txt-wrap { display: inline-flex; width: 100%; }
+	.de-file-utils { display: inline-flex; float: none; align-items: center; }
+	.de-file-wrap { display: flex; align-items: center; }
 
 	/* Reply form */
-	.de-parea { text-align: center; }
+	.de-parea { text-align: center; clear: both; }
 	.de-parea-btn-close::after { content: "${ Lng.hideForm[lang] }"; }
 	.de-parea-btn-thr::after { content: "${ Lng.makeThr[lang] }"; }
 	.de-parea-btn-reply::after { content: "${ Lng.makeReply[lang] }"; }
@@ -18798,8 +19043,8 @@ function scriptCSS() {
 
 	/* Other */
 	.de-abtn { text-decoration: none !important; outline: none; }
-	.de-button { flex: none; padding: 0 ${ nav.isFirefox ? 2 : 4 }px !important; margin: 1px 2px; height: 24px; font: 13px arial; }
-	.de-editor { display: block; font: 12px courier new; width: 619px; height: 337px; tab-size: 4; -moz-tab-size: 4; -o-tab-size: 4; }
+	.de-button { flex: none; padding: 0 ${ nav.isFirefox ? 2 : 4 }px !important; margin: 1px 2px; min-width: auto !iportant; height: 24px; font: 13px arial; }
+	.de-editor { display: block; width: 600px; height: 300px; max-width: calc(100vw - 20px); font: 12px courier new; tab-size: 4; -moz-tab-size: 4; -o-tab-size: 4; }
 	.de-hidden { float: left; overflow: hidden !important; margin: 0 !important; padding: 0 !important; border: none !important; width: 0 !important; height: 0 !important; display: inline !important; }
 	.de-input-key { padding: 0 2px !important; margin: 0 !important; font: 13px/15px arial !important; }
 	input[type="text"].de-input-selected { background: rgba(255,255,150,0.4) !important }
@@ -18809,18 +19054,18 @@ function scriptCSS() {
 	.de-list { padding-top: 4px; }
 	.de-list::before { content: "\u25CF"; margin-right: 4px; }
 	.de-logo { display: inline-block; margin-right: 10px; fill: inherit; color: #F5F5F5; border-radius: 80px 0 0 0; }
-	.de-logo > svg { width: 144px; height: 144px; }
+	.de-logo > svg { width: 130px; height: 130px; }
 	.de-menu { padding: 0 !important; margin: 0 !important; width: auto !important; min-width: 0 !important; z-index: 10002; border: 1px solid grey !important; text-align: left; }
 	.de-menu-item { display: block; padding: 3px 10px; color: inherit; text-decoration: none; font: 13px arial; white-space: nowrap; cursor: pointer; }
 	.de-menu-item:hover { background-color: #222; color: #fff; }
 	.de-omitted { color: grey; }
 	.de-omitted::before { content: "${ Lng.postsOmitted[lang] }"; }
-	.de-popup { overflow: visible !important; clear: both !important; width: auto !important; min-width: 0pt !important; padding: 8px !important; margin: 1px !important; border: 1px solid grey !important; display: block !important; float: right !important; max-width: initial !important; }
-	.de-popup-btn { display: inline-block; vertical-align: top; color: green; cursor: pointer; line-height: 1.15; }
-	.de-popup-msg { display: inline-block; white-space: pre-wrap; }
-	.de-popup-msg > hr { margin: 0 !important; }
+	.de-page-num { clear: both; }
+	.de-popup { overflow: visible !important; clear: both !important; width: auto !important; min-width: 0pt !important; padding: 8px !important; margin: 1px !important; border: 1px solid grey !important; display: block !important; float: right !important; white-space: pre-wrap; }
+	.de-popup-btn { display: inline-block; vertical-align: -1px; color: green; font-size: 1.5em; line-height: 16px; cursor: pointer; }
+	.de-popup > hr { margin: 0 !important; }
 	.de-post-hiddencontent { display: none !important; }
-	.de-pview { position: absolute; width: auto; min-width: 0; z-index: 9999; border: 1px solid grey !important; margin: 0 !important; display: block !important; }
+	.de-pview { position: absolute !important; width: auto; min-width: 0; z-index: 9999; border: 1px solid grey !important; margin: 0 !important; display: block !important; }
 	.de-pview-info { padding: 3px 6px !important; }
 	.de-ref-del::after { content: " (Del)"; }
 	.de-ref-op::after { content: " (OP)"; }
@@ -18838,9 +19083,15 @@ function scriptCSS() {
 	.de-viewed { color: #747488 !important; }
 	.de-wait, .de-fav-wait , .de-fullimg-load { animation: de-wait-anim 1s linear infinite; }
 	.de-wait { margin: 0 2px -3px 0 !important; width: 16px; height: 16px; }
-	#de-wrapper-popup { overflow-x: hidden !important; overflow-y: auto !important; -moz-box-sizing: border-box; box-sizing: border-box; max-height: 100vh; position: fixed; right: 0; top: 0; z-index: 9999; font: 14px arial; cursor: default; }
+	#de-wrapper-popup { max-width: calc(100vw - (100vw - 100%)); overflow-x: hidden !important; overflow-y: auto !important; -moz-box-sizing: border-box; box-sizing: border-box; max-height: 100vh; position: fixed; right: 0; top: 0; z-index: 9999; font: 14px arial; cursor: default; }
 	@keyframes de-wait-anim { to { transform: rotate(360deg); } }
-	form > hr { clear: both }`;
+	form > hr { clear: both }
+
+	/* Mobile devices */
+	@media screen and (max-width: 768px) {
+		.de-btn-expthr, .de-btn-fav, .de-btn-fav-sel, .de-btn-hide, .de-btn-hide-user, .de-btn-img, .de-btn-reply, .de-btn-sage, .de-btn-stick, .de-btn-stick-on, .de-btn-unhide, .de-btn-unhide-user, .de-win-btn-clear, .de-win-btn-close, .de-win-btn-toggle { width: 19px; height: 19px; vertical-align: -5px; }
+		.de-video-obj { max-width: calc(100vw - 6px); margin: 5px 0; }
+	}`;
 
 	$css(x).id = 'de-css';
 	$css('').id = 'de-css-dynamic';
@@ -18885,17 +19136,16 @@ function updateCSS() {
 			.de-btn-stick-on { color: #BFFFBF; }
 			.de-btn-unhide-user { color: #FFBFBF; }` }
 	.de-fullimg-wrap-inpost > .de-fullimg { ${ Cfg.resizeImgs ?
-		`max-width: 100%;${ Cfg.resizeImgs === 2 ? ' max-height: 96vh' : '' }` :
-		'width: auto' }; }
+		`max-width: 100%;${ Cfg.resizeImgs === 2 ? ' max-height: 96vh;' : '' }` :
+		'width: auto;' }; }
 	${ Cfg.maskImgs ?
 		`${ aib.qPostImg }, .de-img-embed, .de-video-obj { opacity: ${ Cfg.maskVisib / 100 } !important; }
 			${ aib.qPostImg.split(', ').join(':hover, ') }:hover, .de-img-embed:hover, .de-video-obj:hover { opacity: 1 !important; }
 			.de-video-obj:not(.de-video-obj-inline) { clear: both; }` : '' }
-	${ Cfg.imgNames === 1 ? '.de-img-name { max-width: 165px; overflow: hidden; }' : '' }
-	${ Cfg.imgNames === 1 || Cfg.imgNames === 3 ?
-		'.de-img-name { display: inline-block; white-space: nowrap; vertical-align: bottom; text-overflow: ellipsis; }' :
-		Cfg.imgNames === 2 ? '.de-img-name { text-decoration: none !important; text-transform: capitalize; }' : '' }
-	${ Cfg.widePosts ? '.de-reply { float: none; width: 99.9%; margin-left: 0; }' : '' }
+	${ Cfg.imgNames === 1 ? '.de-img-name { display: inline-block; max-width: 230px; vertical-align: top; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }' : '' }
+	${ Cfg.imgNames === 2 ? '.de-img-name { text-decoration: none !important; text-transform: capitalize; }' : '' }
+	${ Cfg.imgNames === 3 ? '.de-img-name { display: inline-block; max-width: 230px; vertical-align: top; word-wrap: break-word; white-space: break-spaces; }' : '' }
+	${ Cfg.widePosts ? '.de-reply { float: none; width: 99vw; margin-left: 0; }' : '' }
 	${ aib.qPostMsg } { max-width: ${ Cfg.limitPostMsg }px; overflow-wrap: break-word; word-wrap: break-word; word-break: break-word; }
 	${ Cfg.strikeHidd ? '.de-link-hid { text-decoration: line-through !important; opacity: .5 !important; }' : '' }
 	${ Cfg.noSpoilers === 1 ?
@@ -18904,6 +19154,9 @@ function updateCSS() {
 	${ Cfg.noSpoilers === 2 ?
 		`.spoiler, s { color: inherit !important; }
 			.spoiler > a, s > a:not(:hover) { color: inherit !important; }` : '' }
+	${ Cfg.favFolders ? '' : `.de-fav-entries-hide { display: block; }
+		.de-fav-header { display: none; }
+		.de-fav-link::before { content: attr(de-host) "/" attr(de-board) "/" }` }
 	${ Cfg.addSageBtn ? '' : '#de-sagebtn, ' }
 	${ Cfg.delHiddPost === 1 || Cfg.delHiddPost === 3 ?
 		'.de-thr-hid, .de-thr-hid + div + br, .de-thr-hid + div + hr, .de-thr-hid + div + br + hr, .de-thr-hid + div + div + hr, ' :
@@ -18920,8 +19173,9 @@ function updateCSS() {
 	${ Cfg.thrBtns === 1 || Cfg.thrBtns === 2 && !aib.t ? '' : '.de-thr-buttons > svg, ' }
 	${ Cfg.ajaxPosting ? '' : '.de-file-btn-rar, .de-file-btn-txt, ' }
 	${ Cfg.fileInputs ? '' : '.de-file-txt-wrap, .de-file-btn-txt, ' }
-	${ !aib.kusaba && (aib.multiFile || Cfg.fileInputs !== 2) ?
-		'#de-pform form > table > tbody > tr > td:not([colspan]):first-child, #de-pform form > table > tbody > tr > th:first-child, ' : '' }body > hr, .postarea, .theader { display: none !important; }\r\n`;
+	${ !aib.formHeaders && (aib.multiFile || Cfg.fileInputs !== 2) ?
+		'#de-pform form > table > tbody > tr > td:not([colspan]):first-child, #de-pform form table > tbody > tr > th:first-child, ' : '' }
+	body > hr, .postarea, .theader { display: none !important; }\r\n`;
 	$id('de-css-dynamic').textContent = (x + aib.css).replace(/[\r\n\t]+/g, '\r\n\t');
 	$id('de-css-user').textContent = Cfg.userCSS ? Cfg.userCSSTxt : '';
 }
@@ -18942,7 +19196,11 @@ function runFrames() {
 		}
 		inf = GM_info;
 	}
-	if(!inf || inf.scriptHandler !== 'Greasemonkey' || !deWindow.frames[0]) {
+	if(!inf) {
+		return;
+	}
+	const handlerName = inf.scriptHandler;
+	if(handlerName !== 'Greasemonkey' && handlerName !== 'FireMonkey' || !deWindow.frames[0]) {
 		return;
 	}
 	const deMainFuncFrame = frameEl => {
@@ -18951,7 +19209,7 @@ function runFrames() {
 			const deWindow = fDoc.defaultView;
 			deMainFuncInner(
 				deWindow,
-				deWindow.opera && deWindow.opera.scriptStorage,
+				deWindow.opera?.scriptStorage,
 				deWindow.FormData,
 				(x, y) => deWindow.scrollTo(x, y),
 				typeof localData === 'object' ? localData : null
@@ -18975,15 +19233,15 @@ function runFrames() {
 
 async function runMain(checkDomains, dataPromise) {
 	Logger.initLogger();
-	if(!(docBody = doc.body) || !aib && !(aib = getImageBoard(checkDomains, true))) {
+	if(!doc.body || !aib && !(aib = getImageBoard(checkDomains, true))) {
 		return;
 	}
-	let formEl = $q(aib.qDForm + ', form[de-form]');
+	let formEl = $q(aib.qDelForm + ', [de-form]');
 	if(!formEl) {
 		runFrames();
 		return;
 	}
-	if(docBody.classList.contains('de-runned') ||
+	if(doc.body.classList.contains('de-runned') ||
 		aib.observeContent && !aib.observeContent(checkDomains, dataPromise)
 	) {
 		return;
@@ -18995,11 +19253,11 @@ async function runMain(checkDomains, dataPromise) {
 		}
 		initNavFuncs();
 	}
-	const [favObj] = await (dataPromise || readData());
-	if(!Cfg.disabled && aib.init && aib.init() || !localData && docBody.classList.contains('de-mode-local')) {
+	const [favObj] = await (dataPromise || Promise.all([readFavorites(), readCfg()]));
+	if(!Cfg.disabled && aib.init?.() || !localData && doc.body.classList.contains('de-mode-local')) {
 		return;
 	}
-	docBody.classList.add('de-runned');
+	doc.body.classList.add('de-runned');
 	Logger.log('Storage loading');
 	addSVGIcons();
 	if(Cfg.disabled) {
@@ -19007,14 +19265,14 @@ async function runMain(checkDomains, dataPromise) {
 		scriptCSS();
 		return;
 	}
-	if('toJSON' in aProto) {
-		delete aProto.toJSON;
+	if('toJSON' in Array.prototype) {
+		delete Array.prototype.toJSON;
 	}
 	initStorageEvent();
 	DollchanAPI.initAPI();
 	if(localData) {
-		aib.prot = 'http:';
-		aib.host = aib.dm;
+		aib.protocol = 'http:';
+		aib.host = aib.domain;
 		aib.b = localData.b;
 		aib.t = localData.t;
 		aib.docExt = '.html';
@@ -19029,12 +19287,12 @@ async function runMain(checkDomains, dataPromise) {
 	Logger.log('Init');
 	if(Cfg.correctTime) {
 		dTime = new DateTime(Cfg.timePattern, Cfg.timeRPattern, Cfg.timeOffset, lang,
-			rp => saveCfg('timeRPattern', rp));
+			rp => CfgSaver.save('timeRPattern', rp));
 		Logger.log('Time correction');
 	}
 	MyPosts.readStorage();
 	Logger.log('Read my posts');
-	$hide(docBody);
+	$hide(doc.body);
 	dummy = doc.createElement('div');
 	formEl = aib.fixHTML(formEl, true);
 	Logger.log('Replace delform');
@@ -19047,16 +19305,18 @@ async function runMain(checkDomains, dataPromise) {
 		}
 	} catch(err) {
 		console.error('Delform parsing error:', getErrorMessage(err));
-		$show(docBody);
+		$show(doc.body);
 		return;
 	}
 	Logger.log('Parse delform');
-	const storageName = `de-lastpcount-${ aib.b }-${ aib.t }`;
-	if(aib.t && !!sesStorage[storageName] && (sesStorage[storageName] > Thread.first.pcount)) {
-		sesStorage.removeItem(storageName);
-		deWindow.location.reload();
+	if(aib.t) {
+		const storageName = `de-last-postscount-${ aib.b }-${ aib.t }`;
+		if(sesStorage[storageName] > Thread.first.postsCount) {
+			sesStorage.removeItem(storageName);
+			deWindow.location.reload();
+		}
 	}
-	pr = new PostForm($q(aib.qForm));
+	postform = new PostForm($q(aib.qForm));
 	Logger.log('Parse postform');
 	if(Cfg.hotKeys) {
 		HotKeys.enableHotKeys();
@@ -19072,9 +19332,9 @@ async function runMain(checkDomains, dataPromise) {
 	readViewedPosts();
 	scriptCSS();
 	Logger.log('Apply CSS');
-	$show(docBody);
+	$show(doc.body);
 	Logger.log('Display page');
-	toggleInfinityScroll();
+	Pages.toggleInfinityScroll();
 	Logger.log('Infinity scroll');
 	const { firstThr } = DelForm.first;
 	if(firstThr) {
@@ -19084,7 +19344,7 @@ async function runMain(checkDomains, dataPromise) {
 	scrollPage();
 	Logger.log('Scroll page');
 	if(localData) {
-		$each($Q('.de-post-removed'), el => {
+		$Q('.de-post-removed').forEach(el => {
 			const post = pByEl.get(el);
 			if(post) {
 				post.deletePost(false);
@@ -19110,7 +19370,7 @@ function initMain() {
 			return;
 		}
 		initNavFuncs();
-		dataPromise = readData();
+		dataPromise = Promise.all([readFavorites(), readCfg()]);
 	}
 	needScroll = true;
 	doc.addEventListener('onwheel' in doc.defaultView ? 'wheel' : 'mousewheel', function wFunc(e) {
@@ -19125,7 +19385,7 @@ initMain();
 /* ==[ Tail ]== */
 }(
 	window,
-	window.opera && window.opera.scriptStorage,
+	window.opera?.scriptStorage,
 	window.FormData,
 	(x, y) => window.scrollTo(x, y),
 	/* global localData */ typeof localData === 'object' ? localData : null

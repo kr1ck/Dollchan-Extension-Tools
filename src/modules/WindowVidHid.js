@@ -2,22 +2,23 @@
                                         WINDOW: VIDEOS, HIDDEN THREADS
 =========================================================================================================== */
 
-function showVideosWindow(body) {
+function showVideosWindow(winBody) {
 	const els = $Q('.de-video-link');
 	if(!els.length) {
-		body.innerHTML = `<b>${ Lng.noVideoLinks[lang] }</b>`;
+		winBody.innerHTML = `<b>${ Lng.noVideoLinks[lang] }</b>`;
 		return;
 	}
-	// EXCLUDED FROM FIREFOX EXTENSION - START
+	// <EXCLUDED_FROM_EXTENSION>
 	if(!$id('de-ytube-api')) {
-		// YouTube APT script. We can't insert scripts directly as html.
+		// YouTube APT script. We canʼt insert scripts directly as html.
 		const script = doc.createElement('script');
 		script.type = 'text/javascript';
-		script.src = aib.prot + '//www.youtube.com/player_api';
-		doc.head.appendChild(script).id = 'de-ytube-api';
+		script.src = aib.protocol + '//www.youtube.com/player_api';
+		script.id = 'de-ytube-api';
+		doc.head.append(script);
 	}
-	// EXCLUDED FROM FIREFOX EXTENSION - END
-	body.innerHTML = `<div de-disableautoplay class="de-video-obj"></div>
+	// </EXCLUDED_FROM_EXTENSION>
+	winBody.innerHTML = `<div de-disableautoplay class="de-video-obj"></div>
 	<div id="de-video-buttons">
 		<a class="de-abtn" id="de-video-btn-prev" href="#" title="${ Lng.prevVideo[lang] }">&#x25C0;</a>
 		<a class="de-abtn" id="de-video-btn-resize" href="#" title="${ Lng.expandVideo[lang] }"></a>
@@ -28,7 +29,7 @@ function showVideosWindow(body) {
 		+Cfg.YTubeWidth + 40 }px; max-height: ${
 		nav.viewportHeight() * 0.92 - +Cfg.YTubeHeigh - 82 }px;"></div>`);
 
-	// EXCLUDED FROM FIREFOX EXTENSION - START
+	// <EXCLUDED_FROM_EXTENSION>
 	// A script to detect the end of current video playback, and auto play next. Uses YouTube API.
 	// The first video should not start automatically!
 	const script = doc.createElement('script');
@@ -66,15 +67,15 @@ function showVideosWindow(body) {
 			document.getElementById("de-video-btn-next").click();
 		}
 	})();`;
-	body.appendChild(script);
-	// EXCLUDED FROM FIREFOX EXTENSION - END
+	winBody.append(script);
+	// </EXCLUDED_FROM_EXTENSION>
 
 	// Events for control buttons
-	body.addEventListener('click', {
+	winBody.addEventListener('click', {
 		linkList,
 		currentLink : null,
 		listHidden  : false,
-		player      : body.firstElementChild,
+		player      : winBody.firstElementChild,
 		playerInfo  : null,
 		handleEvent(e) {
 			const el = e.target;
@@ -105,7 +106,7 @@ function showVideosWindow(body) {
 						(exp ? 562 : +Cfg.YTubeHeigh + 82) }px`;
 				}
 				}
-				$pd(e);
+				e.preventDefault();
 				return;
 			} else if(!el.classList.contains('de-video-link')) { // Clicking on ">" before link
 				// Go to post that contains this link
@@ -122,7 +123,7 @@ function showVideosWindow(body) {
 				el.classList.add('de-current');
 				Videos.addPlayer(this, info, el.classList.contains('de-ytube'), true);
 			}
-			$pd(e);
+			e.preventDefault();
 		}
 	}, true);
 
@@ -130,84 +131,91 @@ function showVideosWindow(body) {
 	for(let i = 0, len = els.length; i < len; ++i) {
 		updateVideoList(linkList, els[i], aib.getPostOfEl(els[i]).num);
 	}
-	body.appendChild(linkList);
+	winBody.append(linkList);
 	$q('.de-video-link', linkList).click();
 }
 
 function updateVideoList(parent, link, num) {
 	const el = link.cloneNode(true);
 	el.videoInfo = link.videoInfo;
+	el.classList.remove('de-current');
+	el.setAttribute('onclick', 'window.de_addVideoEvents && window.de_addVideoEvents();');
 	$bEnd(parent, `<div class="de-entry ${ aib.cReply }">
 		<a class="de-video-refpost" title=">>${ num }" de-num="${ num }">&gt;&gt;</a>
-	</div>`).appendChild(el).classList.remove('de-current');
-	el.setAttribute('onclick', 'window.de_addVideoEvents && window.de_addVideoEvents();');
+	</div>`).append(el);
 }
 
 // HIDDEN THREADS WINDOW
-function showHiddenWindow(body) {
-	const hThr = HiddenThreads.getRawData();
-	const hasThreads = !$isEmpty(hThr);
+function showHiddenWindow(winBody) {
+	const boards = HiddenThreads.getRawData();
+	const hasThreads = !$isEmpty(boards);
 	if(hasThreads) {
 		// Generate DOM for the list of hidden threads
-		for(const b in hThr) {
-			if($isEmpty(hThr[b])) {
+		for(const board in boards) {
+			if(!$hasProp(boards, board)) {
 				continue;
 			}
-			const block = $bEnd(body,
-				`<div class="de-fold-block"><input type="checkbox"><b>/${ b }</b></div>`);
+			const threads = boards[board];
+			if($isEmpty(threads)) {
+				continue;
+			}
+			const block = $bEnd(winBody,
+				`<div class="de-fold-block"><input type="checkbox"><b>/${ board }</b></div>`);
 			block.firstChild.onclick =
-				e => $each($Q('.de-entry > input', block), el => (el.checked = e.target.checked));
-			for(const tNum in hThr[b]) {
-				$bEnd(block, `<div class="de-entry ${ aib.cReply }" info="${ b };${ tNum }">
-					<input type="checkbox">
-					<a href="${ aib.getThrUrl(b, tNum) }" target="_blank">${ tNum }</a>
-					<div class="de-entry-title">- ${ hThr[b][tNum][2] }</div>
-				</div>`);
+				e => $Q('.de-entry > input', block).forEach(el => (el.checked = e.target.checked));
+			for(const tNum in threads) {
+				if($hasProp(threads, tNum)) {
+					block.insertAdjacentHTML('beforeend',
+						`<div class="de-entry ${ aib.cReply }" info="${ board };${ tNum }">
+							<input type="checkbox">
+							<a href="${ aib.getThrUrl(board, tNum) }" target="_blank">${ tNum }</a>
+							<div class="de-entry-title">- ${ threads[tNum][2] }</div>
+						</div>`);
+				}
 			}
 		}
 	}
-	const btns = $bEnd(body, (!hasThreads ? `<center><b>${ Lng.noHidThr[lang] }</b></center>` : '') +
-		'<div id="de-hid-buttons"></div>');
-
-	// "Edit" button. Calls a popup with editor to edit Hidden in JSON.
-	btns.appendChild(getEditButton('hidden', fn => fn(HiddenThreads.getRawData(), true, data => {
-		HiddenThreads.saveRawData(data);
-		Thread.first.updateHidden(data[aib.b]);
-		toggleWindow('hid', true);
-	})));
-
-	// "Clear" button. Allows to clear 404'd threads.
-	btns.appendChild($btn(Lng.clear[lang], Lng.clrDeleted[lang], async e => {
-		// Sequentially load threads, and remove inaccessible
-		const els = $Q('.de-entry[info]', e.target.parentNode.parentNode);
-		for(let i = 0, len = els.length; i < len; ++i) {
-			const [b, tNum] = els[i].getAttribute('info').split(';');
-			await $ajax(aib.getThrUrl(b, tNum)).catch(err => {
-				if(err.code === 404) {
-					HiddenThreads.removeStorage(tNum, b);
-					HiddenPosts.removeStorage(tNum, b);
+	$bEnd(winBody, (!hasThreads ? `<center><b>${ Lng.noHidThr[lang] }</b></center>` : '') +
+		'<div id="de-hid-buttons"></div>'
+	).append(
+		// "Edit" button. Calls a popup with editor to edit Hidden in JSON.
+		getEditButton('hidden', fn => fn(HiddenThreads.getRawData(), true, data => {
+			HiddenThreads.saveRawData(data);
+			Thread.first.updateHidden(data[aib.b]);
+			toggleWindow('hid', true);
+		})),
+		// "Clear" button. Allows to clear 404'd threads.
+		$button(Lng.clear[lang], Lng.clear404[lang], async e => {
+			// Sequentially load threads, and remove inaccessible
+			const els = $Q('.de-entry[info]', e.target.parentNode.parentNode);
+			for(let i = 0, len = els.length; i < len; ++i) {
+				const [board, tNum] = els[i].getAttribute('info').split(';');
+				await $ajax(aib.getThrUrl(board, tNum)).catch(err => {
+					if(err.code === 404) {
+						HiddenThreads.removeStorage(tNum, board);
+						HiddenPosts.removeStorage(tNum, board);
+					}
+				});
+			}
+			toggleWindow('hid', true);
+		}),
+		// "Delete" button. Allows to delete selected threads
+		$button(Lng.remove[lang], Lng.delEntries[lang], () => {
+			$Q('.de-entry[info]', winBody).forEach(el => {
+				if(!$q('input', el).checked) {
+					return;
 				}
+				const [board, tNum] = el.getAttribute('info').split(';');
+				const num = +tNum;
+				if(pByNum.has(num)) {
+					pByNum.get(num).setUserVisib(false);
+				} else {
+					sendStorageEvent('__de-post', { brd: board, num, hide: false, thrNum: num });
+				}
+				HiddenThreads.removeStorage(num, board);
+				HiddenPosts.set(num, num, false); // Actually unhide thread by its oppost
 			});
-		}
-		toggleWindow('hid', true);
-	}));
-
-	// "Delete" button. Allows to delete selected threads
-	btns.appendChild($btn(Lng.remove[lang], Lng.delEntries[lang], () => {
-		$each($Q('.de-entry[info]', body), el => {
-			if(!$q('input', el).checked) {
-				return;
-			}
-			const [brd, tNum] = el.getAttribute('info').split(';');
-			const num = +tNum;
-			if(pByNum.has(num)) {
-				pByNum.get(num).setUserVisib(false);
-			} else {
-				sendStorageEvent('__de-post', { brd, num, hide: false, thrNum: num });
-			}
-			HiddenThreads.removeStorage(num, brd);
-			HiddenPosts.set(num, num, false); // Actually unhide thread by its oppost
-		});
-		toggleWindow('hid', true);
-	}));
+			toggleWindow('hid', true);
+		})
+	);
 }

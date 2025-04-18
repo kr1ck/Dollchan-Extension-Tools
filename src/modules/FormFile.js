@@ -6,7 +6,7 @@
 class Files {
 	constructor(form, fileEl) {
 		this.filesCount = 0;
-		this.fileTr = $qParent(fileEl, aib.qFormTr);
+		this.fileTr = fileEl.closest(aib.qFormTr);
 		this.onchange = null;
 		this._form = form;
 		this._inputs = [];
@@ -18,7 +18,7 @@ class Files {
 		this.hideEmpty();
 	}
 	get rarInput() {
-		const value = $bEnd(docBody, '<input type="file" style="display: none;">');
+		const value = $bEnd(doc.body, '<input type="file" style="display: none;">');
 		Object.defineProperty(this, 'rarInput', { value });
 		return value;
 	}
@@ -27,7 +27,7 @@ class Files {
 		if(aib.multiFile) {
 			value = $aEnd(this.fileTr, '<div id="de-file-area"></div>');
 		} else {
-			value = $qParent(this._form.txta, aib.qFormTd).previousElementSibling;
+			value = this._form.txta.closest(aib.qFormTd).previousElementSibling;
 			value.innerHTML = `<div style="display: none;">${ value.innerHTML }</div><div></div>`;
 			value = value.lastChild;
 		}
@@ -46,6 +46,9 @@ class Files {
 			inp.clearInp();
 		}
 		this.hideEmpty();
+		if(aib.clearFileInputs) {
+			aib.clearFileInputs();
+		}
 	}
 	hideEmpty() {
 		for(let els = this._inputs, i = els.length - 1; i > 0; --i) {
@@ -99,7 +102,7 @@ class FileInput {
 		el.obj = this;
 		el.classList.add('de-file-input');
 		el.addEventListener('change', this);
-		if(el.files && el.files[0]) {
+		if(el.files?.[0]) {
 			this._removeFile();
 		}
 		if(Cfg.fileInputs) {
@@ -111,13 +114,55 @@ class FileInput {
 		if(FileInput._isThumbMode) {
 			this._initThumbs();
 		} else {
-			$before(this._input, this._txtWrap);
-			$after(this._input, this._utils);
+			this._initUtils();
 		}
+	}
+	async addUrlFile(url, file = null) {
+		if(!url) {
+			return Promise.reject(new Error('URL is null'));
+		}
+		$popup('file-loading', Lng.loading[lang], true);
+		return await ContentLoader.loadFileData(url, false).then(data => {
+			if(file) {
+				deWindow.URL.revokeObjectURL(url);
+			}
+			if(!data) {
+				$popup('file-loading', Lng.cantLoad[lang] + ' URL: ' + url);
+				return;
+			}
+			closePopup('file-loading');
+			this._isTxtEditable = this._isTxtEditName = false;
+			let name = file?.name || getFileName(url);
+			const type = file?.type || getFileMime(name);
+			if(!type || name.includes('?')) {
+				let ext;
+				switch((data[0] << 8) | data[1]) {
+				case 0xFFD8: ext = 'jpg'; break;
+				case 0x8950: ext = 'png'; break;
+				case 0x4749: ext = 'gif'; break;
+				case 0x1A45: ext = 'webm'; break;
+				default: ext = '';
+				}
+				if(ext) {
+					name = name.split('?').shift() + '.' + ext;
+				}
+			}
+			this.imgFile = { data: data.buffer, name, type: type || getFileMime(name) };
+			if(!file) {
+				file = new Blob([data], { type: this.imgFile.type });
+				file.name = name;
+			}
+			this._parent._files[this._parent._inputs.indexOf(this)] = file;
+			DollchanAPI.notify('filechange', this._parent._files);
+			if(FileInput._isThumbMode) {
+				$hide(this._txtWrap);
+			}
+			this._onFileChange(true);
+		});
 	}
 	changeMode(showThumbs) {
 		$toggle(this._input, !Cfg.fileInputs);
-		toggleAttr(this._input, 'multiple', true, aib.multiFile && Cfg.fileInputs);
+		this._input.toggleAttribute('multiple', aib.multiFile && Cfg.fileInputs);
 		$toggle(this._btnRen, Cfg.fileInputs && this.hasFile);
 		if(!(showThumbs ^ !!this._thumb)) {
 			return;
@@ -126,16 +171,15 @@ class FileInput {
 			this._initThumbs();
 			return;
 		}
-		$before(this._input, this._txtWrap);
-		$after(this._input, this._utils);
-		$del($q('de-file-txt-area'));
+		this._initUtils();
 		$show(this._parent.fileTr);
 		$show(this._txtWrap);
 		if(this._mediaEl) {
 			deWindow.URL.revokeObjectURL(this._mediaEl.src);
 		}
 		this._toggleDragEvents(this._thumb, false);
-		$del(this._thumb);
+		$q('.de-file-txt-area')?.remove();
+		this._thumb.remove();
 		this._thumb = this._mediaEl = null;
 	}
 	clearInp() {
@@ -156,7 +200,7 @@ class FileInput {
 			}
 			$hide(this._btnRar);
 			$hide(this._txtAddBtn);
-			$del(this._rarMsg);
+			this._rarMsg?.remove();
 			if(FileInput._isThumbMode) {
 				$hide(this._txtWrap);
 			}
@@ -199,7 +243,7 @@ class FileInput {
 				}
 			}
 			DollchanAPI.notify('filechange', this._parent._files);
-			return;
+			break;
 		}
 		case 'click': {
 			const parent = el.parentNode;
@@ -249,7 +293,7 @@ class FileInput {
 						return;
 					}
 					if(this.imgFile) {
-						this.imgFile.isConstName = true;
+						this.imgFile.isCustomName = true;
 						this.imgFile.name = newName;
 						if(FileInput._isThumbMode) {
 							this._addThumbTitle(newName, this.imgFile.data.byteLength);
@@ -258,7 +302,7 @@ class FileInput {
 					}
 					const file = this._input.files[0];
 					readFile(file).then(({ data }) => {
-						this.imgFile = { data, name: newName, type: file.type, isConstName: true };
+						this.imgFile = { data, name: newName, type: file.type, isCustomName: true };
 						this._removeFileHelper(); // Clear the original file
 						if(FileInput._isThumbMode) {
 							this._addThumbTitle(newName, data.byteLength);
@@ -266,15 +310,13 @@ class FileInput {
 					});
 					return;
 				} else {
-					this._addUrlFile(this._txtInput.value);
+					this.addUrlFile(this._txtInput.value);
 				}
 			} else if(el === this._txtInput && !this._isTxtEditable) {
 				this._input.click();
 				this._txtInput.blur();
 			}
-			$pd(e);
-			e.stopPropagation();
-			return;
+			break;
 		}
 		case 'dragenter':
 			if(isThumb) {
@@ -301,15 +343,15 @@ class FileInput {
 				}
 				DollchanAPI.notify('filechange', this._parent._files);
 			} else {
-				this._addUrlFile(dt.getData('text/plain'));
+				this.addUrlFile(dt.getData('text/plain'));
 			}
 			if(FileInput._isThumbMode) {
 				setTimeout(() => thumb.classList.remove('de-file-drag'), 10);
 			}
-			$pd(e);
-			e.stopPropagation();
 		}
 		}
+		e.preventDefault();
+		e.stopPropagation();
 	}
 	hideInp() {
 		if(FileInput._isThumbMode) {
@@ -375,83 +417,39 @@ class FileInput {
 	_addThumbTitle(name, size) {
 		this._thumb.firstChild.firstChild.title = `${ name }, ${ (size / 1024).toFixed(2) }KB`;
 	}
-	_addUrlFile(url, file = null) {
-		if(!url) {
-			return Promise.reject(new Error('URL is null'));
-		}
-		$popup('file-loading', Lng.loading[lang], true);
-		return ContentLoader.loadImgData(url, false).then(data => {
-			if(file) {
-				deWindow.URL.revokeObjectURL(url);
-			}
-			if(!data) {
-				$popup('file-loading', Lng.cantLoad[lang] + ' URL: ' + url);
-				return;
-			}
-			closePopup('file-loading');
-			this._isTxtEditable = this._isTxtEditName = false;
-			let name = file ? file.name : getFileName(url);
-			const type = file && file.type || getFileType(name);
-			if(!type || name.includes('?')) {
-				let ext;
-				switch((data[0] << 8) | data[1]) {
-				case 0xFFD8: ext = 'jpg'; break;
-				case 0x8950: ext = 'png'; break;
-				case 0x4749: ext = 'gif'; break;
-				case 0x1A45: ext = 'webm'; break;
-				default: ext = '';
-				}
-				if(ext) {
-					name = name.split('?').shift() + '.' + ext;
-				}
-			}
-			this.imgFile = { data: data.buffer, name, type: type || getFileType(name) };
-			if(!file) {
-				file = new Blob([data], { type: this.imgFile.type });
-				file.name = name;
-			}
-			this._parent._files[this._parent._inputs.indexOf(this)] = file;
-			DollchanAPI.notify('filechange', this._parent._files);
-			if(FileInput._isThumbMode) {
-				$hide(this._txtWrap);
-			}
-			this._onFileChange(true);
-		});
-	}
 	_changeFilesCount(val) {
 		this._parent.filesCount = Math.max(this._parent.filesCount + val, 0);
-		if(aib.dobrochan) {
-			$id('post_files_count').value = this._parent.filesCount + 1;
-		}
 	}
 	_initThumbs() {
 		const { fileTr } = this._parent;
 		$hide(fileTr);
 		$hide(this._txtWrap);
-		const isTr = fileTr.tagName === 'TR';
+		const isTr = fileTr.tagName.toLowerCase() === 'tr';
 		const txtArea = $q('.de-file-txt-area') || $bBegin(fileTr, isTr ?
 			'<tr class="de-file-txt-area"><td class="postblock"></td><td></td></tr>' :
 			'<div class="de-file-txt-area"></div>');
-		(isTr ? txtArea.lastChild : txtArea).appendChild(this._txtWrap);
+		(isTr ? txtArea.lastChild : txtArea).append(this._txtWrap);
 		this._thumb = $bEnd(this._parent.thumbsEl,
 			`<div class="de-file de-file-off"><div class="de-file-img"><div class="de-file-img" title="${
 				Lng.youCanDrag[lang] }"></div></div></div>`);
-		this._thumb.addEventListener('click', this);
-		this._thumb.addEventListener('dragenter', this);
-		this._thumb.appendChild(this._utils);
+		['click', 'dragenter'].forEach(e => this._thumb.addEventListener(e, this));
+		this._thumb.append(this._utils);
 		this._toggleDragEvents(this._thumb, true);
 		if(this.hasFile) {
 			this._showFileThumb();
 		}
+	}
+	_initUtils() {
+		this._input.parentNode.classList.add('de-file-wrap');
+		this._input.before(this._txtWrap);
+		this._input.after(this._utils);
 	}
 	_onFileChange(hasImgFile) {
 		this._txtInput.value = hasImgFile ? this.imgFile.name : this._input.files[0].name;
 		if(!hasImgFile) {
 			this.imgFile = null;
 		}
-		if(this._parent.onchange) {
-			this._parent.onchange();
-		}
+		this._parent.onchange?.();
 		if(FileInput._isThumbMode) {
 			this._showFileThumb();
 		}
@@ -476,7 +474,7 @@ class FileInput {
 		if(!nav.isPresto && !aib._4chan &&
 			/^image\/(?:png|jpeg)$/.test(hasImgFile ? this.imgFile.type : this._input.files[0].type)
 		) {
-			$del(this._rarMsg);
+			this._rarMsg?.remove();
 			$show(this._btnRar);
 		}
 	}
@@ -518,9 +516,7 @@ class FileInput {
 	}
 	_toggleDragEvents(el, isAdd) {
 		const name = isAdd ? 'addEventListener' : 'removeEventListener';
-		el[name]('dragover', $pd);
-		el[name]('dragenter', this);
-		el[name]('dragleave', this);
-		el[name]('drop', this);
+		el[name]('dragover', e => e.preventDefault());
+		['dragenter', 'dragleave', 'drop'].forEach(e => el[name](e, this));
 	}
 }

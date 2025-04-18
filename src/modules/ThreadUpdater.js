@@ -3,14 +3,15 @@
 =========================================================================================================== */
 
 function initThreadUpdater(title, enableUpdate) {
-	let focusLoadTime, disabledByUser = true;
+	let focusLoadTime;
+	let disabledByUser = true;
 	let enabled = false;
 	let repliesToYou = new Set();
 	let lastECode = 200;
 	let newPosts = 0;
 	let paused = false;
 	let sendError = false;
-	const storageName = `de-lastpcount-${ aib.b }-${ aib.t }`;
+	const storageName = `de-last-postscount-${ aib.b }-${ aib.t }`;
 
 	const audio = {
 		enabled  : false,
@@ -176,8 +177,8 @@ function initThreadUpdater(title, enableUpdate) {
 		_blinkMS     : 800,
 		_currentIcon : null,
 		_emptyIcon   : 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==',
-		_getIconNew  : newPosts => null,
-		_getIconYou  : newPosts => null,
+		_getIconNew  : () => null,
+		_getIconYou  : () => null,
 		_hasIcons    : false,
 		_iconError   : null,
 		_iconsNew    : [],
@@ -267,11 +268,11 @@ function initThreadUpdater(title, enableUpdate) {
 		get canShow() {
 			return Cfg.desktNotif && this._granted;
 		},
-		checkPermission() {
+		async checkPermission() {
 			if(Cfg.desktNotif && ('permission' in Notification)) {
 				switch(Notification.permission.toLowerCase()) {
 				case 'default': this._requestPermission(); break;
-				case 'denied': saveCfg('desktNotif', 0);
+				case 'denied': await CfgSaver.save('desktNotif', 0);
 				}
 			}
 		},
@@ -290,13 +291,13 @@ function initThreadUpdater(title, enableUpdate) {
 			};
 			const post = Thread.first.last;
 			const toYou = repliesToYou.size;
-			const notif = new Notification(`${ aib.dm }/${ aib.b }/${ aib.t }: ${ newPosts } ${
+			const notif = new Notification(`${ aib.domain }/${ aib.b }/${ aib.t }: ${ newPosts } ${
 				Lng.newPost[lang][lngQuantity(newPosts)] }. ${
 				toYou ? `${ toYou } ${ Lng.youReplies[lang][lngQuantity(toYou)] }.` : '' }`,
 			{
 				body : Lng.latestPost[lang] + ':\n' + post.text.substring(0, 250).replace(/\s+/g, ' '),
 				icon : post.images.firstAttach ? post.images.firstAttach.src : favicon.originalIcon,
-				tag  : aib.dm + aib.b + aib.t
+				tag  : aib.domain + aib.b + aib.t
 			});
 			notif.onshow = () => setTimeout(() => notif === this._notifEl && this.closeNotif(), 12e3);
 			notif.onclick = () => deWindow.focus();
@@ -307,14 +308,13 @@ function initThreadUpdater(title, enableUpdate) {
 			this._notifEl = notif;
 		},
 
-		_closeTO : null,
 		_granted : true,
 		_notifEl : null,
 		_requestPermission() {
 			this._granted = false;
-			Notification.requestPermission(state => {
+			Notification.requestPermission(async state => {
 				if(state.toLowerCase() === 'denied') {
-					saveCfg('desktNotif', 0);
+					await CfgSaver.save('desktNotif', 0);
 				} else {
 					this._granted = true;
 				}
@@ -356,7 +356,7 @@ function initThreadUpdater(title, enableUpdate) {
 		_seconds     : 0,
 		_state       : -1,
 		get _panelButton() {
-			const value = $q('a[id^="de-panel-upd"]');
+			const value = $q('button[id^="de-panel-upd"]');
 			if(value) {
 				Object.defineProperty(this, '_panelButton', { value });
 			}
@@ -382,7 +382,9 @@ function initThreadUpdater(title, enableUpdate) {
 					this._makeStep();
 				}
 				lastECode = eCode;
-				updateFavorites(aib.t, getErrorMessage(err), 'error');
+				// Updating Favorites: failed thread loading
+				updateFavorites(aib.t, getErrorMessage(err),
+					aib.qClosed && $q(aib.qClosed) ? 'closed' : 'error');
 				return;
 			}
 			if(lastECode !== 200) {
@@ -404,7 +406,7 @@ function initThreadUpdater(title, enableUpdate) {
 					if(audio.enabled) {
 						audio.playAudio();
 					}
-					sesStorage[storageName] = Thread.first.pcount;
+					sesStorage[storageName] = Thread.first.postsCount;
 					this._delay = this._initDelay;
 				} else if(this._delay !== 12e4) {
 					this._delay = Math.min(this._delay + this._initDelay, 12e4);
@@ -511,6 +513,11 @@ function initThreadUpdater(title, enableUpdate) {
 					forceLoadPosts();
 				}
 			}, 200);
+			if(aib.t) {
+				const thr = Thread.first;
+				// Updating Favorites: visiting a previously inactive page
+				updateFavorites(thr.op.num, [thr.postsCount, 0, 0, thr.last.num], 'update');
+			}
 		} else if(Thread.first) {
 			Post.clearMarks();
 		}
@@ -521,6 +528,12 @@ function initThreadUpdater(title, enableUpdate) {
 	}
 
 	return {
+		get getRepliesToYou() {
+			return repliesToYou.size;
+		},
+		addReplyToYou(pNum) {
+			repliesToYou.add(pNum);
+		},
 		continueUpdater(needSleep = false) {
 			if(enabled && paused) {
 				updMachine.start(needSleep);
@@ -539,7 +552,7 @@ function initThreadUpdater(title, enableUpdate) {
 		},
 		forceLoad(e) {
 			if(e) {
-				$pd(e);
+				e.preventDefault();
 			}
 			Post.clearMarks();
 			if(enabled && paused) {
@@ -552,11 +565,6 @@ function initThreadUpdater(title, enableUpdate) {
 			if(enabled && !paused) {
 				updMachine.stopUpdater();
 				paused = true;
-			}
-		},
-		refToYou(pNum) {
-			if(doc.hidden) {
-				repliesToYou.add(pNum);
 			}
 		},
 		toggle() {

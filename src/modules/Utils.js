@@ -4,78 +4,51 @@
 
 // DOM SEARCH
 
-const $Q = (path, root = docBody) => root.querySelectorAll(path);
-
-const $q = (path, root = docBody) => root.querySelector(path);
-
-const $id = id => doc.getElementById(id);
-
-function $parent(el, tagName) {
-	do {
-		el = el.parentElement;
-	} while(el && el.tagName !== tagName);
-	return el;
+function $id(id) {
+	return doc.getElementById(id);
 }
 
-function $qParent(el, path) {
-	do {
-		el = el.parentElement;
-	} while(el && !nav.matchesSelector(el, path));
-	return el;
+function $q(path, rootEl = doc.body) {
+	return rootEl.querySelector(path);
+}
+
+function $Q(path, rootEl = doc.body) {
+	return rootEl.querySelectorAll(path);
+}
+
+function $match(parentStr, ...rules) {
+	return parentStr.split(', ').map(val => val + rules.join(', ' + val)).join(', ');
+}
+
+function $contains(containerEl, el) {
+	el = el?.farthestViewportElement /* for SVG */ || el;
+	return el && (el === containerEl || containerEl.contains(el));
 }
 
 // DOM MODIFIERS
 
-function $before(el, node) {
-	el.parentNode.insertBefore(node, el);
+function $bBegin(siblingEl, html) {
+	siblingEl.insertAdjacentHTML('beforebegin', html);
+	return siblingEl.previousSibling;
 }
 
-function $after(el, node) {
-	const nextEl = el.nextSibling;
-	if(nextEl) {
-		el.parentNode.insertBefore(node, nextEl);
-	} else {
-		el.parentNode.appendChild(node);
-	}
+function $aBegin(parentEl, html) {
+	parentEl.insertAdjacentHTML('afterbegin', html);
+	return parentEl.firstChild;
 }
 
-function $bBegin(sibling, html) {
-	sibling.insertAdjacentHTML('beforebegin', html);
-	return sibling.previousSibling;
+function $bEnd(parentEl, html) {
+	parentEl.insertAdjacentHTML('beforeend', html);
+	return parentEl.lastChild;
 }
 
-function $aBegin(parent, html) {
-	parent.insertAdjacentHTML('afterbegin', html);
-	return parent.firstChild;
+function $aEnd(siblingEl, html) {
+	siblingEl.insertAdjacentHTML('afterend', html);
+	return siblingEl.nextSibling;
 }
 
-function $bEnd(parent, html) {
-	parent.insertAdjacentHTML('beforeend', html);
-	return parent.lastChild;
-}
-
-function $aEnd(sibling, html) {
-	sibling.insertAdjacentHTML('afterend', html);
-	return sibling.nextSibling;
-}
-
-function $replace(origEl, newEl) {
-	if(typeof newEl === 'string') {
-		origEl.insertAdjacentHTML('afterend', newEl);
-		origEl.remove();
-	} else {
-		origEl.parentNode.replaceChild(newEl, origEl);
-	}
-}
-
-function $del(el) {
-	if(el) {
-		el.remove();
-	}
-}
-
-function $delAll(path, root = docBody) {
-	$each(root.querySelectorAll(path, root), el => el.remove());
+function $delAll(path, rootEl = doc.body) {
+	rootEl.querySelectorAll(path, rootEl).forEach(el => el.remove());
 }
 
 function $add(html) {
@@ -83,41 +56,36 @@ function $add(html) {
 	return dummy.firstElementChild;
 }
 
-function $btn(value, title, fn, className = 'de-button') {
+function $button(value, title, fn, className = 'de-button') {
 	const el = $add(`<input type="button" class="${ className }" value="${ value }" title="${ title }">`);
 	el.addEventListener('click', fn);
 	return el;
 }
 
 function $script(text) {
-	const el = doc.createElement('script'); // We can't insert scripts directly as html
-	el.type = 'text/javascript';
-	el.textContent = text;
-	doc.head.appendChild(el).remove();
+	try {
+		const el = doc.createElement('script');
+		el.type = 'text/javascript';
+		el.textContent = text;
+		doc.head.append(el);
+		el.remove();
+	} catch(err) {}
 }
 
 function $css(text) {
-	if(nav.isSafari && !('flex' in docBody.style)) {
-		text = text.replace(/(transform|transition|flex|align-items)/g, ' -webkit-$1');
-	}
-	return $bEnd(doc.head, `<style type="text/css">${ text }</style>`);
+	return $bEnd(doc.head, `<style type="text/css">${
+		nav.isSafari && !('flex' in doc.body.style) ?
+			text.replace(/(transform|transition|flex|align-items)/g, ' -webkit-$1') : text
+	}</style>`);
 }
 
-function $DOM(html) {
+function $createDoc(html) {
 	const myDoc = doc.implementation.createHTMLDocument('');
 	myDoc.documentElement.innerHTML = html;
 	return myDoc;
 }
 
-// CSS UTILS
-
-function $toggle(el, needToShow = el.style.display) {
-	if(needToShow) {
-		el.style.removeProperty('display');
-	} else {
-		el.style.display = 'none';
-	}
-}
+// CSS AND ATTRIBUTES
 
 function $show(el) {
 	el.style.removeProperty('display');
@@ -125,6 +93,14 @@ function $show(el) {
 
 function $hide(el) {
 	el.style.display = 'none';
+}
+
+function $toggle(el, needToShow = el.style.display) {
+	if(needToShow) {
+		el.style.removeProperty('display');
+	} else {
+		el.style.display = 'none';
+	}
 }
 
 function $animate(el, cName, isRemove = false) {
@@ -139,75 +115,10 @@ function $animate(el, cName, isRemove = false) {
 	el.classList.add(cName);
 }
 
-// Checks the validity of the user inputted color
-function checkCSSColor(color) {
-	if(!color || color === 'inherit' || color === 'currentColor') {
-		return false;
-	}
-	if(color === 'transparent') {
-		return true;
-	}
-	const image = doc.createElement('img');
-	image.style.color = 'rgb(0, 0, 0)';
-	image.style.color = color;
-	if(image.style.color !== 'rgb(0, 0, 0)') {
-		return true;
-	}
-	image.style.color = 'rgb(255, 255, 255)';
-	image.style.color = color;
-	return image.style.color !== 'rgb(255, 255, 255)';
-}
+// OBJECT
 
-const cssMatches = (leftSel, ...rules) => leftSel.split(', ').map(
-	val => val + rules.join(', ' + val)
-).join(', ');
-
-// OTHER UTILS
-
-const $hasProp = (obj, i) => Object.prototype.hasOwnProperty.call(obj, i);
-
-const pad2 = i => (i < 10 ? '0' : '') + i;
-
-const arrTags = (arr, start, end) => start + arr.join(end + start) + end;
-
-const fixBrd = b => `/${ b }${ b ? '/' : '' }`;
-
-const getAbsLink = url => (
-	url[1] === '/' ? aib.prot :
-	url[0] === '/' ? aib.prot + '//' + aib.host : '') + url;
-
-const getFileName = url => url.substring(url.lastIndexOf('/') + 1);
-
-const getFileExt = url => url.substring(url.lastIndexOf('.') + 1);
-
-const cutFileExt = fileName => fileName.substring(0, fileName.lastIndexOf('.'));
-
-const prettifySize = val =>
-	val > 512 * 1024 * 1024 ? (val / (1024 ** 3)).toFixed(2) + Lng.sizeGByte[lang] :
-	val > 512 * 1024 ? (val / (1024 ** 2)).toFixed(2) + Lng.sizeMByte[lang] :
-	val > 512 ? (val / 1024).toFixed(2) + Lng.sizeKByte[lang] :
-	val.toFixed(2) + Lng.sizeByte[lang];
-
-// Prepares a string to be used as a new RegExp argument
-const quoteReg = str => (str + '').replace(/([.?*+^$[\]\\(){}|-])/g, '\\$1');
-
-// Converts a string to a regular expression
-function toRegExp(str, noG) {
-	const l = str.lastIndexOf('/');
-	const flags = str.substr(l + 1);
-	return new RegExp(str.substr(1, l - 1), noG ? flags.replace('g', '') : flags);
-}
-
-function toggleAttr(el, name, value, isAdd) {
-	if(isAdd) {
-		el.setAttribute(name, value);
-	} else {
-		el.removeAttribute(name);
-	}
-}
-
-function $pd(e) {
-	e.preventDefault();
+function $hasProp(obj, i) {
+	return Object.prototype.hasOwnProperty.call(obj, i);
 }
 
 function $isEmpty(obj) {
@@ -219,24 +130,133 @@ function $isEmpty(obj) {
 	return true;
 }
 
-function insertText(el, txt) {
-	const scrtop = el.scrollTop;
-	const start = el.selectionStart;
-	el.value = el.value.substr(0, start) + txt + el.value.substr(el.selectionEnd);
-	el.setSelectionRange(start + txt.length, start + txt.length);
-	el.focus();
-	el.scrollTop = scrtop;
+// REGEXP
+
+// Prepares a string to be used as a new RegExp argument
+function escapeRegExp(str) {
+	return (str + '').replace(/([.?*+^$[\]\\(){}|-])/g, '\\$1');
 }
 
-// XXX: SVG events hack for Opera Presto
-function fixEventEl(el) {
-	if(el && nav.isPresto) {
-		const svg = el.correspondingUseElement;
-		if(svg) {
-			el = svg.ownerSVGElement;
-		}
+// Converts a string into regular expression
+function strToRegExp(str, notGlobal) {
+	const l = str.lastIndexOf('/');
+	const flags = str.substr(l + 1);
+	return new RegExp(str.substr(1, l - 1), notGlobal ? flags.replace('g', '') : flags);
+}
+
+// OTHER UTILS
+
+function pad2(i) {
+	return i < 10 ? '0' + i : i;
+}
+
+function arrTags(arr, start, end) {
+	return start + arr.join(end + start) + end;
+}
+
+function fixBoardName(board) {
+	return `/${ board ? board + '/' : '' }`;
+}
+
+function getFileName(url) {
+	return url.substring(url.lastIndexOf('/') + 1);
+}
+
+function getFileExt(url) {
+	return url.substring(url.lastIndexOf('.') + 1);
+}
+
+function cutFileExt(fileName) {
+	return fileName.substring(0, fileName.lastIndexOf('.'));
+}
+
+// Converts bytes into KB/MB/GB
+function prettifySize(val) {
+	return val > 512 * 1024 * 1024 ? (val / (1024 ** 3)).toFixed(2) + Lng.sizeGByte[lang] :
+		val > 512 * 1024 ? (val / (1024 ** 2)).toFixed(2) + Lng.sizeMByte[lang] :
+		val > 512 ? (val / 1024).toFixed(2) + Lng.sizeKByte[lang] :
+		val.toFixed(2) + Lng.sizeByte[lang];
+}
+
+// Inserts the text at the cursor into an input field
+function insertText(el, txt) {
+	const { scrollTop, selectionStart: start, value } = el;
+	el.value = value.substr(0, start) + txt + value.substr(el.selectionEnd);
+	el.setSelectionRange(start + txt.length, start + txt.length);
+	el.focus();
+	el.scrollTop = scrollTop;
+}
+
+// Gets the error stack trace
+function getErrorMessage(err) {
+	if(err instanceof AjaxError) {
+		return err.toString();
 	}
-	return el;
+	if(typeof err === 'string') {
+		return err;
+	}
+	const { stack, name, message } = err;
+	return Lng.internalError[lang] + (
+		!stack ? `${ name }: ${ message }` :
+		nav.isWebkit ? stack : `${ name }: ${ message }\n${ !nav.isFirefox ? stack : stack.replace(
+			/^([^@]*).*\/(.+)$/gm,
+			(str, fName, line) => `    at ${ fName ? `${ fName } (${ line })` : line }`
+		) }`
+	);
+}
+
+// Read cookies
+function getCookies() {
+	const obj = {};
+	const cookies = doc.cookie.split(';');
+	for(let i = 0, len = cookies.length; i < len; ++i) {
+		const parts = cookies[i].split('=');
+		obj[parts.shift().trim()] = decodeURI(parts.join('='));
+	}
+	return obj;
+}
+
+// Reads File into data
+async function readFile(file, asText) {
+	return new Promise(resolve => {
+		const fr = new FileReader();
+		fr.onload = e => resolve({ data: e.target.result });
+		if(asText) {
+			fr.readAsText(file);
+		} else {
+			fr.readAsArrayBuffer(file);
+		}
+	});
+}
+
+// Gets mime type depending on file name
+function getFileMime(url) {
+	const dotIdx = url.lastIndexOf('.') + 1;
+	switch(dotIdx && url.substr(dotIdx).toLowerCase()) {
+	case 'gif': return 'image/gif';
+	case 'jfif':
+	case 'jpeg':
+	case 'jpg': return 'image/jpeg';
+	case 'mov': return 'video/quicktime';
+	case 'mp4':
+	case 'm4v': return 'video/mp4';
+	case 'ogv': return 'video/ogv';
+	case 'png': return 'image/png';
+	case 'webm': return 'video/webm';
+	case 'webp': return 'image/webp';
+	default: return '';
+	}
+}
+
+// Downloads files stored in a Blob
+function downloadBlob(blob, name) {
+	const url = nav.isMsEdge ? navigator.msSaveOrOpenBlob(blob, name) : deWindow.URL.createObjectURL(blob);
+	const link = $bEnd(doc.body, `<a href="${ url }" download="${ name }"></a>`);
+	link.click();
+	setTimeout(() => {
+		deWindow.URL.revokeObjectURL(url);
+		link.remove();
+	}, 2e5);
 }
 
 // Allows to record the duration of code execution
@@ -248,7 +268,8 @@ const Logger = {
 	getLogData(isFull) {
 		const marks = this._marks;
 		const timeLog = [];
-		let duration, i = 1;
+		let duration;
+		let i = 1;
 		let lastExtra = 0;
 		for(let len = marks.length - 1; i < len; ++i) {
 			duration = marks[i][1] - marks[i - 1][1] + lastExtra;
@@ -345,7 +366,7 @@ class Maybe {
 
 class TemporaryContent {
 	constructor(key) {
-		const oClass = /* new.target */this.constructor; // https://github.com/babel/babel/issues/1088
+		const oClass = /* new.target */ this.constructor; // https://github.com/babel/babel/issues/1088
 		if(oClass.purgeTO) {
 			clearTimeout(oClass.purgeTO);
 		}
@@ -374,9 +395,7 @@ class TemporaryContent {
 		this.data = null;
 	}
 	static removeTempData(key) {
-		if(this.data) {
-			this.data.delete(key);
-		}
+		this.data?.delete(key);
 	}
 }
 TemporaryContent.purgeSecs = 6e4;
@@ -393,7 +412,7 @@ class TasksPool {
 	}
 	completeTasks() {
 		if(!this.stopped) {
-			if(this.array.length === 0 && this.running === 0) {
+			if(!this.array.length && this.running === 0) {
 				this.endFn();
 			} else {
 				this.completed = true;
@@ -421,13 +440,13 @@ class TasksPool {
 	_continueTasks() {
 		if(!this.stopped) {
 			this.paused = false;
-			if(this.array.length === 0) {
+			if(!this.array.length) {
 				if(this.completed) {
 					this.endFn();
 				}
 				return;
 			}
-			while(this.array.length !== 0 && this.running !== this.max) {
+			while(this.array.length && this.running !== this.max) {
 				this._runTask(this.array.shift());
 				this.running++;
 			}
@@ -435,7 +454,7 @@ class TasksPool {
 	}
 	_endTask() {
 		if(!this.stopped) {
-			if(!this.paused && this.array.length !== 0) {
+			if(!this.paused && this.array.length) {
 				this._runTask(this.array.shift());
 				return;
 			}
@@ -519,7 +538,8 @@ class TarBuilder {
 		this._data = [];
 	}
 	addFile(filepath, input) {
-		let i, checksum = 0;
+		let i;
+		let checksum = 0;
 		const fileSize = input.length;
 		const header = new Uint8Array(512);
 		const nameLen = Math.min(filepath.length, 100);
@@ -672,79 +692,3 @@ WebmParser.Element = function(elData, dataLength, offset) {
 	this.endOffset = offset + size;
 	this.size = size;
 };
-
-function getErrorMessage(err) {
-	if(err instanceof AjaxError) {
-		return err.toString();
-	}
-	if(typeof err === 'string') {
-		return err;
-	}
-	const { stack, name, message } = err;
-	return Lng.internalError[lang] + (
-		!stack ? `${ name }: ${ message }` :
-		nav.isWebkit ? stack : `${ name }: ${ message }\n${ !nav.isFirefox ? stack : stack.replace(
-			/^([^@]*).*\/(.+)$/gm,
-			(str, fName, line) => `    at ${ fName ? `${ fName } (${ line })` : line }`
-		) }`
-	);
-}
-
-async function readFile(file, asText = false) {
-	return new Promise(resolve => {
-		const fr = new FileReader();
-		// XXX: firefox hack to prevent 'XrayWrapper denied access to property "then"' errors
-		fr.onload = e => resolve({ data: e.target.result });
-		if(asText) {
-			fr.readAsText(file);
-		} else {
-			fr.readAsArrayBuffer(file);
-		}
-	});
-}
-
-function getFileType(url) {
-	const dotIdx = url.lastIndexOf('.') + 1;
-	switch(dotIdx && url.substr(dotIdx).toLowerCase()) {
-	case 'gif': return 'image/gif';
-	case 'jpeg':
-	case 'jpg': return 'image/jpeg';
-	case 'mp4':
-	case 'm4v': return 'video/mp4';
-	case 'ogv': return 'video/ogv';
-	case 'png': return 'image/png';
-	case 'web':
-	case 'webm': return 'video/webm';
-	case 'webp': return 'image/webp';
-	default: return '';
-	}
-}
-
-function downloadBlob(blob, name) {
-	const url = nav.isMsEdge ? navigator.msSaveOrOpenBlob(blob, name) : deWindow.URL.createObjectURL(blob);
-	const link = $bEnd(docBody, `<a href="${ url }" download="${ name }"></a>`);
-	link.click();
-	setTimeout(() => {
-		deWindow.URL.revokeObjectURL(url);
-		link.remove();
-	}, 2e5);
-}
-
-function showDonateMsg() {
-	const font = ' style="font: 13px monospace; color: green;"';
-	$popup('donate', Lng.donateMsg[lang] + ':<br style="margin-bottom: 8px;">' +
-		'<div class="de-logo"><svg><use xlink:href="#de-symbol-panel-logo"/></svg></div>' +
-		'<div style="display: inline-block;"><b><i>Yandex.Money</i></b><br>' +
-		`<span class="de-list de-depend"><i${
-			font }>410012122418236</i></span><br><b><i>WebMoney</i></b><br>` +
-		`<span class="de-list de-depend">WMZ &ndash; <i${ font }>Z100197626370</i></span><br>` +
-		`<span class="de-list de-depend">WMR &ndash; <i${ font }>R266614957054</i></span><br>` +
-		`<span class="de-list de-depend">WMU &ndash; <i${ font }>U142375546253</i></span><br>` +
-		`<b><i>Bitcoin</i></b><br><span class="de-list de-depend">P2PKH &ndash; <i${
-			font }>15xEo7BVQ3zjztJqKSRVhTq3tt3rNSHFpC</i></span><br>` +
-		`<span class="de-list de-depend">P2SH &ndash; <i${
-			font }>3AhNPPpvtxQoFCLXk5e9Hzh6Ex9h7EoNzq</i></span></div>` +
-		(nav.firefoxVer >= 56 && nav.scriptHandler !== 'WebExtension' ?
-			`<br><br>New: <a href="https://addons.mozilla.org/${ lang === 1 ? 'en-US' : 'ru' }` +
-			'/firefox/addon/dollchan-extension/" target="_blank">' + Lng.firefoxAddon[lang] : ''));
-}

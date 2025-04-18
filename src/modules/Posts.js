@@ -10,9 +10,9 @@ class AbstractPost {
 		this.ref = new RefMap(this);
 		this.thr = thr;
 		this._hasEvents = false;
-		this._linkDelay = 0;
+		this._linkTO = null;
 		this._menu = null;
-		this._menuDelay = 0;
+		this._menuTO = null;
 	}
 	get btnFav() {
 		const value = $q('.de-btn-fav, .de-btn-fav-sel', this.btns);
@@ -69,158 +69,181 @@ class AbstractPost {
 		embedAudioLinks(this);
 	}
 	handleEvent(e) {
-		let temp, el = fixEventEl(e.target);
+		let temp;
+		let el = nav.fixEventEl(e.target);
 		const { type } = e;
 		const isOutEvent = type === 'mouseout';
 		const isPview = this instanceof Pview;
+
+		// Click event
 		if(type === 'click') {
+			if(aib.handlePostClick) {
+				aib.handlePostClick(this, el, e);
+			}
+			// Skip the click by wheel button
 			switch(e.button) {
 			case 0: break;
-			case 1: e.stopPropagation(); // Skip the click on wheel button
+			case 1: e.stopPropagation();
 				/* falls through */
 			default: return;
 			}
-			if(this._menu) { // Hide the dropdown menu after the click on its option
+			// Hide the dropdown menu after the click on its option
+			if(this._menu && el.classList.contains('de-menu-item')) {
 				this._menu.removeMenu();
 				this._menu = null;
 			}
-			switch(el.tagName) {
-			case 'A':
+			// Handle click on links/images/videos
+			switch(el.tagName.toLowerCase()) {
+			case 'a':
 				// Click on YouTube link - show/hide player or thumbnail
 				if(el.classList.contains('de-video-link')) {
 					this.videos.clickLink(el, Cfg.embedYTube);
-					$pd(e);
+					e.preventDefault();
 					return;
 				}
 				// Check if the link is not an image container
-				if(!(temp = el.firstElementChild) || temp.tagName !== 'IMG') {
+				if((temp = el.firstElementChild)?.tagName.toLowerCase() !== 'img') {
 					temp = el.parentNode;
+					const text = el.textContent;
 					if(temp === this.trunc) { // Click on "truncated message" link
 						this._getFullMsg(temp, false);
-						$pd(e);
+						e.preventDefault();
 						e.stopPropagation();
-					} else if(Cfg.insertNum && pr.form && (this._pref === temp || this._pref === el) &&
-						!/Reply|Ответ/.test(el.textContent)
+					} else if(Cfg.insertNum && postform.form && (this._pref === temp || this._pref === el) &&
+						!/Reply|Ответ|№/.test(text)
 					) { // Click on post number link - show quick reply or redirect with an #anchor
-						$pd(e);
+						e.preventDefault();
 						e.stopPropagation();
 						if(!Cfg.showRepBtn) {
-							quotedText = deWindow.getSelection().toString();
-							pr.showQuickReply(isPview ? Pview.topParent : this, this.num, !isPview, false);
-							quotedText = '';
-						} else if(pr.isQuick || (aib.t && pr.isHidden)) {
-							pr.showQuickReply(isPview ? Pview.topParent : this, this.num, false, true);
+							postform.getSelectedText();
+							postform.showQuickReply(isPview ? Pview.topParent : this,
+								this.num, !isPview, false);
+							postform.quotedText = '';
+						} else if(postform.isQuick || aib.t && postform.isHidden) {
+							postform.showQuickReply(isPview ? Pview.topParent : this, this.num, false, true);
 						} else if(aib.t) {
-							const formText = pr.txta.value;
+							const formText = postform.txta.value;
 							const isOnNewLine = formText === '' || formText.slice(-1) === '\n';
-							insertText(pr.txta, `>>${ this.num }${ isOnNewLine ? '\n' : '' }`);
+							insertText(postform.txta, `>>${ this.num }${ isOnNewLine ? '\n' : '' }`);
 						} else {
-							deWindow.location.assign(el.href.replace(/#i/, '#'));
+							deWindow.location.assign(el.href);
 						}
-					} else if((temp = el.textContent)[0] === '>' &&
-						temp[1] === '>' && !temp[2].includes('/')
-					) { // Click on >>link - scroll to the referenced post
-						const post = pByNum.get(+temp.match(/\d+/));
-						if(post) {
-							post.selectAndScrollTo();
-						}
+					} else if(text === '№') {
+						pByNum.get(+el.href.match(/#(\d+)/)[1])?.selectAndScrollTo();
+					} else if(nav.isMobile) {
+						break;
+					} else if(text[0] === '>' && text[1] === '>' && !text[2].includes('/')) {
+						// Click on >>link - scroll to the referenced post
+						pByNum.get(+text.match(/\d+/))?.selectAndScrollTo();
 					}
 					return;
 				}
 				el = temp; // The link is an image container
 				/* falls through */
-			case 'IMG': // Click on attached image - expand/collapse
+			case 'img': // Click on attached image - expand/collapse
 				if(el.classList.contains('de-video-thumb')) {
 					if(Cfg.embedYTube === 1) {
 						const { videos } = this;
 						videos.currentLink.classList.add('de-current');
 						videos.setPlayer(videos.playerInfo, el.classList.contains('de-ytube'));
-						$pd(e);
+						e.preventDefault();
 					}
 				} else if(Cfg.expandImgs !== 0) {
 					this._clickImage(el, e);
 				}
 				return;
-			case 'OBJECT':
-			case 'VIDEO': // Click on attached video - expand/collapse
+			case 'object':
+			case 'video': // Click on attached video - expand/collapse
 				if(Cfg.expandImgs !== 0 && !ExpandableImage.isControlClick(e)) {
 					this._clickImage(el, e);
 				}
 				return;
 			}
-			if(aib.makaba) {
-				// Makaba: Click on like/dislike elements
-				let c = el.classList;
-				if(c.contains('post__rate') || c[0] === 'like-div' || c[0] === 'dislike-div' ||
-					(temp = el.parentNode) && (
-						(c = temp.classList).contains('post__rate') ||
-						c[0] === 'like-div' ||
-						c[0] === 'dislike-div') ||
-					(temp = temp.parentNode) && (
-						(c = temp.className) === 'like-div' ||
-						c === 'dislike-div')
-				) {
-					const task = temp.id.split('-')[0];
-					const num = +temp.id.match(/\d+/);
-					$ajax(`/api/${ task }?board=${ aib.b }&num=${ num }`).then(xhr => {
-						const obj = JSON.parse(xhr.responseText);
-						if(obj.Status !== 'OK') {
-							$popup('err-2chlike', obj.Reason);
-							return;
-						}
-						temp.classList.add(`${ task }-div-checked`, `post__rate_${ task }d`);
-						const countEl = $q(`.${ task }-count, #${ task }-count${ num }`, temp);
-						countEl.textContent = +countEl.textContent + 1;
-					}, () => $popup('err-2chlike', Lng.noConnect[lang]));
-				}
-				// Makaba: Click on "truncated message" link
-				if(el.classList.contains('expand-large-comment')) {
-					this._getFullMsg(el, false);
-					$pd(e);
-					e.stopPropagation();
-				}
-			}
 			// Click on post buttons
 			switch(el.classList[0]) {
-			case 'de-btn-expthr': this.thr.loadPosts('all'); return;
+			case 'de-btn-expthr':
+				if(nav.isMobile) {
+					this._menuToggleClickBtn(el, arrTags(Lng.selExpandThr[lang],
+						'<span class="de-menu-item" info="thr-exp">', '</span>'));
+				} else {
+					this.thr.loadPosts('all');
+				}
+				return;
 			case 'de-btn-fav': this.thr.toggleFavState(true, isPview ? this : null); return;
 			case 'de-btn-fav-sel': this.thr.toggleFavState(false, isPview ? this : null); return;
 			case 'de-btn-hide':
 			case 'de-btn-hide-user':
 			case 'de-btn-unhide':
-			case 'de-btn-unhide-user': this.setUserVisib(!this.isHidden); return;
+			case 'de-btn-unhide-user':
+				if(nav.isMobile && Cfg.showHideBtn === 1) {
+					this._menuToggleClickBtn(el,
+						(this instanceof Pview ? pByNum.get(this.num) : this)._getMenuHide());
+				} else {
+					this.setUserVisib(!this.isHidden);
+				}
+				return;
 			case 'de-btn-img':
-				quotedText = aib.getImgRealName(aib.getImgWrap(el));
-				pr.showQuickReply(isPview ? Pview.topParent : this, this.num, !isPview, false);
+				if(nav.isMobile) {
+					this._menuToggleClickBtn(el, Menu.getMenuImg(el));
+				} else {
+					postform.quotedText = aib.getImgRealName(aib.getImgWrap(el));
+					postform.showQuickReply(isPview ? Pview.topParent : this, this.num, !isPview, false);
+				}
 				return;
 			case 'de-btn-reply':
-				pr.showQuickReply(isPview ? Pview.topParent : this, this.num, !isPview, false);
-				quotedText = '';
+				if(nav.isMobile && Cfg.showRepBtn === 1) {
+					this._menuToggleClickBtn(el,
+						(this instanceof Pview ? pByNum.get(this.num) : this)._getMenuReply());
+				} else {
+					postform.showQuickReply(isPview ? Pview.topParent : this, this.num, !isPview, false);
+					postform.quotedText = '';
+				}
 				return;
-			case 'de-btn-sage': Spells.addSpell(9, '', false); return;
+			case 'de-btn-sage': /* await */ Spells.addSpell(9, '', false); return;
 			case 'de-btn-stick': this.toggleSticky(true); return;
 			case 'de-btn-stick-on': this.toggleSticky(false); return;
+			// Mobile devices: Click on >>links - show/delete post previews
+			default:
+				if(!nav.isMobile || !Cfg.linksNavig || el.tagName.toLowerCase() !== 'a' || el.isNotRefLink) {
+					return;
+				}
+				if(!el.textContent.startsWith('>>')) {
+					el.isNotRefLink = true;
+					return;
+				}
+				// Donʼt use classList here, 'de-link-postref ' should be first
+				el.className = 'de-link-postref ' + el.className;
+				/* falls through */
+			case 'de-link-backref':
+			case 'de-link-postref':
+				if(!nav.isMobile || !Cfg.linksNavig) {
+					return;
+				}
+				if(this.kid && this.kid.parent.num === this.num &&
+					this.kid.num === +el.textContent.match(/\d+/g)?.[0]
+				) {
+					this.kid.deletePview();
+				} else {
+					this.kid = Pview.showPview(this, el);
+				}
+				e.preventDefault();
+				e.stopPropagation();
 			}
 			return;
 		}
+
+		// Mouseover/mouseout events
 		if(!this._hasEvents) {
 			this._hasEvents = true;
-			this.el.addEventListener('click', this, true);
-			this.el.addEventListener('mouseout', this, true);
+			['click', 'mouseout'].forEach(e => this.el.addEventListener(e, this, true));
 		}
 		// Mouseover/mouseout on YouTube links
-		if(el.classList.contains('de-video-link')) {
-			if(aib.makaba && !el.videoInfo) {
-				const origMsg = this.msg.firstChild;
-				this.videos.updatePost($Q('.de-video-link', origMsg),
-					$Q('.de-video-link', origMsg.nextSibling), true);
-			}
-			if(Cfg.embedYTube === 2) {
-				this.videos.toggleFloatedThumb(el, isOutEvent);
-			}
+		if(Cfg.embedYTube === 2 && el.classList.contains('de-video-link')) {
+			this.videos.toggleFloatedThumb(el, isOutEvent);
 		}
 		// Mouseover/mouseout on attached images/videos - update title
-		if(!isOutEvent && Cfg.expandImgs && el.tagName === 'IMG' && !el.classList.contains('de-fullimg') &&
+		if(!isOutEvent && Cfg.expandImgs &&
+			el.tagName.toLowerCase() === 'img' && !el.classList.contains('de-fullimg') &&
 			(temp = this.images.getImageByEl(el)) && (temp.isImage || temp.isVideo)
 		) {
 			el.title = Cfg.expandImgs === 1 ? Lng.expImgInline[lang] : Lng.expImgFull[lang];
@@ -229,8 +252,10 @@ class AbstractPost {
 		switch(el.classList[0]) {
 		case 'de-btn-expthr':
 			this.btns.title = Lng.expandThr[lang];
-			this._addMenu(el, isOutEvent, arrTags(Lng.selExpandThr[lang],
-				'<span class="de-menu-item" info="thr-exp">', '</span>'));
+			if(!nav.isMobile) {
+				this._menuToggleOverBtn(el, isOutEvent, arrTags(Lng.selExpandThr[lang],
+					'<span class="de-menu-item" info="thr-exp">', '</span>'));
+			}
 			return;
 		case 'de-btn-fav': this.btns.title = Lng.addFav[lang]; return;
 		case 'de-btn-fav-sel': this.btns.title = Lng.delFav[lang]; return;
@@ -239,30 +264,23 @@ class AbstractPost {
 		case 'de-btn-unhide':
 		case 'de-btn-unhide-user':
 			this.btns.title = this.isOp ? Lng.toggleThr[lang] : Lng.togglePost[lang];
-			if(Cfg.showHideBtn === 1) {
-				this._addMenu(el, isOutEvent,
+			if(!nav.isMobile && Cfg.showHideBtn === 1) {
+				this._menuToggleOverBtn(el, isOutEvent,
 					(this instanceof Pview ? pByNum.get(this.num) : this)._getMenuHide());
 			}
 			return;
 		case 'de-btn-img':
-			if(el.parentNode.className !== 'de-fullimg-info') {
-				this._addMenu(el, isOutEvent, Menu.getMenuImg(el));
+			if(!nav.isMobile && el.parentNode.className !== 'de-fullimg-info') {
+				this._menuToggleOverBtn(el, isOutEvent, Menu.getMenuImg(el));
 			}
 			return;
 		case 'de-btn-reply': {
-			const title = this.btns.title = this.isOp ? Lng.replyToThr[lang] : Lng.replyToPost[lang];
-			if(Cfg.showRepBtn === 1) {
+			if(!nav.isMobile && Cfg.showRepBtn === 1) {
 				if(!isOutEvent) {
-					quotedText = deWindow.getSelection().toString();
+					postform.getSelectedText();
 				}
-				this._addMenu(el, isOutEvent,
-					`<span class="de-menu-item" info="post-reply">${ title }</span>` +
-					(aib.reportForm ? `<span class="de-menu-item" info="post-report">${
-						this.num === this.thr.num ? Lng.reportThr[lang] : Lng.reportPost[lang] }</span>` : ''
-					) +
-					(Cfg.markMyPosts || Cfg.markMyLinks ? `<span class="de-menu-item" info="post-markmy">${
-						MyPosts.has(this.num) ? Lng.deleteMyPost[lang] : Lng.markMyPost[lang] }</span>` : ''
-					));
+				this._menuToggleOverBtn(el, isOutEvent,
+					(this instanceof Pview ? pByNum.get(this.num) : this)._getMenuReply());
 			}
 			return;
 		}
@@ -271,14 +289,14 @@ class AbstractPost {
 		case 'de-post-btns': el.removeAttribute('title'); return;
 		// Mouseover/mouseout on >>links - show/delete post previews
 		default:
-			if(!Cfg.linksNavig || el.tagName !== 'A' || el.isNotRefLink) {
+			if(nav.isMobile || !Cfg.linksNavig || el.tagName.toLowerCase() !== 'a' || el.isNotRefLink) {
 				return;
 			}
 			if(!el.textContent.startsWith('>>')) {
 				el.isNotRefLink = true;
 				return;
 			}
-			// Don't use classList here, 'de-link-postref ' should be first
+			// Donʼt use classList here, 'de-link-postref ' should be first
 			el.className = 'de-link-postref ' + el.className;
 			/* falls through */
 		case 'de-link-backref':
@@ -287,36 +305,34 @@ class AbstractPost {
 				return;
 			}
 			if(isOutEvent) { // Mouseout - We need to delete previews
-				clearTimeout(this._linkDelay);
-				if(!(aib.getPostOfEl(fixEventEl(e.relatedTarget)) instanceof Pview) && Pview.top) {
+				clearTimeout(this._linkTO);
+				if(!(aib.getPostOfEl(nav.fixEventEl(e.relatedTarget)) instanceof Pview) && Pview.top) {
 					Pview.top.markToDel(); // If cursor is not over one of previews - delete all previews
 				} else if(this.kid) {
 					this.kid.markToDel(); // If cursor is over any preview - delete its kids
 				}
 			} else { // Mouseover - we need to show a preview for this link
-				this._linkDelay = setTimeout(() => (this.kid = Pview.showPview(this, el)), Cfg.linksOver);
+				if(nav.isMobile) {
+					return;
+				}
+				this._linkTO = setTimeout(() => (this.kid = Pview.showPview(this, el)), Cfg.linksOver);
 			}
-			$pd(e);
+			e.preventDefault();
 			e.stopPropagation();
 		}
 	}
 	toggleFavBtn(isEnable) {
 		const elClass = isEnable ? 'de-btn-fav-sel' : 'de-btn-fav';
-		if(this.btnFav) {
-			this.btnFav.setAttribute('class', elClass);
-		}
-		if(this.thr.btnFav) {
-			this.thr.btnFav.setAttribute('class', elClass);
-		}
+		this.btnFav?.setAttribute('class', elClass);
+		this.thr.btnFav?.setAttribute('class', elClass);
 	}
 	updateMsg(newMsg, sRunner) {
 		let videoExt, videoLinks;
-		const origMsg = aib.dobrochan ? this.msg.firstElementChild : this.msg;
 		if(Cfg.embedYTube) {
-			videoExt = $q('.de-video-ext', origMsg);
-			videoLinks = $Q(':not(.de-video-ext) > .de-video-link', origMsg);
+			videoExt = $q('.de-video-ext', this.msg);
+			videoLinks = $Q(':not(.de-video-ext) > .de-video-link', this.msg);
 		}
-		$replace(origMsg, newMsg);
+		this.msg.replaceWith(newMsg);
 		Object.defineProperties(this, {
 			msg   : { configurable: true, value: newMsg },
 			trunc : { configurable: true, value: null }
@@ -325,7 +341,7 @@ class AbstractPost {
 		if(Cfg.embedYTube) {
 			this.videos.updatePost(videoLinks, $Q('a[href*="youtu"], a[href*="vimeo.com"]', newMsg), false);
 			if(videoExt) {
-				newMsg.appendChild(videoExt);
+				newMsg.append(videoExt);
 			}
 		}
 		this.addFuncs();
@@ -336,24 +352,37 @@ class AbstractPost {
 		}
 		closePopup('load-fullmsg');
 	}
-
-	_addMenu(el, isOutEvent, html) {
-		if(!this.menu || this.menu.parentEl !== el) {
-			if(isOutEvent) {
-				clearTimeout(this._menuDelay);
-			} else {
-				this._menuDelay = setTimeout(() => this._showMenu(el, html), Cfg.linksOver);
+	changeMyMark(val) {
+		this.el.classList.toggle('de-mypost', val);
+		$Q(`[de-form] ${ aib.qPostMsg } a[href$="${ aib.anchor + this.num }"]`).forEach(el => {
+			const post = aib.getPostOfEl(el);
+			if(post.el !== this.el) {
+				el.classList.toggle('de-ref-you', val);
+				post.el.classList.toggle('de-mypost-reply', val);
 			}
-		}
+		});
 	}
+
 	_clickImage(el, e) {
 		const image = this.images.getImageByEl(el);
 		if(!image || (!image.isImage && !image.isVideo)) {
 			return;
 		}
 		image.expandImg((Cfg.expandImgs === 1) ^ e.ctrlKey, e);
-		$pd(e);
+		e.preventDefault();
 		e.stopPropagation();
+	}
+	async _downloadImageByLink(el, e) {
+		e.preventDefault();
+		$popup('file-loading', Lng.loading[lang], true);
+		const url = el.href;
+		const data = await ContentLoader.loadFileData(url, false);
+		if(!data) {
+			$popup('file-loading', Lng.cantLoad[lang] + ' URL: ' + url);
+			return;
+		}
+		closePopup('file-loading');
+		downloadBlob(new Blob([data], { type: getFileMime(url) }), el.getAttribute('download'));
 	}
 	_getFullMsg(truncEl, isInit) {
 		if(aib.deleteTruncMsg) {
@@ -369,7 +398,7 @@ class AbstractPost {
 			if(this.isOp) {
 				sourceEl = form;
 			} else {
-				const posts = $Q(aib.qRPost, form);
+				const posts = $Q(aib.qPost, form);
 				for(let i = 0, len = posts.length; i < len; ++i) {
 					const post = posts[i];
 					if(this.num === aib.getPNum(post)) {
@@ -385,15 +414,121 @@ class AbstractPost {
 			if(maybeSpells.hasValue) {
 				maybeSpells.value.endSpells();
 			}
-		}, emptyFn);
+		}, Function.prototype);
 	}
-	_showMenu(el, html) {
-		if(this._menu) {
-			this._menu.removeMenu();
+	_menuAdd(el, html) {
+		return new Menu(el, html, (el, e) =>
+			(this instanceof Pview ? pByNum.get(this.num) || this : this)._menuClickOnOptions(el, e), false);
+	}
+	async _menuClickOnOptions(el, e) {
+		const isHide = !this.isHidden;
+		const { num } = this;
+		switch(el.getAttribute('info')) {
+		case 'hide-sel': {
+			let { startContainer: start, endContainer: end } = this._selRange;
+			if(start.nodeType === 3) {
+				start = start.parentNode;
+			}
+			if(end.nodeType === 3) {
+				end = end.parentNode;
+			}
+			const inMsgSel = `${ aib.qPostMsg }, ${ aib.qPostMsg } *`;
+			if((nav.matchesSelector(start, inMsgSel) && nav.matchesSelector(end, inMsgSel)) || (
+				nav.matchesSelector(start, aib.qPostSubj) &&
+				nav.matchesSelector(end, aib.qPostSubj)
+			)) {
+				if(this._selText.includes('\n')) {
+					await Spells.addSpell(1 /* #exp */,
+						`/${ escapeRegExp(this._selText).replace(/\r?\n/g, '\\n') }/`, false);
+				} else {
+					await Spells.addSpell(0 /* #words */, this._selText.toLowerCase(), false);
+				}
+			} else {
+				dummy.innerHTML = '';
+				dummy.append(this._selRange.cloneContents());
+				await Spells.addSpell(2 /* #exph */,
+					`/${ escapeRegExp(dummy.innerHTML.replace(/^<[^>]+>|<[^>]+>$/g, '')) }/`, false);
+			}
+			return;
 		}
-		this._menu = new Menu(el, html,
-			el => (this instanceof Pview ? pByNum.get(this.num) : this)._clickMenu(el), false);
+		case 'hide-name': await Spells.addSpell(6 /* #name */, this.posterName, false); return;
+		case 'hide-trip': await Spells.addSpell(7 /* #trip */, this.posterTrip, false); return;
+		case 'hide-img': {
+			const { weight: w, width: wi, height: h } = this.images.firstAttach;
+			await Spells.addSpell(8 /* #img */, [0, [w, w], [wi, wi, h, h]], false);
+			return;
+		}
+		case 'hide-imgn':
+			await Spells.addSpell(3 /* #imgn */, `/${ escapeRegExp(this.images.firstAttach.name) }/`, false);
+			return;
+		case 'hide-ihash': {
+			const hash = await ImagesHashStorage.getHash(this.images.firstAttach);
+			if(hash !== -1) {
+				await Spells.addSpell(4 /* #ihash */, hash, false);
+			}
+			return;
+		}
+		case 'hide-noimg': await Spells.addSpell(0x108 /* (#all & !#img) */, '', true); return;
+		case 'hide-post': this.setUserVisib(!this.isHidden); break;
+		case 'hide-text': {
+			const words = Post.getWrds(this.text);
+			for(let post = Thread.first.op; post; post = post.next) {
+				Post.findSameText(num, !isHide, words, post);
+			}
+			return;
+		}
+		case 'hide-notext': await Spells.addSpell(0x10B /* (#all & !#tlen) */, '', true); return;
+		case 'hide-refs':
+			this.ref.toggleRef(isHide, true);
+			this.setUserVisib(isHide);
+			return;
+		case 'hide-refsonly': await Spells.addSpell(0 /* #words */, '>>' + num, false); return;
+		case 'img-load': this._downloadImageByLink(el, e); return;
+		case 'post-markmy': {
+			const isAdd = !MyPosts.has(num);
+			if(isAdd) {
+				MyPosts.set(num, this.thr.num);
+			} else {
+				MyPosts.removeStorage(num);
+			}
+			this.changeMyMark(isAdd);
+			return;
+		}
+		case 'post-reply': {
+			const isPview = this instanceof Pview;
+			postform.showQuickReply(isPview ? Pview.topParent : this, num, !isPview, false);
+			postform.quotedText = '';
+			return;
+		}
+		case 'post-report': aib.reportForm(num, this.thr.num); return;
+		case 'thr-exp': {
+			const task = +el.textContent.match(/\d+/);
+			this.thr.loadPosts(!task ? 'all' : task === 10 ? 'more' : task);
+		}
+		}
+	}
+	_menuShowOverBtn(el, html) {
+		this._menu?.removeMenu();
+		this._menu = this._menuAdd(el, html);
 		this._menu.onremove = () => (this._menu = null);
+	}
+	_menuToggleClickBtn(el, html) {
+		if(this._menu?.el && this._menu.parentEl === el) {
+			this._menu.removeMenu();
+			this._menu = null;
+			return;
+		}
+		this._menu = this._menuAdd(el, html);
+	}
+	_menuToggleOverBtn(el, isOutEvent, html) {
+		if(this._menu?.parentEl === el) {
+			return;
+		}
+		if(isOutEvent) {
+			clearTimeout(this._menuTO);
+		} else {
+			this._menuTO = setTimeout(() => this._menuShowOverBtn(el, html), Cfg.linksOver);
+		}
 	}
 }
 
@@ -430,7 +565,6 @@ class Post extends AbstractPost {
 		}
 		const isOpsPost = thr.opPosterId && thr.opPosterId === this.posterId;
 		el.classList.add(isOp ? 'de-oppost' : 'de-reply');
-		this.sage = aib.getSage(el);
 		this.btns = $aEnd(this._pref = $q(aib.qPostRef, el),
 			'<span class="de-post-btns">' + Post.getPostBtns(isOp, aib.t) +
 			(this.sage ? '<svg class="de-btn-sage"><use xlink:href="#de-symbol-post-sage"/></svg>' : '') +
@@ -487,20 +621,20 @@ class Post extends AbstractPost {
 		el.addEventListener('mouseover', this, true);
 	}
 	static addMark(postEl, forced) {
-		if(!doc.hidden && !forced) {
-			Post.clearMarks();
-		} else {
+		if(doc.hidden || forced) {
 			if(!Post.hasNew) {
 				Post.hasNew = true;
 				doc.addEventListener('click', Post.clearMarks, true);
 			}
 			postEl.classList.add('de-new-post');
+		} else {
+			Post.clearMarks();
 		}
 	}
 	static clearMarks() {
 		if(Post.hasNew) {
 			Post.hasNew = false;
-			$each($Q('.de-new-post'), el => el.classList.remove('de-new-post'));
+			$Q('.de-new-post').forEach(el => el.classList.remove('de-new-post'));
 			doc.removeEventListener('click', Post.clearMarks, true);
 		}
 	}
@@ -557,12 +691,12 @@ class Post extends AbstractPost {
 	static hideContent(headerEl, btnHide, isUser, isHide) {
 		if(!isHide) {
 			btnHide.setAttribute('class', isUser ? 'de-btn-hide-user' : 'de-btn-hide');
-			$each($Q('.de-post-hiddencontent', headerEl.parentNode),
+			$Q('.de-post-hiddencontent', headerEl.parentNode).forEach(
 				el => el.classList.remove('de-post-hiddencontent'));
 			return;
 		}
 		if(aib.t) {
-			Thread.first.hidCounter++;
+			Thread.first.hiddenCount++;
 		}
 		btnHide.setAttribute('class', isUser ? 'de-btn-unhide-user' : 'de-btn-unhide');
 		if(headerEl) {
@@ -595,7 +729,7 @@ class Post extends AbstractPost {
 	}
 	get nextNotDeleted() {
 		let post = this.nextInThread;
-		while(post && post.isDeleted) {
+		while(post?.isDeleted) {
 			post = post.nextInThread;
 		}
 		return post;
@@ -613,6 +747,11 @@ class Post extends AbstractPost {
 	}
 	get posterTrip() {
 		return new Post.Сontent(this).posterTrip;
+	}
+	get sage() {
+		const value = aib.getSage(this.el);
+		Object.defineProperty(this, 'sage', { value });
+		return value;
 	}
 	get subj() {
 		return new Post.Сontent(this).subj;
@@ -706,10 +845,7 @@ class Post extends AbstractPost {
 			HotKeys.cPost = this;
 			HotKeys.lastPageOffset = deWindow.pageYOffset;
 		} else {
-			const el = $q('.de-selected');
-			if(el) {
-				el.unselect();
-			}
+			$q('.de-selected')?.unselect();
 		}
 		this.select();
 	}
@@ -800,10 +936,7 @@ class Post extends AbstractPost {
 	}
 	unselect() {
 		if(this.isOp) {
-			const el = $id('de-thr-hid-' + this.num);
-			if(el) {
-				el.classList.remove('de-selected');
-			}
+			$id('de-thr-hid-' + this.num)?.classList.remove('de-selected');
 			this.thr.el.classList.remove('de-selected');
 		} else {
 			this.el.classList.remove('de-selected');
@@ -927,6 +1060,20 @@ class Post extends AbstractPost {
 			!Cfg.hideRefPsts && this.ref.hasMap ? item('refs') : '' }${
 			item('refsonly') }`;
 	}
+	_getMenuReply() {
+		return `<span class="de-menu-item" info="post-reply">${
+			this.btns.title = this.isOp ? Lng.replyToThr[lang] : Lng.replyToPost[lang]
+		}</span>` +
+		(getCookies().atom_access === '1' ? `<a class="de-menu-item" target="_blank" href="/${
+			aib.b }/imgboard.php?manage=&moderate=${ this.num }">${
+			this.isOp ? Lng.moderateThread[lang] : Lng.moderatePost[lang] }</a>` : '') +
+		(aib.reportForm ? `<span class="de-menu-item" info="post-report">${
+			this.isOp ? Lng.reportThr[lang] : Lng.reportPost[lang] }</span>` : '') +
+		(Cfg.markMyPosts || Cfg.markMyLinks ?
+			`<span class="de-menu-item" info="post-markmy">${
+				MyPosts.has(this.num) ? Lng.deleteMyPost[lang] : Lng.markMyPost[lang]
+			}</span>` : '');
+	}
 	_strikePostNum(isHide) {
 		const { num } = this;
 		if(isHide) {
@@ -934,7 +1081,7 @@ class Post extends AbstractPost {
 		} else {
 			Post.hiddenNums.delete(+num);
 		}
-		$each($Q(`[de-form] a[href$="${ aib.anchor + num }"]`), el => {
+		$Q(`[de-form] a[href$="${ aib.anchor + num }"]`).forEach(el => {
 			el.classList.toggle('de-link-hid', isHide);
 			if(Cfg.removeHidd && el.classList.contains('de-link-backref')) {
 				const refMapEl = el.parentNode;
@@ -995,14 +1142,14 @@ Post.Сontent = class PostContent extends TemporaryContent {
 		const value = this.post.msg.innerHTML
 			.replace(/<\/?(?:br|p|li)[^>]*?>/gi, '\n')
 			.replace(/<[^>]+?>/g, '')
-			.replace(/&gt;/g, '>')
-			.replace(/&lt;/g, '<')
-			.replace(/&nbsp;/g, '\u00A0').trim();
+			.replaceAll('&gt;', '>')
+			.replaceAll('&lt;', '<')
+			.replaceAll('&nbsp;', '\u00A0').trim();
 		Object.defineProperty(this, 'text', { value });
 		return value;
 	}
 	get title() {
-		const value = this.subj || this.text.substring(0, 70).replace(/\s+/g, ' ');
+		const value = this.subj || this.text.substring(0, 85).replace(/\s+/g, ' ');
 		Object.defineProperty(this, 'title', { value });
 		return value;
 	}
@@ -1050,7 +1197,7 @@ Post.Note = class PostNote {
 		if(this.isHideThr) {
 			this._aEl.onmouseover = this._aEl.onmouseout = e => this._post.hideContent(e.type === 'mouseout');
 			this._aEl.onclick = e => {
-				$pd(e);
+				e.preventDefault();
 				this._post.setUserVisib(!this._post.isHidden);
 			};
 			text = (this._post.title ? `(${ this._post.title }) ` : '') +

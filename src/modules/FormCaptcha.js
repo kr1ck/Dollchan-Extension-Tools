@@ -9,8 +9,8 @@ class Captcha {
 		this.tNum = initNum;
 		this.parentEl = nav.matchesSelector(el, aib.qFormTr) ? el : aib.getCapParent(el);
 		this.isAdded = false;
-		this.isSubmitWait = false;
-		this._isRecap = !aib._02ch && !!$q('[id*="recaptcha"], [class*="recaptcha"]', this.parentEl);
+		this._isHcap = !!$q('.h-captcha', this.parentEl);
+		this._isRecap = this._isHcap || !!$q('[id*="recaptcha"], [class*="recaptcha"]', this.parentEl);
 		this._lastUpdate = null;
 		this.originHTML = this.parentEl.innerHTML;
 		$hide(this.parentEl);
@@ -19,17 +19,20 @@ class Captcha {
 		}
 	}
 	addCaptcha() {
-		if(this.isAdded) { // Run this function only once
+		if(this.isAdded) {
 			return;
 		}
 		this.isAdded = true;
-		if(!this._isRecap) {
+		if(this._isHcap) {
+			$show(this.parentEl);
+		} else if(this._isRecap) {
+			const el = $q('#g-recaptcha, .g-recaptcha');
+			el.insertAdjacentHTML('afterend', `<div id="g-recaptcha" class="g-recaptcha" data-sitekey="${
+				el.getAttribute('data-sitekey') }"></div>`);
+			el.remove();
+		} else {
 			this.parentEl.innerHTML = this.originHTML;
 			this.textEl = $q('input[type="text"][name*="aptcha"]', this.parentEl);
-		} else {
-			const el = $q('#g-recaptcha, .g-recaptcha');
-			$replace(el, `<div id="g-recaptcha" class="g-recaptcha" data-sitekey="${
-				el.getAttribute('data-sitekey') }"></div>`);
 		}
 		this.initCapPromise();
 	}
@@ -40,9 +43,10 @@ class Captcha {
 				return;
 			}
 			const ruUa = 'йцукенгшщзхъїфыівапролджэєячсмитьбюёґ';
-			const en = "qwertyuiop[]]assdfghjkl;''zxcvbnm,.`\\";
+			const en = 'qwertyuiop[]]assdfghjkl;\'\'zxcvbnm,.`\\';
 			const code = e.charCode || e.keyCode;
-			let i, chr = String.fromCharCode(code).toLowerCase();
+			let i;
+			let chr = String.fromCharCode(code).toLowerCase();
 			if(Cfg.captchaLang === 1) {
 				if(code < 0x0410 || code > 0x04FF || (i = ruUa.indexOf(chr)) === -1) {
 					return;
@@ -59,7 +63,7 @@ class Captcha {
 		}
 		case 'focus': this.updateOutdated();
 		}
-		$pd(e);
+		e.preventDefault();
 		e.stopPropagation();
 	}
 	initCapPromise() {
@@ -84,12 +88,11 @@ class Captcha {
 	}
 	initTextEl() {
 		this.textEl.autocomplete = 'off';
-		if(!aib.kusaba && (aib.multiFile || Cfg.fileInputs !== 2)) {
+		if(!aib.formHeaders && (aib.multiFile || Cfg.fileInputs !== 2)) {
 			this.textEl.placeholder = Lng.cap[lang];
 		}
-		this.textEl.addEventListener('keypress', this);
+		['keypress', 'focus'].forEach(e => this.textEl.addEventListener(e, this));
 		this.textEl.onkeypress = null;
-		this.textEl.addEventListener('focus', this);
 		this.textEl.onfocus = null;
 	}
 	showCaptcha(isUpdateImage = false) {
@@ -110,8 +113,8 @@ class Captcha {
 		}
 		this.initImage(img);
 		const a = img.parentNode;
-		if(a.tagName === 'A') {
-			$replace(a, img);
+		if(a.tagName.toLowerCase() === 'a') {
+			a.replaceWith(img);
 		}
 		if(isUpdateImage) {
 			this.refreshCaptcha(false);
@@ -120,7 +123,7 @@ class Captcha {
 		}
 		$show(this.parentEl);
 	}
-	refreshCaptcha(isFocus, isErr = false, tNum = this.tNum) {
+	refreshCaptcha(isFocus, isError = false, tNum = this.tNum) {
 		if(!this.isAdded || tNum !== this.tNum) {
 			this.tNum = tNum;
 			this.isAdded = false;
@@ -129,12 +132,12 @@ class Captcha {
 			$hide(this.parentEl);
 			this.addCaptcha();
 			return;
-		} else if(!this.hasCaptcha && !isErr) {
+		} else if(!this.hasCaptcha && !isError) {
 			return;
 		}
 		this._lastUpdate = Date.now();
 		if(aib.captchaUpdate) {
-			const updatePromise = aib.captchaUpdate(this, isErr);
+			const updatePromise = aib.captchaUpdate(this, isError);
 			if(updatePromise) {
 				updatePromise.then(() => this._updateTextEl(isFocus), err => this._setUpdateError(err));
 			}
@@ -163,28 +166,28 @@ class Captcha {
 		}
 	}
 	updateHelper(url, fn) {
-		if(aib._capUpdPromise) {
-			aib._capUpdPromise.cancelPromise();
+		if(aib.captchaUpdPromise) {
+			aib.captchaUpdPromise.cancelPromise();
 		}
-		return (aib._capUpdPromise = $ajax(url).then(xhr => {
-			aib._capUpdPromise = null;
+		return (aib.captchaUpdPromise = $ajax(url).then(xhr => {
+			aib.captchaUpdPromise = null;
 			fn(xhr);
 		}, err => {
 			if(!(err instanceof CancelError)) {
-				aib._capUpdPromise = null;
+				aib.captchaUpdPromise = null;
 				return CancelablePromise.reject(err);
 			}
 		}));
 	}
 	updateOutdated() {
-		if(this._lastUpdate && (Date.now() - this._lastUpdate > Cfg.capUpdTime * 1e3)) {
+		if(!aib.makaba && this._lastUpdate && (Date.now() - this._lastUpdate > Cfg.capUpdTime * 1e3)) {
 			this.refreshCaptcha(false);
 		}
 	}
 
 	_setUpdateError(e) {
 		if(e) {
-			this.parentEl = e.toString();
+			this.parentEl.innerHTML = e.toString();
 			this.isAdded = false;
 			this.parentEl.onclick = () => {
 				this.parentEl.onclick = null;
@@ -194,13 +197,13 @@ class Captcha {
 		}
 	}
 	_updateRecap() {
-		// EXCLUDED FROM FIREFOX EXTENSION - START
+		// <EXCLUDED_FROM_EXTENSION>
 		const script = doc.createElement('script');
-		script.type = 'text/javascript';
-		script.src = aib.prot + '//www.google.com/recaptcha/api.js';
-		doc.head.appendChild(script);
+		script.src = aib.protocol +
+			(this._isHcap ? '//js.hcaptcha.com/1/api.js' : '//www.google.com/recaptcha/api.js');
+		doc.head.append(script);
 		setTimeout(() => script.remove(), 1e5);
-		// EXCLUDED FROM FIREFOX EXTENSION - END
+		// </EXCLUDED_FROM_EXTENSION>
 	}
 	_updateTextEl(isFocus) {
 		if(this.textEl) {

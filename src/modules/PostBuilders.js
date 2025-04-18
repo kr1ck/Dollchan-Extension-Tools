@@ -5,7 +5,7 @@
 class DOMPostsBuilder {
 	constructor(form, isArchived) {
 		this._form = form;
-		this._posts = $Q(aib.qRPost, form);
+		this._posts = $Q(aib.qPost, form);
 		this.length = this._posts.length;
 		this.postersCount = '';
 		this._isArchived = isArchived;
@@ -54,19 +54,20 @@ class DOMPostsBuilder {
 }
 
 class _4chanPostsBuilder {
-	constructor(json, brd) {
+	constructor(json, board) {
 		this._posts = json.posts;
-		this._brd = brd;
+		this._board = board;
 		this.length = json.posts.length - 1;
 		this.postersCount = this._posts[0].unique_ips;
+		this._colorIDs = [];
 	}
 	static fixFileName(name, maxLength) {
-		const decodedName = name.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#039;/g, "'")
-			.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+		const decodedName = name.replaceAll('&amp;', '&').replaceAll('&quot;', '"').replaceAll('&#039;', '\'')
+			.replaceAll('&lt;', '<').replaceAll('&gt;', '>');
 		return decodedName.length <= maxLength ? { isFixed: false, name } : {
 			isFixed : true,
-			name    : decodedName.slice(0, 25).replace(/&/g, '&amp;').replace(/"/g, '&quot;')
-				.replace(/'/g, '&#039;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+			name    : decodedName.slice(0, 25).replaceAll('&', '&amp;').replaceAll('"', '&quot;')
+				.replaceAll('\'', '&#039;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
 		};
 	}
 	get isClosed() {
@@ -88,7 +89,7 @@ class _4chanPostsBuilder {
 	getPostHTML(i) {
 		const data = this._posts[i + 1];
 		const num = data.no;
-		const brd = this._brd;
+		const board = this._board;
 		const _icon = id => `//s.4cdn.org/image/${ id }${
 			deWindow.devicePixelRatio < 2 ? '.gif' : '@2x.gif' }`;
 
@@ -115,14 +116,14 @@ class _4chanPostsBuilder {
 			const fileTextTitle = isSpoiler ? ` title="${ data.filename + data.ext }"` : '';
 			const aHref = needTitle ? `title="${ data.filename + data.ext }"` : '';
 			const imgSrc = isSpoiler ? '//s.4cdn.org/image/spoiler.png' :
-				`//i.4cdn.org/${ brd }/${ data.tim }s.jpg`;
+				`//i.4cdn.org/${ board }/${ data.tim }s.jpg`;
 			fileHTML = `<div class="file" id="f${ num }">
 				<div class="fileText" id="fT${ num }"${ fileTextTitle }>File:
-					<a href="//i.4cdn.org/${ brd }/${ data.tim +
+					<a href="//i.4cdn.org/${ board }/${ data.tim +
 						data.ext }" ${ aHref } target="_blank">${ name }</a>
 					(${ size }, ${ data.ext === '.pdf' ? 'PDF' : data.w + 'x' + data.h })
 				</div>
-				<a class="fileThumb ${ isSpoiler ? 'imgspoiler' : '' }" href="//i.4cdn.org/${ brd }/` +
+				<a class="fileThumb ${ isSpoiler ? 'imgspoiler' : '' }" href="//i.4cdn.org/${ board }/` +
 					`${ data.tim + data.ext }" target="_blank">
 					<img src="${ imgSrc }" alt="${ size }" data-md5="` +
 						`${ data.md5 }" style="height: ${ data.tn_h }px; width: ${ data.tn_w }px;">
@@ -134,7 +135,8 @@ class _4chanPostsBuilder {
 		}
 
 		// --- CAPCODE ---
-		let highlight = '', ccBy = '';
+		let highlight = '';
+		let ccBy = '';
 		let cc = data.capcode;
 		switch(cc) {
 		case 'admin_highlight':
@@ -147,7 +149,10 @@ class _4chanPostsBuilder {
 		case 'manager': ccBy = 'Managers'; break;
 		case 'founder': ccBy = 'Founder';
 		}
-		let ccName = '', ccText = '', ccImg = '', ccClass = '';
+		let ccName = '';
+		let ccText = '';
+		let ccImg = '';
+		let ccClass = '';
 		if(cc) {
 			ccName = cc[0].toUpperCase() + cc.slice(1);
 			ccText = `<strong class="capcode hand id_${ cc === 'founder' ? 'admin' : cc }` +
@@ -158,17 +163,22 @@ class _4chanPostsBuilder {
 		}
 
 		// --- POST ---
-		const { name = '' } = data;
+		const { id, name = '' } = data;
 		const nameEl = `<span class="name">${ name }</span>`;
 		const mobNameEl = name.length <= 30 ? nameEl :
 			`<span class="name" data-tip data-tip-cb="mShowFull">${ name.substring(30) }(…)</span>`;
 		const tripEl = `${ data.trip ? `<span class="postertrip">${ data.trip }</span>` : '' }`;
-		const posteruidEl = data.id && !data.capcode ? `<span class="posteruid id_${ data.id }` +
-			`">(ID: <span class="hand" title="Highlight posts by this ID">${ data.id }</span>)</span>` : '';
-		const flagEl = data.country ? `<span title="${ data.country_name }" class="flag flag-${
-			data.country.toLowerCase() }"></span>` : '';
+		const cID = id ? this._colorIDs[id] || this._computeIDColor(id) : null;
+		const posteruidEl = id && !data.capcode ? `<span class="posteruid id_${ id }` +
+			`">(ID: <span class="hand" title="Highlight posts by this ID" style="background-color: rgb(${
+				cID[0] }, ${ cID[1] }, ${ cID[2] }); color: ${ cID[3] ? 'black' : 'white' };">${
+				id }</span>)</span>` : '';
+		const flagEl = (data.country ? `<span title="${ data.country_name }" class="flag flag-${
+			data.country.toLowerCase() }"></span>` : '') +
+			(data.board_flag ? `<span title="${ data.flag_name }" class="bfl bfl-${
+				data.board_flag.toLowerCase() }"></span>` : '');
 		const emailEl = data.email ? `<a href="mailto:${
-			data.email.replace(/ /g, '%20') }" class="useremail">` : '';
+			data.email.replaceAll(' ', '%20') }" class="useremail">` : '';
 		const replyEl = `<a href="#p${ num }" title="Link to this post">No.</a><a href="javascript:quote('${
 			num }');" title="Reply to this post">${ num }</a>`;
 		const subjEl = `<span class="subject">${ data.sub || '' }</span>`;
@@ -209,128 +219,30 @@ class _4chanPostsBuilder {
 		</div>`;
 	}
 	* bannedPostsData() {}
+
+	_computeIDColor(text) {
+		let hash = 0;
+		for(let i = 0, len = text.length; i < len; ++i) {
+			hash = (hash << 5) - hash + text.charCodeAt(i);
+		}
+		const r = hash >> 24 & 255;
+		const g = hash >> 16 & 255;
+		const b = hash >> 8 & 255;
+		const value = this._colorIDs[text] = [r, g, b, 0.299 * r + 0.587 * g + 0.114 * b > 125];
+		return value;
+	}
 }
 _4chanPostsBuilder._customSpoiler = new Map();
 
-class DobrochanPostsBuilder {
-	constructor(json, brd) {
-		if(json.error) {
-			throw new AjaxError(0, `API error: ${ json.error.message }`);
-		}
-		this._json = json.result;
-		this._brd = brd;
-		this._posts = json.result.threads[0].posts;
-		this.length = this._posts.length - 1;
-		this.postersCount = '';
-	}
-	get isClosed() {
-		return !!this._json.threads[0].archived;
-	}
-	getOpMessage() {
-		return $add(aib.fixHTML(`<div class="postbody"> ${ this._posts[0].message_html }</div>`));
-	}
-	getPNum(i) {
-		return this._posts[i + 1].display_id;
-	}
-	getOpEl() {
-		return this.getPostEl(-1);
-	}
-	getPostEl(i) {
-		const el = $add(aib.fixHTML(this.getPostHTML(i)));
-		if(i === -1) {
-			return el;
-		}
-		return el.firstElementChild.firstElementChild.lastElementChild;
-	}
-	getPostHTML(i) {
-		const data = this._posts[i + 1];
-		const num = data.display_id;
-		const brd = this._brd;
-		const multiFile = data.files.length > 1;
-
-		// --- FILE ---
-		let filesHTML = '';
-		for(const { file_id, metadata, rating, size, src, thumb, thumb_height, thumb_width } of data.files) {
-			let fileName, fullFileName, th = thumb;
-			let thumbW = 200;
-			let thumbH = 200;
-			const ext = getFileExt(src);
-			if(brd === 'b' || brd === 'rf') {
-				fileName = fullFileName = getFileName(th);
-			} else {
-				fileName = fullFileName = getFileName(src);
-				if(multiFile && fileName.length > 20) {
-					fileName = fileName.substr(0, 20 - ext.length) + '(…)' + ext;
-				}
-			}
-			const maxRating = 'r15'; // FIXME: read from settings
-			if(rating === 'r-18g' && maxRating !== 'r-18g') {
-				th = 'images/r-18g.png';
-			} else if(rating === 'r-18' && (maxRating !== 'r-18g' || maxRating !== 'r-18')) {
-				th = 'images/r-18.png';
-			} else if(rating === 'r-15' && maxRating === 'sfw') {
-				th = 'images/r-15.png';
-			} else if(rating === 'illegal') {
-				th = 'images/illegal.png';
-			} else {
-				thumbW = thumb_width;
-				thumbH = thumb_height;
-			}
-			const fileInfo = `<div class="fileinfo${ multiFile ? ' limited' : '' }">Файл:
-				<a href="/${ src }" title="${ fullFileName }" target="_blank">${ fileName }</a><br>
-				<em>${ ext }, ${ prettifySize(size) }, ${ metadata.width }x${ metadata.height }
-				</em>${ multiFile ? '' : ' - Нажмите на картинку для увеличения' }<br>
-				<a class="edit_ icon" href="/utils/image/edit/${ file_id }/${ num }">
-					<img title="edit" alt="edit" src="/images/blank.png">
-				</a>
-			</div>`;
-			filesHTML += `${ multiFile ? '' : fileInfo }
-			<div id="file_${ num }_${ file_id }" class="file">${ multiFile ? fileInfo : '' }
-				<a href="/${ src }" target="_blank">
-					<img class="thumb" src="/${ th }" width="${ thumbW }" height="${ thumbH }">
-				</a>
-			</div>`;
-		}
-
-		// --- POST ---
-		const date = data.date.replace(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2})$/,
-			(all, y, mo, d, h, m, s) => {
-				const dt = new Date(y, +mo - 1, d, h, m, s);
-				return `${ pad2(dt.getDate()) } ${ Lng.fullMonth[1][dt.getMonth()] } ${ dt.getFullYear()
-				} (${ Lng.week[1][dt.getDay()] }) ${ pad2(dt.getHours()) }:${ pad2(dt.getMinutes()) }`;
-			});
-		const isOp = i === -1;
-		return `${ isOp ? `<div id="post_${ num }" class="oppost post">` :
-			`<table id="post_${ num }" class="replypost post"><tbody><tr>
-			<td class="doubledash">&gt;&gt;</td>
-			<td class="reply" id="reply${ num }">` }
-				<a name="i${ num }"></a>
-				<label>
-					<input name="${ num }" value="${ data.thread_id }" ` +
-						`class="delete_checkbox" id="delbox_${ num }" type="checkbox">
-					${ data.subject ? `<span class="replytitle">${ data.subject }</span>` : '' }
-					<span class="postername">${ data.name || 'Анонимус' }</span> ${ date }
-				</label>
-				<span class="reflink">
-					<a href="/${ brd }/res/${ data.thread_id }.xhtml#i${ num }"> No.${ num }</a>
-				</span><br>
-				${ filesHTML }
-				${ multiFile ? '<div style="clear: both;"></div>' : '' }
-				<div class="postbody"> ${ data.message_html }</div>
-			${ isOp ? '</div>' : '</td></tr></tbody></table>' }`;
-	}
-	* bannedPostsData() {}
-}
-
 class MakabaPostsBuilder {
-	constructor(json, brd) {
+	constructor(json, board) {
 		if(json.Error) {
 			throw new AjaxError(0, `API error: ${ json.Error } (${ json.Code })`);
 		}
 		this._json = json;
-		this._brd = brd;
+		this._board = board;
 		this._posts = json.threads[0].posts;
-		this.length = aib._2channel ? json.counter_posts - 1 : json.posts_count;
+		this.length = json.posts_count - 1;
 		this.postersCount = json.unique_posters;
 	}
 	get isClosed() {
@@ -350,35 +262,31 @@ class MakabaPostsBuilder {
 	}
 	getPostHTML(i) {
 		const data = this._posts[i + 1];
-		const { num } = data;
-		const brd = this._brd;
-		const isNew = this._isNew;
-		const p = isNew ? 'post__' : '';
+		const { files, num } = data;
+		const board = this._board;
 		const _switch = (val, obj) => val in obj ? obj[val] : obj['@@default'];
 
 		// --- FILE ---
 		let filesHTML = '';
-		if(data.files && data.files.length !== 0) {
-			filesHTML = `<div class="${ isNew ? 'post__images post__images_type_' : 'images images-' }${
-				data.files.length === 1 ? 'single' : 'multi' }">`;
-			for(const file of data.files) {
+		if(files?.length) {
+			filesHTML = `<div class="post__images post__images_type_${
+				files.length === 1 ? 'single' : 'multi' }">`;
+			for(const file of files) {
 				const imgId = num + '-' + file.md5;
-				const { fullname = file.name, displayname: dispName = file.name } = file;
-				const isVideo = file.type === 6 || file.type === 10;
-				const imgClass = isNew ?
-					`post__file-preview${ isVideo ? ' post__file-webm' : '' }${
-						data.nsfw ? ' post__file-nsfw' : '' }` :
-					`img preview${ isVideo ? ' webm-file' : '' }`;
-				filesHTML += `<figure class="${ p }image">
-					<figcaption class="${ p }file-attr">
+				const { fullname = file.name, displayname: dispName = file.name, type } = file;
+				const isVideo = type === 6 || type === 10;
+				const imgClass = `post__file-preview${ isVideo ? ' post__file-webm' : '' }${
+					data.nsfw ? ' post__file-nsfw' : '' }`;
+				filesHTML += `<figure class="post__image">
+					<figcaption class="post__file-attr">
 						<a id="title-${ imgId }" class="desktop" target="_blank" href="` +
-							`${ file.type === 100 /* is sticker */ ? file.install : file.path }"` +
+							`${ type === 100 /* is sticker */ ? file.install : file.path }"` +
 							`${ dispName === fullname ? '' : ` title="${ fullname }"` }>${ dispName }</a>
-						<span class="${ isNew ? 'post__filezise' : 'filesize' }">(${ file.size }Кб, ` +
+						<span class="post__filezise">(${ file.size }Кб, ` +
 							`${ file.width }x${ file.height }${ isVideo ? ', ' + file.duration : '' })</span>
 					</figcaption>
-					<div id="exlink-${ imgId }"${ isNew ? '' : 'class="image-link"' }>
-						<a ${ isNew ? 'class="post__image-link" ' : '' }href="${ file.path }">
+					<div id="exlink-${ imgId }">
+						<a class="post__image-link" href="${ file.path }">
 							<img class="${ imgClass }" src="${ file.thumbnail }" alt="${ file.width }x` +
 								`${ file.height }" width="${ file.tn_width }" height="${ file.tn_height }">
 						</a>
@@ -390,70 +298,61 @@ class MakabaPostsBuilder {
 
 		// --- POST ---
 		const emailEl = data.email ?
-			`<a href="${ data.email }" class="${ isNew ? 'post__' : 'post-' }email">${ data.name }</a>` :
-			`<span class="${ isNew ? 'post__anon' : 'ananimas' }">${ data.name }</span>`;
+			`<a href="${ data.email }" class="post__email">${ data.name }</a>` :
+			`<span class="post__anon">${ data.name }</span>`;
 		const tripEl = !data.trip ? '' : `<span class="${ _switch(data.trip, {
-			'!!%adm%!!'        : `${ p }adm">## ${ aib._2channel ? 'Admin' : 'Abu' } ##`,
-			'!!%mod%!!'        : `${ p }mod">## Mod ##`,
-			'!!%Inquisitor%!!' : `${ p }inquisitor">## Applejack ##`,
-			'!!%coder%!!'      : `${ p }mod">## Кодер ##`,
-			'!!%curunir%!!'    : `${ p }mod">## Curunir ##`,
-			'@@default'        :
-				`${ data.trip_style ? data.trip_style : isNew ? 'post__trip' : 'postertrip' }">` + data.trip
+			'!!%adm%!!'        : 'post__adm">## Abu ##',
+			'!!%mod%!!'        : 'post__mod">## Mod ##',
+			'!!%Inquisitor%!!' : 'post__inquisitor">## Applejack ##',
+			'!!%coder%!!'      : 'post__mod">## Кодер ##',
+			'!!%curunir%!!'    : 'post__mod">## Curunir ##',
+			'@@default'        : `${ data.trip_style ? data.trip_style : 'post__trip' }">` + data.trip
 		}) }</span>`;
-		const refHref = `/${ brd }/res/${ parseInt(data.parent) || num }.html#${ num }`;
+		const refHref = `/${ board }/res/${ parseInt(data.parent) || num }.html#${ num }`;
 		let rate = '';
 		if(this._hasLikes) {
-			const likes = `<div id="like-div${ num }" class="${ isNew ?
-				`post__detailpart post__rate post__rate_type_like" title="Мне это нравится">
+			const likes = `<div id="like-div${ num }" class="post__detailpart post__rate` +
+				` post__rate_type_like" title="Мне это нравится">
 					<svg xmlns="http://www.w3.org/2000/svg" class="post__rate-icon icon">
-						<use xlink:href="#icon__thunder"></use></svg>` :
-				'like-div"> <span class="like-icon"> <i class="fa fa-bolt"></i></span>'
-			} <span id="like-count${ num }"${ isNew ? '' : 'class="like-count"' }>`;
-			const dislikes = likes.replace(/like/g, 'dislike').replace('icon__thunder', 'icon__thumbdown');
+						<use xlink:href="#icon__thunder"></use></svg> <span id="like-count${ num }">`;
+			const dislikes = likes.replaceAll('like', 'dislike').replace('icon__thunder', 'icon__thumbdown');
 			rate = `${ likes }${ data.likes || 0 }</span></div>
 				${ dislikes }${ data.dislikes || 0 }</span></div>`;
 		}
-		const isOp =  i === -1;
-		const wrapClass = !isNew ? 'post-wrapper' : isOp ? 'thread__oppost' : 'thread__post';
-		const timeReflink = `<span class="${ isNew ? 'post__time' : 'posttime' }">${ data.date }</span>
-			<span class="${ isNew ? 'post__detailpart' : 'reflink' }">` +
-				`<a id="${ num }" ${ isNew ? 'class="post__reflink" ' : '' }href="${ refHref }">` +
-					`${ aib._2channel ? 'No.' : '№' }</a>` +
-				`<a class="${ isNew ? 'post__reflink ' : '' }postbtn-reply-href" href="${ refHref }"` +
-					` name="${ num }">${ num }</a>
-			</span>`;
-		return `<div id="post-${ num }" class="${ wrapClass }">
-			<div class="post ${ isNew ? 'post_type_' : '' }${ isOp ? 'oppost' : 'reply' }` +
-				`${ filesHTML ? ' post_withimg' : '' }" id="post-body-${ num }" data-num="${ num }">
-				<div id="post-details-${ num }" class="${ isNew ? 'post__details' : 'post-details' }">
-					<input type="checkbox" name="delete" value="${ num }">
-					${ !data.subject ? '' : `<span class="${ isNew ? 'post__' : 'post-' }title">` +
-						`${ data.subject + (data.tags ? ` /${ data.tags }/` : '') }</span>` }
+		const isOp = i === -1;
+		const reflink = `<a id="${ num }" class="post__reflink" href="${ refHref }">№</a>` +
+				`<a class="post__reflink postbtn-reply-href" href="${ refHref }"` +
+					` name="${ num }">${ num }</a>`;
+		const w = el => `<span class="post__detailpart">${ el }</span>`;
+		return `<div id="post-${ num }" class="post post_type_${ isOp ? 'oppost' : 'reply' }` +
+			`${ filesHTML ? ' post_withimg' : '' }" data-num="${ num }">
+			<div id="post-details-${ num }" class="post__details">
+				<input class="turnmeoff" type="checkbox" name="delete" value="${ num }">
+				${ !data.subject ? '' : w('<span class="post__title">' +
+					`${ data.subject + (data.tags ? ` /${ data.tags }/` : '') }</span>`) }
+				${ w(`
 					${ emailEl }
-					${ data.icon ? `<span class="${ isNew ? 'post__' : 'post-' }icon">` +
+					${ data.icon ? '<span class="post__icon">' +
 						`${ data.icon }</span>` : '' }
 					${ tripEl }
-					${ data.op === 1 ? `<span class="${ p }ophui"># OP</span>&nbsp;` : '' }
-					${ isNew ? timeReflink : `<span class="posttime-reflink">
-						${ timeReflink }
-					</span>` }
-					${ rate }
-				</div>
-				${ filesHTML }
-				${ this._getPostMsg(data) }
+					${ data.op === 1 ? '<span class="post__ophui"># OP</span>&nbsp;' : '' }
+				`) }
+				${ w(`<span class="post__time">${ data.date }</span>`) }
+				${ w(reflink) }
+				${ rate }
 			</div>
+			${ filesHTML }
+			${ this._getPostMsg(data) }
 		</div>`;
 	}
 	* bannedPostsData() {
-		const p = this._isNew ? 'post__' : '';
 		for(const { banned, num } of this._posts) {
 			switch(banned) {
 			case 1:
-				yield [1, num, $add(`<span class="${ p }pomyanem">(Автор этого поста был забанен.)</span>`)];
+				yield [1, num, $add('<span class="post__pomyanem">(Автор этого поста был забанен.)</span>')];
 				break;
 			case 2:
-				yield [2, num, $add(`<span class="${ p }pomyanem">` +
+				yield [2, num, $add('<span class="post__pomyanem">' +
 					'(Автор этого поста был предупрежден.)</span>')];
 				break;
 			}
@@ -465,21 +364,15 @@ class MakabaPostsBuilder {
 		Object.defineProperty(this, '_hasLikes', { value });
 		return value;
 	}
-	get _isNew() {
-		const value = !!$q('.post_type_oppost');
-		Object.defineProperty(this, '_isNew', { value });
-		return value;
-	}
 	_getPostMsg(data) {
 		const _switch = (val, obj) => val in obj ? obj[val] : obj['@@default'];
 		const comment = data.comment.replace(/<script /ig, '<!--<textarea ')
 			.replace(/<\/script>/ig, '</textarea>-->');
-		const p = this._isNew ? 'post__' : '';
-		return `<blockquote id="m${ data.num }" class="${ this._isNew ? 'post__' : 'post-' }message">` +
+		return `<article id="m${ data.num }" class="post__message">` +
 			`${ comment }${ _switch(data.banned, {
-				1           : `<br><span class="${ p }pomyanem">(Автор этого поста был забанен.)</span>`,
-				2           : `<br><span class="${ p }pomyanem">(Автор этого поста был предупрежден.)</span>`,
+				1           : '<br><span class="post__pomyanem">(Автор этого поста был забанен.)</span>',
+				2           : '<br><span class="post__pomyanem">(Автор этого поста был предупрежден.)</span>',
 				'@@default' : ''
-			}) }</blockquote>`;
+			}) }</article>`;
 	}
 }

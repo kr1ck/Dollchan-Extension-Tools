@@ -76,16 +76,17 @@ class DelForm {
 	}
 
 	static _parseClasslessThreads(formEl) {
-		let i, len, cThr = doc.createElement('div');
+		let i, len;
+		let cThr = doc.createElement('div');
 		const threads = [];
 		const fNodes = [...formEl.childNodes];
 		for(i = 0, len = fNodes.length - 1; i < len; ++i) {
 			const el = fNodes[i];
-			if(el.tagName === 'HR') {
-				formEl.insertBefore(cThr, el);
+			if(el.tagName?.toLowerCase() === 'hr') {
+				el.before(cThr);
 				const lastEl = cThr.lastElementChild;
-				if(lastEl.tagName === 'BR') {
-					formEl.insertBefore(lastEl, el);
+				if(lastEl.tagName?.toLowerCase() === 'br') {
+					el.before(lastEl);
 				}
 				try {
 					aib.getTNum(cThr);
@@ -93,11 +94,20 @@ class DelForm {
 				} catch(err) {}
 				cThr = doc.createElement('div');
 			} else {
-				cThr.appendChild(el);
+				cThr.append(el);
+				if(i === len - 1) {
+					let tNum;
+					try {
+						tNum = aib.getTNum(cThr);
+					} catch(err) {}
+					if(tNum) {
+						threads.push(cThr);
+					}
+				}
 			}
 		}
-		cThr.appendChild(fNodes[i]);
-		formEl.appendChild(cThr);
+		cThr.append(fNodes[i]);
+		formEl.append(cThr);
 		return threads;
 	}
 	get passEl() {
@@ -108,12 +118,12 @@ class DelForm {
 	addStuff() {
 		const { el } = this;
 		if(Cfg.ajaxPosting && !localData) {
-			const delBtn = aib.qDelBut ? $q(aib.qDelBut, el) : null;
+			const delBtn = aib.qDelBtn ? $q(aib.qDelBtn, el) : null;
 			if(delBtn) {
-				el.onsubmit = $pd;
+				el.onsubmit = e => e.preventDefault();
 				delBtn.onclick = e => {
-					$pd(e);
-					pr.closeReply();
+					e.preventDefault();
+					postform.closeReply();
 					$popup('delete', Lng.deleting[lang], true);
 					html5Submit(el, e.target).then(checkDelete)
 						.catch(err => $popup('delete', getErrorMessage(err)));

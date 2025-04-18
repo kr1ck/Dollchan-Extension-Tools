@@ -34,10 +34,10 @@ class DateTime {
 			!val.includes('y') || !(val.includes('n') || val.includes('m')) ||
 			/[^?\-+sihdmwny]|mm|ww|\?\?|([ihdny]\?)\1+/.test(val);
 	}
-	static toggleSettings(el) {
+	static async toggleSettings(el) {
 		if(el.checked && (!/^[+-]\d{1,2}$/.test(Cfg.timeOffset) || DateTime.checkPattern(Cfg.timePattern))) {
 			$popup('err-correcttime', Lng.cTimeError[lang]);
-			saveCfg('correctTime', 0);
+			await CfgSaver.save('correctTime', 0);
 			el.checked = false;
 		}
 	}
@@ -74,9 +74,7 @@ class DateTime {
 			rPattern += str.substring(j, k) + '_' + p;
 			j = k + a.length;
 		}
-		if(this.onRPat) {
-			this.onRPat(rPattern);
-		}
+		this.onRPat?.(rPattern);
 		this.genDateTime = this.genRFunc(rPattern);
 		return true;
 	}

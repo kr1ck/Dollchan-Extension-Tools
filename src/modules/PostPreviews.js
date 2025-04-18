@@ -22,9 +22,9 @@ class Pview extends AbstractPost {
 			return;
 		}
 		this._isCached = true;
-		this.brd = link.pathname.match(/^\/?(.+\/)/)[1].replace(aib.res, '').replace(/\/$/, '');
-		if(PviewsCache.has(this.brd + tNum)) {
-			post = PviewsCache.get(this.brd + tNum).getPost(pNum);
+		this.board = link.pathname.match(/^\/?(.+\/)/)[1].replace(aib.res, '').replace(/\/$/, '');
+		if(PviewsCache.has(this.board + tNum)) {
+			post = PviewsCache.get(this.board + tNum).getPost(pNum);
 			if(post) {
 				this._buildPview(post);
 			} else {
@@ -37,16 +37,15 @@ class Pview extends AbstractPost {
 			<svg class="de-wait"><use xlink:href="#de-symbol-wait"/></svg>${ Lng.loading[lang] }</div>`));
 
 		// Get post preview via ajax. Always use DOM parsing.
-		this._loadPromise = ajaxPostsLoad(this.brd, tNum, false, false)
+		this._loadPromise = ajaxPostsLoad(this.board, tNum, false, false)
 			.then(pBuilder => this._onload(pBuilder), err => this._onerror(err));
 	}
 	static get topParent() {
 		return Pview.top ? Pview.top.parent : null;
 	}
 	static showPview(parent, link) {
-		const tNum = +(link.pathname.match(/.+?\/[^\d]*(\d+)/) || [0, aib.getPostOfEl(link).tNum])[1];
-		let pNum = link.textContent.match(/\d+/g);
-		pNum = pNum ? +pNum.pop() : tNum;
+		const tNum = +link.pathname.match(/.+?\/[^\d]*(\d+)/)?.[1] || aib.getPostOfEl(link).tNum;
+		const pNum = +link.textContent.match(/\d+/g)?.[0] || tNum;
 		const isTop = !(parent instanceof Pview);
 		let pv = isTop ? Pview.top : parent.kid;
 		clearTimeout(Pview._delTO);
@@ -61,7 +60,7 @@ class Pview extends AbstractPost {
 				link.classList.add('de-link-parent');
 				pv._link = link;
 				if(pv.parent.num !== parent.num) {
-					$each($Q('.de-link-pview', pv.el), el => el.classList.remove('de-link-pview'));
+					$Q('.de-link-pview', pv.el).forEach(el => el.classList.remove('de-link-pview'));
 					Pview._markLink(pv.el, parent.num);
 				}
 			}
@@ -127,7 +126,7 @@ class Pview extends AbstractPost {
 			this._loadPromise.cancelPromise();
 			this._loadPromise = null;
 		}
-		let vPost = AttachedImage.viewer && AttachedImage.viewer.data.post;
+		let vPost = AttachedImage.viewer?.data.post;
 		let pv = this;
 		do {
 			clearTimeout(pv._readDelay);
@@ -147,7 +146,8 @@ class Pview extends AbstractPost {
 		} while((pv = pv.kid));
 	}
 	deleteNonSticky() {
-		let lastSticky = null, pv = this;
+		let lastSticky = null;
+		let pv = this;
 		do {
 			if(pv.isSticky) {
 				lastSticky = pv;
@@ -176,9 +176,9 @@ class Pview extends AbstractPost {
 			case 'mouseout': break;
 			default: break checkMouse;
 			}
-			const el = fixEventEl(e.relatedTarget);
+			const el = nav.fixEventEl(e.relatedTarget);
 			if(!el ||
-				isOverEvent && (el.tagName !== 'A' || el.isNotRefLink) ||
+				isOverEvent && (el.tagName.toLowerCase() !== 'a' || el.isNotRefLink) ||
 				el !== this.el && !this.el.contains(el)
 			) {
 				if(isOverEvent) {
@@ -194,7 +194,7 @@ class Pview extends AbstractPost {
 	}
 	markToDel() {
 		clearTimeout(Pview._delTO);
-		Pview._delTO = setTimeout(() => this.deleteNonSticky(), Cfg.linksOut);
+		Pview._delTO = setTimeout(() => this.deleteNonSticky(), nav.isMobile ? 0 : Cfg.linksOut);
 	}
 	mouseEnter() {
 		if(this.kid) {
@@ -208,7 +208,7 @@ class Pview extends AbstractPost {
 		const isHide = post.isHidden;
 		post.setUserVisib(!isHide);
 		Pview.updatePosition(true);
-		$each($Q(`.de-btn-pview-hide[de-num="${ this.num }"]`), el => {
+		$Q(`.de-btn-pview-hide[de-num="${ this.num }"]`).forEach(el => {
 			el.setAttribute('class',
 				`${ isHide ? 'de-btn-hide-user' : 'de-btn-unhide-user' } de-btn-pview-hide`);
 			el.parentNode.classList.toggle('de-post-hide', !isHide);
@@ -220,12 +220,17 @@ class Pview extends AbstractPost {
 	}
 
 	static _markLink(el, num) {
-		$each($Q(`a[href*="${ num }"]`, el),
+		$Q(`a[href*="${ num }"]`, el).forEach(
 			el => el.textContent.startsWith('>>' + num) && el.classList.add('de-link-pview'));
 	}
+	_menuShowOverBtn(el, html) {
+		super._menuShowOverBtn(el, html);
+		this._menu.onover = () => this.mouseEnter();
+		this._menu.onout = () => Pview.top.markToDel();
+	}
 	async _buildPview(post) {
-		$del(this.el);
-		const { num } = this;
+		this.el?.remove();
+		const { isOp, num } = this;
 		const pv = this.el = post.el.cloneNode(true);
 		pByEl.set(pv, this);
 		const isMyPost = MyPosts.has(num);
@@ -237,18 +242,15 @@ class Pview extends AbstractPost {
 			`${ isHighlighted ? ' de-highlighted' : '' }` +
 			`${ post.el.classList.contains('de-mypost-reply') ? ' de-mypost-reply' : '' }`;
 		$show(pv);
-		$each($Q('.de-post-hiddencontent', pv), el => el.classList.remove('de-post-hiddencontent'));
+		$Q('.de-post-hiddencontent', pv).forEach(el => el.classList.remove('de-post-hiddencontent'));
 		if(Cfg.linksNavig) {
 			Pview._markLink(pv, this.parent.num);
 		}
 		this._pref = $q(aib.qPostRef, pv);
 		this._link.classList.add('de-link-parent');
-		const { isOp } = this;
-		let f;
-		const isFav = isOp && (post.thr.isFav ||
-			((f = (await readFavorites())[aib.host]) && (f = f[this.brd]) && (num in f)));
+		const isFav = isOp && (post.thr.isFav || (await readFavorites())[aib.host]?.[this.board]?.[num]);
 		const isCached = post instanceof CacheItem;
-		const pCountHtml = (post.isDeleted ? ` de-post-counter-deleted">${ Lng.deleted[lang] }</span>` :
+		const postsCountHtml = (post.isDeleted ? ` de-post-counter-deleted">${ Lng.deleted[lang] }</span>` :
 			`">${ isOp ? '(OP)' : post.count + +!(aib.JsonBuilder && isCached) }</span>`) +
 			(isOpsPost ? '<span class="de-post-counter-op">(OP)</span>' : '') +
 			(isMyPost ? '<span class="de-post-counter-you">(You)</span>' : '');
@@ -257,7 +259,7 @@ class Pview extends AbstractPost {
 				'<use xlink:href="#de-symbol-post-fav"></use></svg>' : '') +
 			(post.sage ? '<svg class="de-btn-sage"><use xlink:href="#de-symbol-post-sage"/></svg>' : '') +
 			'<svg class="de-btn-stick"><use xlink:href="#de-symbol-post-stick"/></svg>' +
-			'<span class="de-post-counter' + pCountHtml;
+			'<span class="de-post-counter' + postsCountHtml;
 
 		const { thr, posterId } = post;
 		const posterIdEl = $q(aib.qPosterId, pv);
@@ -311,7 +313,7 @@ class Pview extends AbstractPost {
 			processImgInfoLinks(this);
 		} else {
 			const btnsEl = this.btns = $q('.de-post-btns', pv);
-			$del($q('.de-post-counter', btnsEl));
+			$q('.de-post-counter', btnsEl)?.remove();
 			if(post.isHidden) {
 				btnsEl.classList.add('de-post-hide');
 			}
@@ -320,7 +322,7 @@ class Pview extends AbstractPost {
 				--><use class="de-btn-hide-use" xlink:href="#de-symbol-post-hide"/><!--
 				--><use class="de-btn-unhide-use" xlink:href="#de-symbol-post-unhide"/></svg>${ pText }`;
 			$delAll(`${ !aib.t && isOp ? aib.qOmitted + ', ' : '' }.de-fullimg-wrap, .de-fullimg-after`, pv);
-			$each($Q(aib.qPostImg, pv), el => $show(el.parentNode));
+			$Q(aib.qPostImg, pv).forEach(el => $show(el.parentNode));
 			const link = $q('.de-link-parent', pv);
 			if(link) {
 				link.classList.remove('de-link-parent');
@@ -333,7 +335,7 @@ class Pview extends AbstractPost {
 				this.videos.updatePost($Q('.de-video-link', post.el), $Q('.de-video-link', pv), true);
 			}
 			if(Cfg.addImgs) {
-				$each($Q('.de-img-embed', pv), $show);
+				$Q('.de-img-embed', pv).forEach($show);
 			}
 			if(Cfg.markViewed) {
 				this._readDelay = setTimeout(post => {
@@ -357,14 +359,14 @@ class Pview extends AbstractPost {
 		}
 	}
 	_onload(pBuilder) {
-		const b = this.brd;
-		const { num } = this.parent;
-		const post = new PviewsCache(pBuilder, b, this.tNum).getPost(this.num);
-		if(post && (aib.b !== b || !post.ref.hasMap || !post.ref.has(num))) {
+		const { board } = this;
+		const { num, tNum } = this.parent;
+		const post = new PviewsCache(pBuilder, board, this.tNum).getPost(this.num);
+		if(post && (aib.b !== board || !post.ref.hasMap || !post.ref.has(num))) {
 			(post.ref.hasMap ? $q('.de-refmap', post.el) : $aEnd(post.msg, '<div class="de-refmap"></div>'))
 				.insertAdjacentHTML('afterbegin', `<a class="de-link-backref" href="${
-					aib.getThrUrl(b, this.parent.tNum) + aib.anchor + num }">&gt;&gt;${
-					aib.b === b ? '' : `/${ aib.b }/` }${ num }</a><span class="de-refcomma">, </span>`);
+					aib.getThrUrl(board, tNum) + aib.anchor + num }">&gt;&gt;${
+					aib.b === board ? '' : `/${ aib.b }/` }${ num }</a><span class="de-refcomma">, </span>`);
 		}
 		if(post) {
 			this._buildPview(post);
@@ -397,7 +399,7 @@ class Pview extends AbstractPost {
 			style.top = top + 'px';
 			return;
 		}
-		const uId = 'de-movecss-' + Math.round(Math.random() * 1e3);
+		const uId = 'de-movecss-' + Math.round(Math.random() * 1e12);
 		$css(`@keyframes ${ uId } { to { ${ lmw } top:${ top }px; } }`).className = 'de-css-move';
 		if(this._newPos) {
 			style.cssText = this._newPos;
@@ -410,15 +412,9 @@ class Pview extends AbstractPost {
 		pv.classList.add('de-pview-anim');
 		style.animationName = uId;
 	}
-	_showMenu(el, html) {
-		super._showMenu(el, html);
-		this._menu.onover = () => this.mouseEnter();
-		this._menu.onout = () => Pview.top.markToDel();
-	}
 	_showPview(el) {
-		el.addEventListener('mouseover', this, true);
-		el.addEventListener('mouseout', this, true);
-		this.thr.form.el.appendChild(el);
+		['mouseover', 'mouseout'].forEach(e => el.addEventListener(e, this, true));
+		this.thr.form.el.append(el);
 		this._setPosition(this._link, false);
 		if(Cfg.animation) {
 			el.addEventListener('animationend', function aEvent() {
@@ -445,7 +441,7 @@ class CacheItem {
 		this.isViewed = false;
 	}
 	* refLinks() {
-		yield * this._pBuilder.getRefLinks(this.count, this._thrUrl);
+		yield* this._pBuilder.getRefLinks(this.count, this._thrUrl);
 	}
 	get msg() {
 		const value = $q(aib.qPostMsg, this.el);
@@ -473,8 +469,8 @@ class CacheItem {
 	get thr() {
 		let value = null;
 		if(this.isOp) {
-			const pcount = this._pBuilder.length;
-			value = { lastNum: this._pBuilder.getPNum(pcount - 1), pcount };
+			const postsCount = this._pBuilder.length;
+			value = { lastNum: this._pBuilder.getPNum(postsCount - 1), postsCount };
 			Object.defineProperty(value, 'title', { get: () => this.title });
 		}
 		Object.defineProperty(this, 'thr', { value });
@@ -483,20 +479,20 @@ class CacheItem {
 }
 
 class PviewsCache extends TemporaryContent {
-	constructor(pBuilder, b, tNum) {
-		super(b + tNum);
+	constructor(pBuilder, board, tNum) {
+		super(board + tNum);
 		if(this._isInited) {
 			return;
 		}
 		this._isInited = true;
 		const lPByNum = new Map();
-		const thrUrl = aib.getThrUrl(b, tNum);
+		const thrUrl = aib.getThrUrl(board, tNum);
 		lPByNum.set(tNum, new CacheItem(pBuilder, thrUrl, 0));
 		for(let i = 0; i < pBuilder.length; ++i) {
 			lPByNum.set(pBuilder.getPNum(i), new CacheItem(pBuilder, thrUrl, i + 1));
 		}
 		DelForm.tNums.add(tNum);
-		this._b = b;
+		this._b = board;
 		this._posts = lPByNum;
 		if(Cfg.linksNavig) {
 			RefMap.gen(lPByNum);

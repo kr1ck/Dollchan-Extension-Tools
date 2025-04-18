@@ -17,9 +17,7 @@ const HotKeys = {
 	disableHotKeys() {
 		if(this.enabled) {
 			this.enabled = false;
-			if(this.cPost) {
-				this.cPost.unselect();
-			}
+			this.cPost?.unselect();
 			this.clearCPost();
 			this.gKeys = this.ntKeys = this.tKeys = null;
 			doc.removeEventListener('keydown', this, true);
@@ -73,13 +71,13 @@ const HotKeys = {
 		let idx;
 		const isThr = aib.t;
 		const el = e.target;
-		const tag = el.tagName;
+		const tag = el.tagName.toLowerCase();
 		const kc = e.keyCode |
 			(e.ctrlKey ? 0x1000 : 0) |
 			(e.shiftKey ? 0x2000 : 0) |
 			(e.altKey ? 0x4000 : 0) |
-			(tag === 'TEXTAREA' ||
-				tag === 'INPUT' && (el.type === 'text' || el.type === 'password') ? 0x8000 : 0);
+			(tag === 'textarea' ||
+				tag === 'input' && (el.type === 'text' || el.type === 'password') ? 0x8000 : 0);
 		if(kc === 0x74 || kc === 0x8074) { // F5
 			if(isThr || $id('de-popup-load-pages')) {
 				return;
@@ -106,10 +104,10 @@ const HotKeys = {
 			const globIdx = this.gKeys.indexOf(kc);
 			switch(globIdx) {
 			case 2: // Quick reply
-				if(pr.form) {
+				if(postform.form) {
 					post = this.cPost || this._getFirstVisPost(false, true) || Thread.first.op;
 					this.cPost = post;
-					pr.showQuickReply(post, post.num, true, false);
+					postform.showQuickReply(post, post.num, true, false);
 					post.select();
 				}
 				break;
@@ -128,10 +126,10 @@ const HotKeys = {
 				}
 				break;
 			case 5: // Send post (txt)
-				if(el !== pr.txta && el !== pr.cap.textEl) {
+				if(el !== postform.txta && el !== postform.cap.textEl) {
 					return;
 				}
-				pr.subm.click();
+				postform.subm.click();
 				break;
 			case 6: // Open/close "Favorites"
 				toggleWindow('fav', false);
@@ -143,8 +141,7 @@ const HotKeys = {
 				$toggle($id('de-panel-buttons'));
 				break;
 			case 9: // Mask/unmask images
-				toggleCfg('maskImgs');
-				updateCSS();
+				toggleCfg('maskImgs').then(() => updateCSS());
 				break;
 			case 10: // Open/close "Settings"
 				toggleWindow('cfg', false);
@@ -156,31 +153,31 @@ const HotKeys = {
 				}
 				break;
 			case 12: // Bold text (txt)
-				if(el !== pr.txta) {
+				if(el !== postform.txta) {
 					return;
 				}
 				$id('de-btn-bold').click();
 				break;
 			case 13: // Italic text (txt)
-				if(el !== pr.txta) {
+				if(el !== postform.txta) {
 					return;
 				}
 				$id('de-btn-italic').click();
 				break;
 			case 14: // Strike text (txt)
-				if(el !== pr.txta) {
+				if(el !== postform.txta) {
 					return;
 				}
 				$id('de-btn-strike').click();
 				break;
 			case 15: // Spoiler text (txt)
-				if(el !== pr.txta) {
+				if(el !== postform.txta) {
 					return;
 				}
 				$id('de-btn-spoil').click();
 				break;
 			case 16: // Code text (txt)
-				if(el !== pr.txta) {
+				if(el !== postform.txta) {
 					return;
 				}
 				$id('de-btn-code').click();
@@ -225,7 +222,7 @@ const HotKeys = {
 					if(post) {
 						if(post.thr.loadCount !== 0 && post.thr.op.next.count === 1) {
 							const nextThr = post.thr.nextNotHidden;
-							post.thr.loadPosts(visPosts, !!nextThr);
+							post.thr.loadPosts(Thread.visPosts, !!nextThr);
 							post = (nextThr || post.thr).op;
 						} else {
 							post.thr.loadPosts('all');
@@ -247,7 +244,7 @@ const HotKeys = {
 			}
 			}
 		}
-		$pd(e);
+		e.preventDefault();
 		e.stopPropagation();
 	},
 	pauseHotKeys() {
@@ -327,9 +324,7 @@ const HotKeys = {
 				}
 				post = tPost;
 			}
-			if(this.cPost) {
-				this.cPost.unselect();
-			}
+			this.cPost?.unselect();
 			this.cPost = getThread ? getFull ? post.op : post.op.prev : getFull ? post : post.prev;
 			this.lastPageOffset = deWindow.pageYOffset;
 		}
@@ -426,7 +421,8 @@ class KeyEditListener {
 		return value;
 	}
 	handleEvent(e) {
-		let key, el = e.target;
+		let key;
+		let el = e.target;
 		switch(e.type) {
 		case 'blur':
 			if(HotKeys.enabled && this.errCount === 0) {
@@ -481,7 +477,7 @@ class KeyEditListener {
 				break;
 			}
 			const keyStr = KeyEditListener.keyCodes[key];
-			if(keyStr === undefined) {
+			if(typeof keyStr === 'undefined') {
 				this.cKey = -1;
 				return;
 			}
@@ -561,13 +557,13 @@ class KeyEditListener {
 			}
 		}
 		}
-		$pd(e);
+		e.preventDefault();
 	}
 }
 // Browsers have different codes for these keys (see HotKeys.readKeys):
-//     Firefox - '-' - 173, '=' - 61, ';' - 59
-//     Chrome/Opera: '-' - 189, '=' - 187, ';' - 186
-/* eslint-disable comma-spacing, comma-style, no-sparse-arrays */
+//    Firefox - '-' - 173, '=' - 61, ';' - 59
+//    Chrome/Opera: '-' - 189, '=' - 187, ';' - 186
+/* eslint-disable comma-spacing, no-sparse-arrays */
 KeyEditListener.keyCodes = [
 	'',,,,,,,,'Backspace','Tab',,,,'Enter',,,'Shift','Ctrl','Alt',/* Pause/Break */,/* Caps Lock */,,,,,,,
 	/* Esc */,,,,,'Space',/* PgUp */,/* PgDn */,/* End */,/* Home */,'←','↑','→','↓',,,,,/* Insert */,
@@ -576,6 +572,6 @@ KeyEditListener.keyCodes = [
 	/* Select */,,,'Num 0','Num 1','Num 2','Num 3','Num 4','Num 5','Num 6','Num 7','Num 8','Num 9','Num *',
 	'Num +',,'Num -','Num .','Num /',/* F1 */,/* F2 */,/* F3 */,/* F4 */,/* F5 */,/* F6 */,/* F7 */,/* F8 */,
 	/* F9 */,/* F10 */,/* F11 */,/* F12 */,,,,,,,,,,,,,,,,,,,,,/* Num Lock */,/* Scroll Lock */,,,,,,,,,,,,,,,
-	,,,,,,,,,,,,,'-',,,,,,,,,,,,,';','=',',','-','.','/','`',,,,,,,,,,,,,,,,,,,,,,,,,,,'[','\\',']',"'"
+	,,,,,,,,,,,,,'-',,,,,,,,,,,,,';','=',',','-','.','/','`',,,,,,,,,,,,,,,,,,,,,,,,,,,'[','\\',']','\''
 ];
-/* eslint-enable comma-spacing, comma-style, no-sparse-arrays */
+/* eslint-enable comma-spacing, no-sparse-arrays */

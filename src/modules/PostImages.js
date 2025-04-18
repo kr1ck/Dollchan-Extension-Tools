@@ -6,7 +6,7 @@
 // Navigation buttons for expanding of images/videos by center
 class ImagesNavigBtns {
 	constructor(viewerObj) {
-		const btns = $bEnd(docBody, `<div style="display: none;">
+		const btns = $bEnd(doc.body, `<div style="display: none;">
 			<div id="de-img-btn-prev" class="de-img-btn" de-title="${ Lng.prevImg[lang] }">
 				<svg><use xlink:href="#de-symbol-img-btn-arrow"/></svg></div>
 			<div id="de-img-btn-next" class="de-img-btn" de-title="${ Lng.nextImg[lang] }">
@@ -18,7 +18,7 @@ class ImagesNavigBtns {
 		[this.prevBtn, this.nextBtn, this.autoBtn] = [...btns.children];
 		this._btns = btns;
 		this._btnsStyle = btns.style;
-		this._hideTmt = 0;
+		this._hideTO = null;
 		this._isHidden = true;
 		this._oldX = -1;
 		this._oldY = -1;
@@ -40,16 +40,15 @@ class ImagesNavigBtns {
 		case 'mouseover':
 			if(!this.hasEvents) {
 				this.hasEvents = true;
-				this._btns.addEventListener('mouseout', this);
-				this._btns.addEventListener('click', this);
+				['mouseout', 'click'].forEach(e => this._btns.addEventListener(e, this));
 			}
 			if(!this._isHidden) {
-				clearTimeout(this._hideTmt);
+				clearTimeout(this._hideTO);
 				KeyEditListener.setTitle(this.prevBtn, 4);
 				KeyEditListener.setTitle(this.nextBtn, 17);
 			}
 			return;
-		case 'mouseout': this._setHideTmt(); return;
+		case 'mouseout': this._setHideTimeout(); return;
 		case 'click': {
 			const parent = e.target.parentNode;
 			const viewer = this._viewer;
@@ -74,19 +73,19 @@ class ImagesNavigBtns {
 	removeBtns() {
 		this._btns.remove();
 		doc.defaultView.removeEventListener('mousemove', this);
-		clearTimeout(this._hideTmt);
+		clearTimeout(this._hideTO);
 	}
 	showBtns() {
 		if(this._isHidden) {
 			this._btnsStyle.removeProperty('display');
 			this._isHidden = false;
-			this._setHideTmt();
+			this._setHideTimeout();
 		}
 	}
 
-	_setHideTmt() {
-		clearTimeout(this._hideTmt);
-		this._hideTmt = setTimeout(() => this.hideBtns(), 2e3);
+	_setHideTimeout() {
+		clearTimeout(this._hideTO);
+		this._hideTO = setTimeout(() => this.hideBtns(), 2e3);
 	}
 }
 
@@ -95,7 +94,6 @@ class ImagesViewer {
 	constructor(data) {
 		this.data = null;
 		this.isAutoPlay = false;
-		this._data = null;
 		this._elStyle = null;
 		this._fullEl = null;
 		this._height = 0;
@@ -106,7 +104,9 @@ class ImagesViewer {
 		this._oldX = 0;
 		this._oldY = 0;
 		this._parentEl = null;
+		this._touchDistStart = 0;
 		this._width = 0;
+		this._zoomed = false;
 		this._showFullImg(data);
 	}
 	closeImgViewer(e) {
@@ -117,37 +117,11 @@ class ImagesViewer {
 	}
 	handleEvent(e) {
 		switch(e.type) {
-		case 'mousedown':
-			if(this.data.isVideo && ExpandableImage.isControlClick(e)) {
-				return;
-			}
-			this._oldX = e.clientX;
-			this._oldY = e.clientY;
-			docBody.addEventListener('mousemove', this, true);
-			docBody.addEventListener('mouseup', this, true);
-			break;
-		case 'mousemove': {
-			const { clientX: curX, clientY: curY } = e;
-			if(curX !== this._oldX || curY !== this._oldY) {
-				this._oldL = parseInt(this._elStyle.left, 10) + curX - this._oldX;
-				this._elStyle.left = this._oldL + 'px';
-				this._oldT = parseInt(this._elStyle.top, 10) + curY - this._oldY;
-				this._elStyle.top = this._oldT + 'px';
-				this._oldX = curX;
-				this._oldY = curY;
-				this._moved = true;
-			}
-			return;
-		}
-		case 'mouseup':
-			docBody.removeEventListener('mousemove', this, true);
-			docBody.removeEventListener('mouseup', this, true);
-			return;
 		case 'click': {
 			const el = e.target;
+			const tag = el.tagName.toLowerCase();
 			if(this.data.isVideo && ExpandableImage.isControlClick(e) ||
-				el.tagName !== 'IMG' &&
-				el.tagName !== 'VIDEO' &&
+				tag !== 'img' && tag !== 'video' &&
 				!el.classList.contains('de-fullimg-wrap') &&
 				!el.classList.contains('de-fullimg-wrap-link') &&
 				!el.classList.contains('de-fullimg-video-hack') &&
@@ -156,7 +130,7 @@ class ImagesViewer {
 				return;
 			}
 			if(e.button === 0) {
-				if(this._moved) {
+				if(this._moved && !nav.isMobile) {
 					this._moved = false;
 				} else {
 					this.closeImgViewer(e);
@@ -167,21 +141,71 @@ class ImagesViewer {
 			}
 			return;
 		}
+		case 'mousedown':
+			if(this.data.isVideo && ExpandableImage.isControlClick(e)) {
+				return;
+			}
+			this._oldX = e.clientX;
+			this._oldY = e.clientY;
+			['mousemove', 'mouseup'].forEach(e => doc.body.addEventListener(e, this, true));
+			break;
+		case 'mousemove': this._moveFullImg(e.clientX, e.clientY); return;
+		case 'mouseup':
+			['mousemove', 'mouseup'].forEach(e => doc.body.removeEventListener(e, this, true));
+			return;
+
 		case 'mousewheel':
-			this._handleWheelEvent(e.clientX, e.clientY,
+			this._handleZoom(e.clientX, e.clientY,
 				-1 / 40 * ('wheelDeltaY' in e ? e.wheelDeltaY : e.wheelDelta));
 			break;
-		default: // 'wheel' event
-			this._handleWheelEvent(e.clientX, e.clientY, e.deltaY);
+		case 'touchend':
+			if(e.targetTouches.length === 0) {
+				this._zoomed = false;
+				return;
+			}
+		/* falls through */
+		case 'touchmove': {
+			const touchesLen = e.targetTouches.length;
+			if(touchesLen === 1 && !this._zoomed) {
+				this._moveFullImg(e.touches[0].clientX, e.touches[0].clientY);
+			} else if(touchesLen === 2 && e.changedTouches.length === 2) {
+				const finger0X = e.touches[0].clientX;
+				const finger1X = e.touches[1].clientX;
+				const finger0Y = e.touches[0].clientY;
+				const finger1Y = e.touches[1].clientY;
+				this._handleZoom(
+					(finger0X + finger1X) / 2, (finger0Y + finger1Y) / 2, this._touchDistStart -
+						(this._touchDistStart = Math.hypot(finger0X - finger1X, finger0Y - finger1Y)));
+				this._zoomed = true;
+			}
+			break;
 		}
-		$pd(e);
+		case 'touchstart': {
+			const touchesLen = e.targetTouches.length; // Number of fingers touched screen
+			if(touchesLen === 1) {
+				if(this.data.isVideo && ExpandableImage.isControlClick(e)) {
+					return;
+				}
+				this._oldX = e.touches[0].clientX;
+				this._oldY = e.touches[0].clientY;
+			} else if(touchesLen === 2) {
+				// Distance between two fingers
+				this._touchDistStart = Math.hypot(
+					e.touches[0].clientX - e.touches[1].clientX,
+					e.touches[0].clientY - e.touches[1].clientY);
+			}
+			return;
+		}
+		case 'wheel': this._handleZoom(e.clientX, e.clientY, e.deltaY);
+		}
+		e.preventDefault();
 	}
 	navigate(isForward, isVideoOnly = false) {
 		let { data } = this;
 		data.cancelWebmLoad(this._fullEl);
 		do {
 			data = data.getFollowImg(isForward);
-		} while(data && !data.isVideo && !data.isImage || isVideoOnly && data.isImage);
+		} while(data && (!data.isVideo && !data.isImage || isVideoOnly && data.isImage));
 		if(data) {
 			this.updateImgViewer(data, true, null);
 			data.post.selectAndScrollTo(data.post.images.first.el);
@@ -210,7 +234,7 @@ class ImagesViewer {
 	}
 	toggleVideoLoop() {
 		if(this.data.isVideo) {
-			toggleAttr($q('video', this._fullEl), 'loop', '', !this.isAutoPlay);
+			$q('video', this._fullEl).toggleAttribute('loop', !this.isAutoPlay);
 		}
 	}
 	updateImgViewer(data, showButtons, e) {
@@ -224,25 +248,29 @@ class ImagesViewer {
 		return value;
 	}
 	get _zoomFactor() {
-		const value = 1 + (Cfg.zoomFactor / 100);
+		const value = 1 + Cfg.zoomFactor / 100;
 		Object.defineProperty(this, '_zoomFactor', { value });
 		return value;
 	}
-	_handleWheelEvent(clientX, clientY, delta) {
+	_handleZoom(clientX, clientY, delta) {
 		if(delta === 0) {
 			return;
 		}
 		let width, height;
 		const { _width: oldW, _height: oldH } = this;
-		if(delta > 0) {
+		if(nav.isMobile) {
+			const wh = oldW / oldH;
+			width = oldW - 1.5 * delta;
+			height = width / wh;
+		} else if(delta > 0) {
 			width = oldW / this._zoomFactor;
 			height = oldH / this._zoomFactor;
-			if(width <= this._minSize && height <= this._minSize) {
-				return;
-			}
 		} else {
 			width = oldW * this._zoomFactor;
 			height = oldH * this._zoomFactor;
+		}
+		if(width <= this._minSize && height <= this._minSize) {
+			return;
 		}
 		this._width = width;
 		this._height = height;
@@ -252,6 +280,19 @@ class ImagesViewer {
 		this._elStyle.left = this._oldL + 'px';
 		this._oldT = parseInt(clientY - (height / oldH) * (clientY - this._oldT), 10);
 		this._elStyle.top = this._oldT + 'px';
+		const scale = 100 * width / this.data.width;
+		$q('.de-fullimg-scale', this._fullEl).textContent = scale === 100 ? '' : `${ parseInt(scale, 10) }%`;
+	}
+	_moveFullImg(curX, curY) {
+		if(curX !== this._oldX || curY !== this._oldY) {
+			this._oldL = parseInt(this._elStyle.left, 10) + curX - this._oldX;
+			this._elStyle.left = this._oldL + 'px';
+			this._oldT = parseInt(this._elStyle.top, 10) + curY - this._oldY;
+			this._elStyle.top = this._oldT + 'px';
+			this._oldX = curX;
+			this._oldY = curY;
+			this._moved = true;
+		}
 	}
 	_removeFullImg(e) {
 		const { data } = this;
@@ -264,7 +305,7 @@ class ImagesViewer {
 			data.sendCloseEvent(e, false);
 		}
 	}
-	_resizeFullImg(el) {
+	_resizeFullImg(el) { // Set size for images/videos without initial size
 		if(el !== this._fullEl) {
 			return;
 		}
@@ -325,17 +366,19 @@ class ImagesViewer {
 			data.isVideo ? ' de-fullimg-center-video' : '' }" style="top:${ this._oldT -
 			(Cfg.imgInfoLink ? 11 : 0) - (nav.firefoxVer >= 59 && data.isVideo ? 10 : 0) }px; left:${
 			this._oldL }px; width:${ width }px; height:${ height }px; display: block"></div>`);
-		el.appendChild(this._fullEl);
+		el.append(this._fullEl);
+		const scale = 100 * width / data.width;
+		$q('.de-fullimg-scale', this._fullEl).textContent = scale === 100 ? '' : `${ parseInt(scale, 10) }%`;
 		if(data.isImage) {
 			$aBegin(this._fullEl, `<a class="de-fullimg-wrap-link" href="${ data.src }"></a>`)
-				.appendChild($q('img', this._fullEl));
+				.append($q('img', this._fullEl));
 		}
 		this._elStyle = el.style;
 		this.data = data;
 		this._parentEl = el;
-		el.addEventListener('onwheel' in el ? 'wheel' : 'mousewheel', this, true);
-		el.addEventListener('mousedown', this, true);
-		el.addEventListener('click', this, true);
+		const events = nav.isMobile ? ['click', 'touchend', 'touchmove', 'touchstart'] :
+			['click', 'mousedown', 'onwheel' in el ? 'wheel' : 'mousewheel'];
+		events.forEach(e => el.addEventListener(e, this, true));
 		data.srcBtnEvents(this);
 		if(data.inPview && !data.post.isSticky) {
 			data.post.toggleSticky(true);
@@ -347,7 +390,7 @@ class ImagesViewer {
 		} else if($hasProp(this, '_btns')) {
 			btns.hideBtns();
 		}
-		data.post.thr.form.el.appendChild(el);
+		data.post.thr.form.el.append(el);
 		this.toggleVideoLoop();
 		if(this.data.rotate) {
 			this.rotateView(false);
@@ -384,14 +427,14 @@ class ExpandableImage {
 		return value;
 	}
 	get isImage() {
-		const value = /(jpe?g|png|gif|webp)$/i.test(this.src) ||
-			(this.src.startsWith('blob:') && !this.el.hasAttribute('de-video'));
+		const value = /(jfif|jpe?g|png|gif|webp)$/i.test(this.src) ||
+			this.src.startsWith('blob:') && !this.el.hasAttribute('de-video');
 		Object.defineProperty(this, 'isImage', { value });
 		return value;
 	}
 	get isVideo() {
-		const value = /(web|webm|mp4|m4v|ogv)(&|$)/i.test(this.src) ||
-			(this.src.startsWith('blob:') && this.el.hasAttribute('de-video'));
+		const value = /(webm|mov|mp4|m4v|ogv)(&|$)/i.test(this.src) ||
+			this.src.startsWith('blob:') && this.el.hasAttribute('de-video');
 		Object.defineProperty(this, 'isVideo', { value });
 		return value;
 	}
@@ -444,13 +487,19 @@ class ExpandableImage {
 		$show(this.el.parentNode);
 		(aib.hasPicWrap ? this._getImageParent : this.el.parentNode).nextSibling.remove();
 		if(e) {
-			$pd(e);
+			e.preventDefault();
 			if(this.inPview) {
 				this.sendCloseEvent(e, true);
 			}
 			const origImgTop = this.el.getBoundingClientRect().top;
 			if(fullImgTop < 0 || origImgTop < 0) {
 				scrollTo(deWindow.pageXOffset, deWindow.pageYOffset + origImgTop);
+			}
+		}
+		if(aib.kohlchan) {
+			const containerEl = $q('.contentOverflow', this.post.el);
+			if(containerEl && !$q('.de-fullimg-wrap-inpost', containerEl)) {
+				containerEl.removeAttribute('style');
 			}
 		}
 	}
@@ -479,9 +528,9 @@ class ExpandableImage {
 				width = this.isVideo ? minSize : height * ar;
 			}
 		}
-		const maxWidth = Post.sizing.wWidth - 2;
-		const maxHeight = Post.sizing.wHeight -
-			(Cfg.imgInfoLink ? 24 : 2) - (nav.firefoxVer >= 59 && this.isVideo ? 19 : 0);
+		const maxWidth = Math.min(Post.sizing.wWidth - 2, Cfg.maxImgSize);
+		const maxHeight = Math.min(Post.sizing.wHeight -
+			(Cfg.imgInfoLink ? 24 : 2) - (nav.firefoxVer >= 59 && this.isVideo ? 19 : 0), Cfg.maxImgSize);
 		if(width > maxWidth || height > maxHeight) {
 			const ar = width / height;
 			if(ar > maxWidth / maxHeight) {
@@ -520,19 +569,28 @@ class ExpandableImage {
 			origImgTop = e.target.getBoundingClientRect().top;
 		}
 		this.expanded = true;
-		const { el } = this;
-		(aib.hasPicWrap ? this._getImageParent : el.parentNode).insertAdjacentHTML('afterend',
+		(aib.hasPicWrap ? this._getImageParent : this.el.parentNode).insertAdjacentHTML('afterend',
 			'<div class="de-fullimg-after"></div>');
-		this._fullEl = this.getFullImg(true, null, null);
-		this._fullEl.addEventListener('click', e => this.collapseImg(e), true);
+		const fullEl = this._fullEl = this.getFullImg(true, null, null);
+		fullEl.addEventListener('click', e => this.collapseImg(e), true);
 		this.srcBtnEvents(this);
-		$hide(el.parentNode);
-		$after(el.parentNode, this._fullEl);
-		this.checkForRedirect(this._fullEl);
+		const parent = this.el.parentNode;
+		$hide(parent);
+		parent.after(fullEl);
+		this.checkForRedirect(fullEl);
 		if(e) {
-			const fullImgTop = this._fullEl.getBoundingClientRect().top;
+			const fullImgTop = fullEl.getBoundingClientRect().top;
 			if(fullImgTop < 0 || origImgTop < 0) {
 				scrollTo(deWindow.pageXOffset, deWindow.pageYOffset + fullImgTop);
+			}
+		}
+		if(aib.kohlchan) {
+			if(!this.isVideo) {
+				$q('.de-fullimg', fullEl).classList.add('imgExpanded');
+			}
+			const containerEl = $q('.contentOverflow', this.post.el);
+			if(containerEl) {
+				containerEl.style.maxHeight = 'unset';
 			}
 		}
 	}
@@ -541,7 +599,8 @@ class ExpandableImage {
 		if(nImage) {
 			return nImage;
 		}
-		let imgs, { post } = this;
+		let imgs;
+		let { post } = this;
 		do {
 			post = post.getAdjacentVisPost(!isForward);
 			if(!post) {
@@ -562,7 +621,7 @@ class ExpandableImage {
 		const src = this._getImageSrc();
 		const parent = this._getImageParent;
 		if(this.el.className !== 'de-img-embed') {
-			const nameEl = $q(aib.qImgNameLink, parent) || $q('a', parent);
+			const nameEl = $q(aib.qPostImgNameLink, parent) || $q('a', parent);
 			origSrc = nameEl.getAttribute('de-href') || nameEl.href;
 			({ name } = this);
 		} else {
@@ -583,7 +642,7 @@ class ExpandableImage {
 			wrapEl = $add(`<div class="de-fullimg-wrap${ wrapClass }">
 				${ waitEl }
 				<img class="de-fullimg" src="${ src }" alt="${ src }">
-				<div class="de-fullimg-info">${ imgNameEl }</a></div>
+				<div class="de-fullimg-info">${ imgNameEl }</a> <span class="de-fullimg-scale"></span></div>
 			</div>`);
 			const imgEl = $q('.de-fullimg', wrapEl);
 			imgEl.onload = imgEl.onerror = ({ target: img }) => {
@@ -595,10 +654,9 @@ class ExpandableImage {
 					}
 					return;
 				}
-				const { naturalWidth: newW, naturalHeight: newH } = img;
+				const { naturalWidth: newW, naturalHeight: newH, scrollWidth } = img;
 				const ar = this._size ? this._size[1] / this._size[0] : newH / newW;
-				const isRotated = !img.scrollWidth ? false :
-					img.scrollHeight / img.scrollWidth > 1 ? ar < 1 : ar > 1;
+				const isRotated = scrollWidth ? img.scrollHeight / scrollWidth > 1 ? ar < 1 : ar > 1 : false;
 				if(!this._size || isRotated) {
 					this._size = isRotated ? [newH, newW] : [newW, newH];
 				}
@@ -618,7 +676,7 @@ class ExpandableImage {
 			return wrapEl;
 		}
 
-		// Expand videos: WEBM, MP4
+		// Expand videos
 		// FIXME: handle null size videos
 		const isWebm = getFileExt(origSrc) === 'webm' || getFileExt(origSrc) === 'web';
 		const needTitle = isWebm && Cfg.webmTitles;
@@ -630,13 +688,15 @@ class ExpandableImage {
 		const hasTitle = needTitle && this.el.hasAttribute('de-metatitle');
 		const title = hasTitle ? this.el.getAttribute('de-metatitle') : '';
 		wrapEl = $add(`<div class="de-fullimg-wrap${ wrapClass }"${ inPostSize }>${
-			nav.firefoxVer < 59 ? '' : '<div class="de-fullimg-video-hack"></div>' }
+			nav.firefoxVer >= 59 || nav.isMobile ? `<div class="de-fullimg-video-hack">${
+				nav.isMobile && nav.isWebkit ? '\u00D7' : ''
+			}</div>` : '' }
 			<video src="${ src }" ` +
 				`${ hasTitle && title ? `title="${ title }" ` : '' }loop autoplay ` +
 				`${ Cfg.webmControl ? 'controls ' : '' }` +
 				`${ Cfg.webmVolume === 0 ? 'muted ' : '' }></video>
-			<div class="de-fullimg-info">${ imgNameEl }</a>
-				<span class="de-fullimg-link de-webm-title">${ hasTitle && title ? title : '' }</span>
+			<div class="de-fullimg-info">${ imgNameEl }</a> <span class="de-fullimg-scale"></span>
+				<span class="de-webm-title">${ hasTitle && title ? title : '' }</span>
 				${ needTitle && !hasTitle ? `<svg class="de-wait">
 					<use xlink:href="#de-symbol-wait"/></svg>` : '' }
 			</div>
@@ -658,10 +718,10 @@ class ExpandableImage {
 		}
 		// Sync webm volume on all browser tabs
 		setTimeout(() => videoEl.dispatchEvent(new CustomEvent('volumechange')), 150);
-		videoEl.addEventListener('volumechange', ({ target: el, isTrusted }) => {
+		videoEl.addEventListener('volumechange', async ({ target: el, isTrusted }) => {
 			const val = el.muted ? 0 : Math.round(el.volume * 100);
 			if(isTrusted && val !== Cfg.webmVolume) {
-				saveCfg('webmVolume', val);
+				await CfgSaver.save('webmVolume', val);
 				sendStorageEvent('__de-webmvolume', val);
 			}
 		});
@@ -673,12 +733,13 @@ class ExpandableImage {
 		}
 		// Get webm title: load file and parse its metadata
 		if(needTitle && !hasTitle) {
-			this._webmTitleLoad = ContentLoader.loadImgData(videoEl.src, false).then(data => {
+			this._webmTitleLoad = ContentLoader.loadFileData(videoEl.src, false).then(data => {
 				$hide($q('.de-wait', wrapEl));
 				if(!data) {
 					return;
 				}
-				let str = '', d = new WebmParser(data.buffer).getWebmData();
+				let str = '';
+				let d = new WebmParser(data.buffer).getWebmData();
 				if(!d) {
 					return;
 				}
@@ -700,7 +761,7 @@ class ExpandableImage {
 				this.el.setAttribute('de-metatitle', loadedTitle);
 				if(str) {
 					$q('.de-webm-title', wrapEl).textContent =
-						videoEl.title = loadedTitle.replace(/\./g, ' ');
+						videoEl.title = loadedTitle.replaceAll('.', ' ');
 				}
 			});
 		}
@@ -734,11 +795,17 @@ class ExpandableImage {
 			return;
 		}
 		const srcBtnEl = $q('.de-btn-img', _fullEl);
-		srcBtnEl.addEventListener('mouseover', () => (srcBtnEl.odelay = setTimeout(() => {
+		const event = nav.isMobile ? 'click' : 'mouseover';
+		srcBtnEl.addEventListener(event, () => (srcBtnEl._menuTO = setTimeout(() => {
+			if(nav.isMobile && srcBtnEl._menu?.el && srcBtnEl._menu?.parentEl === srcBtnEl) {
+				srcBtnEl._menu.el.remove();
+				srcBtnEl._menu = null;
+				return;
+			}
 			const menuHtml = !this.isVideo ? Menu.getMenuImg(srcBtnEl) :
-				Menu.getMenuImg(srcBtnEl, true) + `<span class="de-menu-item de-menu-getframe">${
-					Lng.getFrameLinks[lang] }</span>`;
-			new Menu(srcBtnEl, menuHtml, !this.isVideo ? emptyFn : optiontEl => {
+				Menu.getMenuImg(srcBtnEl, true) +
+					`<span class="de-menu-item de-menu-getframe">${ Lng.getFrameLinks[lang] }</span>`;
+			srcBtnEl._menu = new Menu(srcBtnEl, menuHtml, !this.isVideo ? Function.prototype : optiontEl => {
 				if(!optiontEl.classList.contains('de-menu-getframe')) {
 					return;
 				}
@@ -746,17 +813,15 @@ class ExpandableImage {
 					$popup('upload', Lng.sending[lang], true);
 					const name = cutFileExt(this.name) + '.png';
 					const blob = new Blob([arr], { type: 'image/png' });
-					let formData;
-					if(!nav.isChrome || nav.scriptHandler !== 'WebExtension') {
-						formData = new FormData();
-						formData.append('file', blob, name);
-					}
+					const formData = new FormData();
+					formData.append('file', blob, name);
 					const ajaxParams = { data: formData || { arr, name }, method: 'POST' };
 					const frameLinkHtml = `<a class="de-menu-item de-list" href="${
 						deWindow.URL.createObjectURL(blob) }" download="${ name }" target="_blank">${
 						Lng.saveFrame[lang] }</a>`;
 					$ajax('https://tmp.saucenao.com/', ajaxParams, true).then(xhr => {
-						let hostUrl, errMsg = Lng.errSaucenao[lang];
+						let hostUrl;
+						let errMsg = Lng.errSaucenao[lang];
 						try {
 							const obj = JSON.parse(xhr.responseText);
 							if(obj.status === 'success') {
@@ -764,13 +829,13 @@ class ExpandableImage {
 							} else {
 								errMsg += ':<br>' + obj.error_message;
 							}
-						} catch(e) {}
+						} catch(err) {}
 						$popup('upload', (hostUrl || errMsg) + frameLinkHtml);
 					}, () => $popup('upload', Lng.errSaucenao[lang] + frameLinkHtml));
-				}, emptyFn);
+				}, Function.prototype);
 			});
 		}, Cfg.linksOver)));
-		srcBtnEl.addEventListener('mouseout', e => clearTimeout(e.target.odelay));
+		srcBtnEl.addEventListener('mouseout', e => clearTimeout(e.target._menuTO));
 	}
 
 	get _size() {
@@ -815,14 +880,18 @@ class AttachedImage extends ExpandableImage {
 		return value;
 	}
 	get nameLink() {
-		const value = $q(aib.qImgNameLink, this._getImageParent);
+		const value = $q(aib.qPostImgNameLink, this._getImageParent);
 		Object.defineProperty(this, 'nameLink', { value });
 		return value;
 	}
 	get weight() {
 		let value = 0;
 		if(this.info) {
-			const w = this.info.match(/(\d+(?:[.,]\d+)?)\s*([mмkк])?i?[bб]/i);
+			let w = this.info;
+			if(this.nameLink) {
+				w = w.replace(this.nameLink.innerText, '');
+			}
+			w = w.match(/(\d+(?:[.,]\d+)?)\s*([mмkк])?i?[bб]/i);
 			const w1 = w[1].replace(',', '.');
 			value = w[2] === 'M' ? (w1 * 1e3) | 0 : !w[2] ? Math.round(w1 / 1e3) : w1;
 		}
@@ -843,8 +912,8 @@ class AttachedImage extends ExpandableImage {
 		return null;
 	}
 	_getImageSrc() {
-		// XXX: DON'T USE aib.getImgSrcLink(this.el).href
-		// If #ihash spells enabled, Chrome reads href in ajaxed posts as empty -> image can't be expanded!
+		// Donʼt use aib.getImgSrcLink(this.el).href
+		// If #ihash spells enabled, Chrome reads href in ajaxed posts as empty -> image canʼt be expanded!
 		const src = aib.getImgSrcLink(this.el).getAttribute('href');
 		if (/effectivegatetocontent/i.test(src)) {
 		    const extensionRegex = /\.([0-9a-z]+)(?:[\?#]|$)/i;
@@ -865,7 +934,9 @@ AttachedImage.viewer = null;
 // A class that finds a set of images in a post
 class PostImages {
 	constructor(post) {
-		let first = null, last = null, els = $Q(aib.qPostImg, post.el);
+		let first = null;
+		let last = null;
+		let els = $Q(aib.qPostImg, post.el);
 		let hasAttachments = false;
 		const filesMap = new Map();
 		for(let i = 0, len = els.length; i < len; ++i) {
@@ -955,7 +1026,7 @@ const ImagesHashStorage = Object.create({
 		return value;
 	},
 	get _workers() {
-		const value = new WorkerPool(4, this._genImgHash, emptyFn);
+		const value = new WorkerPool(4, this._genImgHash, Function.prototype);
 		Object.defineProperty(this, '_workers', { value, configurable: true });
 		return value;
 	},
@@ -967,7 +1038,7 @@ const ImagesHashStorage = Object.create({
 		}
 		const newh = 8;
 		const neww = 8;
-		const levels = 3;
+		const levels = 4;
 		const areas = 256 / levels;
 		const values = 256 / (levels - 1);
 		let hash = 0;
@@ -1003,7 +1074,8 @@ const ImagesHashStorage = Object.create({
 		if(el.naturalWidth + el.naturalHeight === 0) {
 			return -1;
 		}
-		let data, val = -1;
+		let data;
+		let val = -1;
 		const { naturalWidth: w, naturalHeight: h } = el;
 		const cnv = this._canvas;
 		cnv.width = w;
@@ -1024,7 +1096,7 @@ const ImagesHashStorage = Object.create({
 });
 
 function getImgNameLink(el) {
-	return $q(aib.qImgNameLink, aib.getImgWrap(el));
+	return $q(aib.qPostImgNameLink, aib.getImgWrap(el));
 }
 
 function addImgButtons(link) {
@@ -1038,7 +1110,7 @@ function processImgInfoLinks(parent, addSrc = Cfg.imgSrcBtns, imgNames = Cfg.img
 		if(parent instanceof AbstractPost) {
 			processPostImgInfoLinks(parent, addSrc, imgNames);
 		} else {
-			const posts = $Q(aib.qRPost + ', ' + aib.qOPost + ', .de-oppost', parent);
+			const posts = $Q(aib.qPost + ', ' + aib.qOPost + ', .de-oppost', parent);
 			for(let i = 0, len = posts.length; i < len; ++i) {
 				processPostImgInfoLinks(pByEl.get(posts[i]), addSrc, imgNames);
 			}
@@ -1066,8 +1138,8 @@ function processPostImgInfoLinks(post, addSrc, imgNames) {
 			link.setAttribute('de-href', link.href);
 		}
 		if(imgNames) {
-			let ext;
-			if(!(ext = link.getAttribute('de-img-ext'))) {
+			let ext = link.getAttribute('de-img-ext');
+			if(!ext) {
 				ext = getFileExt(name) || getFileExt(getFileName(link.href));
 				link.setAttribute('de-img-ext', ext);
 				link.setAttribute('de-img-name-old', link.textContent);
@@ -1089,8 +1161,8 @@ function embedPostMsgImages(el) {
 		if(url.includes('?') || aib.getPostOfEl(link).hidden) {
 			continue;
 		}
-		$bBegin(link, `<a href="${
-			link.href }" target="_blank"><img class="de-img-embed" src="${ url }"></a><br>`);
+		link.insertAdjacentHTML('beforebegin',
+			`<a href="${ url }" target="_blank"><img class="de-img-embed" src="${ url }"></a><br>`);
 		if(Cfg.imgSrcBtns) {
 			addImgButtons(link);
 		}

@@ -5,12 +5,12 @@
 const Panel = Object.create({
 	isVidEnabled: false,
 	initPanel(formEl) {
-		const imgLen = $Q(aib.qPostImg, formEl).length;
+		const filesCount = $Q(aib.qPostImg, formEl).length;
 		const isThr = aib.t;
-		(pr && pr.pArea[0] || formEl).insertAdjacentHTML('beforebegin', `<div id="de-main">
+		(postform?.pArea[0] || formEl).insertAdjacentHTML('beforebegin', `<div id="de-main">
 			<div id="de-panel">
 				<div id="de-panel-logo" title="${ Lng.panelBtn.attach[lang] }">
-					<svg class="de-panel-logo-svg">
+					<svg id="de-panel-logo-svg">
 						<use xlink:href="#de-symbol-panel-logo"/>
 					</svg>
 				</div>
@@ -25,9 +25,9 @@ const Panel = Object.create({
 						(!isThr && aib.page !== aib.lastPage ? this._getButton('gonext') : '') : '') +
 					this._getButton('goup') +
 					this._getButton('godown') +
-					(imgLen ? this._getButton('expimg') + this._getButton('maskimg') : '') +
+					(filesCount ? this._getButton('expimg') + this._getButton('maskimg') : '') +
 					(!localData && !nav.isPresto ?
-						(imgLen && !Cfg.preLoadImgs ? this._getButton('preimg') : '') +
+						(filesCount && !Cfg.preLoadImgs ? this._getButton('preimg') : '') +
 						(isThr ? this._getButton('savethr') : '') : '') +
 					(!localData && isThr ?
 						this._getButton(Cfg.ajaxUpdThr && !aib.isArchived ? 'upd-on' : 'upd-off') +
@@ -35,12 +35,13 @@ const Panel = Object.create({
 					(aib.hasCatalog ? this._getButton('catalog') : '') +
 					this._getButton('enable') +
 					(isThr && Thread.first ? `<span id="de-panel-info">
-						<span id="de-panel-info-pcount" title="` +
-							`${ Lng.panelBtn[Cfg.panelCounter !== 2 ? 'pcount' : 'pcountNotHid'][lang] }">` +
-							`${ Thread.first.pcount }</span>
-						<span id="de-panel-info-icount" title="${ Lng.panelBtn.imglen[lang] }">${
-							imgLen }</span>
-						<span id="de-panel-info-acount" title="${ Lng.panelBtn.posters[lang] }"></span>
+						<span id="de-panel-info-posts" title="${
+						Lng.panelBtn[Cfg.panelCounter !== 2 ? 'postsCount' : 'postsNotHid'][lang]
+						}">${ Thread.first.postsCount }</span>
+						<span id="de-panel-info-files" title="${ Lng.panelBtn.filesCount[lang] }">${
+							filesCount }</span>
+						<span id="de-panel-info-posters" title="${ Lng.panelBtn.postersCount[lang] }">${
+							aib.postersCount }</span>
 					</span>` : '') }
 				</span>
 			</div>
@@ -48,53 +49,68 @@ const Panel = Object.create({
 		</div>`);
 		this._el = $id('de-panel');
 		this._el.addEventListener('click', this, true);
-		this._el.addEventListener('mouseover', this);
-		this._el.addEventListener('mouseout', this);
+		if(!nav.isMobile) {
+			['mouseover', 'mouseout'].forEach(e => this._el.addEventListener(e, this));
+		}
 		this._buttons = $id('de-panel-buttons');
-		this.isNew = true;
 	},
 	removeMain() {
 		this._el.removeEventListener('click', this, true);
-		this._el.removeEventListener('mouseover', this);
-		this._el.removeEventListener('mouseout', this);
-		delete this._pcountEl;
-		delete this._icountEl;
-		delete this._acountEl;
+		if(!nav.isMobile) {
+			['mouseover', 'mouseout'].forEach(e => this._el.removeEventListener(e, this));
+		}
+		delete this._postsCountEl;
+		delete this._filesCountEl;
+		delete this._postersCountEl;
 		$id('de-main').remove();
 	},
-	handleEvent(e) {
+	async handleEvent(e) {
 		if('isTrusted' in e && !e.isTrusted) {
 			return;
 		}
-		let el = fixEventEl(e.target);
+		let el = nav.fixEventEl(e.target);
 		el = el.tagName.toLowerCase() === 'svg' ? el.parentNode : el;
 		switch(e.type) {
 		case 'click':
+			if(el.tagName.toLowerCase() === 'a') {
+				return;
+			}
+			e.preventDefault();
 			switch(el.id) {
 			case 'de-panel-logo':
-				if(Cfg.expandPanel && !$q('.de-win-active')) {
-					$hide(this._buttons);
+				if(Cfg.expandPanel) {
+					if(!$q('.de-win-active')) {
+						$hide(this._buttons);
+					}
+				} else {
+					$show(this._buttons);
 				}
-				toggleCfg('expandPanel');
+				await toggleCfg('expandPanel');
 				return;
-			case 'de-panel-cfg': toggleWindow('cfg', false); break;
-			case 'de-panel-hid': toggleWindow('hid', false); break;
-			case 'de-panel-fav': toggleWindow('fav', false); break;
+			case 'de-panel-cfg': toggleWindow('cfg', false); return;
+			case 'de-panel-hid': toggleWindow('hid', false); return;
+			case 'de-panel-fav': toggleWindow('fav', false); return;
 			case 'de-panel-vid':
 				this.isVidEnabled = !this.isVidEnabled;
 				toggleWindow('vid', false);
-				break;
-			case 'de-panel-refresh': deWindow.location.reload(); break;
-			case 'de-panel-goup': scrollTo(0, 0); break;
-			case 'de-panel-godown': scrollTo(0, docBody.scrollHeight || docBody.offsetHeight); break;
+				return;
+			case 'de-panel-refresh':
+				if(nav.isMobile && !aib.t) {
+					this._menuToggleClickBtn(el);
+				} else {
+					deWindow.location.reload();
+				}
+				return;
+			case 'de-panel-goup': scrollTo(0, 0); return;
+			case 'de-panel-godown': scrollTo(0, doc.body.scrollHeight || doc.body.offsetHeight); return;
 			case 'de-panel-expimg':
 				el.classList.toggle('de-panel-button-active');
 				isExpImg = !isExpImg;
-				$del($q('.de-fullimg-center'));
+				$q('.de-fullimg-center')?.remove();
 				for(let post = Thread.first.op; post; post = post.next) {
 					post.toggleImages(isExpImg, false);
 				}
-				break;
+				return;
 			case 'de-panel-preimg':
 				el.classList.toggle('de-panel-button-active');
 				isPreImg = !isPreImg;
@@ -103,36 +119,51 @@ const Panel = Object.create({
 						ContentLoader.preloadImages(el);
 					}
 				}
-				break;
+				return;
 			case 'de-panel-maskimg':
 				el.classList.toggle('de-panel-button-active');
-				toggleCfg('maskImgs');
+				await toggleCfg('maskImgs');
 				updateCSS();
-				break;
+				return;
 			case 'de-panel-upd-on':
 			case 'de-panel-upd-warn':
 			case 'de-panel-upd-off':
 				updater.toggle();
-				break;
+				return;
 			case 'de-panel-audio-on':
-			case 'de-panel-audio-off':
-				if(updater.toggleAudio(0)) {
+				if(nav.isMobile) {
+					updater.toggleAudio(0);
+					el.id = 'de-panel-audio-off';
+					return;
+				}
+				/* falls through */
+			case 'de-panel-audio-off': {
+				if(nav.isMobile) {
+					this._menuToggleClickBtn(el);
+					return;
+				} else if(updater.toggleAudio(0)) {
 					updater.enableUpdater();
 					el.id = 'de-panel-audio-on';
 				} else {
 					el.id = 'de-panel-audio-off';
 				}
-				$del($q('.de-menu'));
-				break;
-			case 'de-panel-savethr': break;
+				if(this._menu) {
+					this._menu.removeMenu();
+					this._menu = null;
+				}
+				return;
+			}
+			case 'de-panel-savethr':
+				if(nav.isMobile) {
+					this._menuToggleClickBtn(el);
+				}
+				return;
 			case 'de-panel-enable':
-				toggleCfg('disabled');
+				await toggleCfg('disabled');
 				deWindow.location.reload();
-				break;
+				return;
 			default: return;
 			}
-			$pd(e);
-			return;
 		case 'mouseover':
 			if(!Cfg.expandPanel) {
 				clearTimeout(this._hideTO);
@@ -152,59 +183,67 @@ const Panel = Object.create({
 				}
 				/* falls through */
 			case 'de-panel-savethr':
-			case 'de-panel-audio-off':
-				if(this._menu && this._menu.parentEl === el) {
+			case 'de-panel-audio-off': {
+				if(this._menu?.parentEl === el) {
 					return;
 				}
 				this._menuTO = setTimeout(() => {
-					this._menu = addMenu(el);
+					this._menu = Menu.addMenu(el);
 					this._menu.onover = () => clearTimeout(this._hideTO);
-					this._menu.onout = () => this._prepareToHide(null);
+					this._menu.onout = () => this._setHideTimeout(null);
 					this._menu.onremove = () => (this._menu = null);
 				}, Cfg.linksOver);
 			}
+			}
 			return;
 		default: // mouseout
-			this._prepareToHide(fixEventEl(e.relatedTarget));
+			this._setHideTimeout(nav.fixEventEl(e.relatedTarget));
 			switch(el.id) {
 			case 'de-panel-refresh':
 			case 'de-panel-savethr':
-			case 'de-panel-audio-off':
-				clearTimeout(this._menuTO);
-				this._menuTO = 0;
+			case 'de-panel-audio-off': clearTimeout(this._menuTO);
 			}
 		}
 	},
-	updateCounter(postCount, imgsCount, postersCount) {
-		this._pcountEl.textContent = postCount;
-		this._icountEl.textContent = imgsCount;
-		this._acountEl.textContent = postersCount;
-		this.isNew = false;
+	updateCounter(postCount, filesCount, postersCount) {
+		this._postsCountEl.textContent = postCount;
+		this._filesCountEl.textContent = filesCount;
+		this._postersCountEl.textContent = postersCount;
+		if(aib.makaba) {
+			$Q('.tn__item > span[title="Всего постов в треде"]').forEach(
+				el => el.innerHTML = el.innerHTML.replace(/\d+$/, postCount));
+			$Q('.tn__item > span[title="Всего файлов в треде"]').forEach(
+				el => el.innerHTML = el.innerHTML.replace(/\d+$/, filesCount));
+			$Q('.tn__item > span[title="Постеры"]').forEach(
+				el => el.innerHTML = el.innerHTML.replace(/\d+$/, postersCount));
+		}
 	},
 
 	_el     : null,
-	_hideTO : 0,
+	_hideTO : null,
 	_menu   : null,
-	_menuTO : 0,
-	get _acountEl() {
-		const value = $id('de-panel-info-acount');
-		Object.defineProperty(this, '_acountEl', { value, configurable: true });
+	_menuTO : null,
+	get _filesCountEl() {
+		const value = $id('de-panel-info-files');
+		Object.defineProperty(this, '_filesCountEl', { value, configurable: true });
 		return value;
 	},
-	get _icountEl() {
-		const value = $id('de-panel-info-icount');
-		Object.defineProperty(this, '_icountEl', { value, configurable: true });
+	get _postersCountEl() {
+		const value = $id('de-panel-info-posters');
+		Object.defineProperty(this, '_postersCountEl', { value, configurable: true });
 		return value;
 	},
-	get _pcountEl() {
-		const value = $id('de-panel-info-pcount');
-		Object.defineProperty(this, '_pcountEl', { value, configurable: true });
+	get _postsCountEl() {
+		const value = $id('de-panel-info-posts');
+		Object.defineProperty(this, '_postsCountEl', { value, configurable: true });
 		return value;
 	},
 	_getButton(id) {
 		let page, href, title, useId;
+		let tag = 'button';
 		switch(id) {
 		case 'goback':
+			tag = 'a';
 			page = Math.max(aib.page - 1, 0);
 			href = aib.getPageUrl(aib.b, page);
 			if(!aib.t) {
@@ -213,6 +252,7 @@ const Panel = Object.create({
 			useId = 'arrow';
 			break;
 		case 'gonext':
+			tag = 'a';
 			page = aib.page + 1;
 			href = aib.getPageUrl(aib.b, page);
 			title = Lng.panelBtn.gonext[lang].replace('%s', page);
@@ -226,23 +266,29 @@ const Panel = Object.create({
 			useId = 'upd';
 			break;
 		case 'catalog':
+			tag = 'a';
 			href = aib.catalogUrl;
 		}
-		// XXX Opera Presto: keep in sync with updMachine._setUpdateStatus
-		return `<a id="de-panel-${ id }" class="de-abtn de-panel-button" title="${
-			title || Lng.panelBtn[id][lang] }" href="${ href || '#' }">
+		return `<${ tag } id="de-panel-${ id }" class="de-abtn de-panel-button"
+			title="${ title || Lng.panelBtn[id][lang] }" ${ href ? 'href="' + href + '"': '' }>
 			<svg class="de-panel-svg">
 			${ id !== 'audio-off' ? `
 				<use xlink:href="#de-symbol-panel-${ useId || id }"/>` : `
 				<use class="de-use-audio-off" xlink:href="#de-symbol-panel-audio-off"/>
 				<use class="de-use-audio-on" xlink:href="#de-symbol-panel-audio-on"/>` }
 			</svg>
-		</a>`;
+		</${ tag }>`;
 	},
-	_prepareToHide(rt) {
-		if(!Cfg.expandPanel && !$q('.de-win-active') &&
-			(!rt || !this._el.contains(rt.farthestViewportElement || rt))
-		) {
+	_menuToggleClickBtn(buttonEl) {
+		if(this._menu?.el && this._menu.parentEl === buttonEl) {
+			this._menu.removeMenu();
+			this._menu = null;
+			return;
+		}
+		this._menu = Menu.addMenu(buttonEl);
+	},
+	_setHideTimeout(targetEl) {
+		if(!Cfg.expandPanel && !$q('.de-win-active') && !$contains(this._el, targetEl)) {
 			this._hideTO = setTimeout(() => $hide(this._buttons), 500);
 		}
 	}

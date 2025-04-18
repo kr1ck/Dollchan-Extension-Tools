@@ -7,14 +7,16 @@ function $ajax(url, params = null, isCORS = false) {
 	let resolve, reject, cancelFn;
 	const needTO = params ? params.useTimeout : false;
 	const WAITING_TIME = 5e3;
-	if(((isCORS ? !nav.hasGMXHR : !nav.canUseNativeXHR) || aib.hasRefererErr && nav.canUseFetch) &&
-		(nav.canUseFetchBlob || !url.startsWith('blob'))
+	if(nav.canUseFetch &&
+		((isCORS ? !nav.hasGMXHR : !nav.canUseNativeXHR) || aib.hasRefererErr) &&
+		!(isCORS && nav.isTampermonkey)
 	) {
 		if(!params) {
 			params = {};
 		}
 		params.referrer =
-			doc.referrer.startsWith(aib.prot + '//' + aib.host) ? doc.referrer : deWindow.location;
+			doc.referrer.startsWith(aib.protocol + '//' + aib.host) ? doc.referrer : deWindow.location;
+		params.referrerPolicy = 'unsafe-url';
 		if(params.data) {
 			params.body = params.data;
 			delete params.data;
@@ -22,69 +24,32 @@ function $ajax(url, params = null, isCORS = false) {
 		if(isCORS) {
 			params.mode = 'cors';
 		}
-		url = getAbsLink(url);
-		// Chrome-extension: avoid CORS in content script. Sending data to background.js
-		if(isCORS && nav.isChrome && nav.scriptHandler === 'WebExtension') {
-			if(params.body) {
-				// Converting image as Uint8Array to text data for sending in POST request from background.js
-				let textData = '';
-				const arrData = params.body.arr;
-				for(let i = 0, len = arrData.length; i < len; ++i) {
-					textData += String.fromCharCode(arrData[i]);
-				}
-				params.body.arr = textData;
-			}
-			chrome.runtime.sendMessage({ 'de-messsage': 'corsRequest', url, params }, res => {
-				const { answer } = res;
-				if(res.isError || !aib.isAjaxStatusOK(res.status)) {
-					reject(res.statusText ?
-						new AjaxError(res.status, res.statusText) : getErrorMessage(answer));
-					return;
-				}
-				const obj = {};
-				switch(params.responseType) {
-				case 'arraybuffer':
-				case 'blob': { // Converting text data from the background.js response to arraybuffer/blob
-					const buf = new ArrayBuffer(answer.length);
-					const bufView = new Uint8Array(buf);
-					for(let i = 0, len = answer.length; i < len; ++i) {
-						bufView[i] = answer.charCodeAt(i);
-					}
-					obj.response = params.responseType === 'blob' ? new Blob([buf]) : buf;
-					break;
-				}
-				default: obj.responseText = answer;
-				}
-				resolve(obj);
-			});
-		} else {
-			const controller = new AbortController();
-			params.signal = controller.signal;
-			const loadTO = needTO && setTimeout(() => {
-				reject(AjaxError.Timeout);
-				try {
-					controller.abort();
-				} catch(err) {}
-			}, WAITING_TIME);
-			cancelFn = () => {
-				if(needTO) {
-					clearTimeout(loadTO);
-				}
+		const controller = new AbortController();
+		params.signal = controller.signal;
+		const loadTO = needTO && setTimeout(() => {
+			reject(AjaxError.Timeout);
+			try {
 				controller.abort();
-			};
-			fetch(url, params).then(async res => {
-				if(!aib.isAjaxStatusOK(res.status)) {
-					reject(new AjaxError(res.status, res.statusText));
-					return;
-				}
-				switch(params.responseType) {
-				case 'arraybuffer': res.response = await res.arrayBuffer(); break;
-				case 'blob': res.response = await res.blob(); break;
-				default: res.responseText = await res.text();
-				}
-				resolve(res);
-			}).catch(err => reject(getErrorMessage(err)));
-		}
+			} catch(err) {}
+		}, WAITING_TIME);
+		cancelFn = () => {
+			if(needTO) {
+				clearTimeout(loadTO);
+			}
+			controller.abort();
+		};
+		fetch(aib.getAbsLink(url), params).then(async res => {
+			if(!aib.isAjaxStatusOK(res.status)) {
+				reject(new AjaxError(res.status, res.statusText));
+				return;
+			}
+			switch(params.responseType) {
+			case 'arraybuffer': res.response = await res.arrayBuffer(); break;
+			case 'blob': res.response = await res.blob(); break;
+			default: res.responseText = await res.text();
+			}
+			resolve(res);
+		}).catch(err => reject(getErrorMessage(err)));
 	} else if((isCORS || !nav.canUseNativeXHR) && nav.hasGMXHR) {
 		let gmxhr;
 		const timeoutFn = () => {
@@ -94,14 +59,18 @@ function $ajax(url, params = null, isCORS = false) {
 			} catch(err) {}
 		};
 		let loadTO = needTO && setTimeout(timeoutFn, WAITING_TIME);
-		const obj = {
-			method : (params && params.method) || 'GET',
-			url    : nav.fixLink(url),
+		const newParams = {
+			method : params?.method || 'GET',
+			url    : nav.isSafari ? aib.getAbsLink(url) : url,
 			onreadystatechange(e) {
 				if(needTO) {
 					clearTimeout(loadTO);
 				}
-				if(e.readyState === 4) {
+				if(e.readyState === 4 && !(
+					// Violentmonkey gives extra stage with undefined responseText and 200 status
+					nav.isViolentmonkey && e.status === 200 &&
+					typeof e.responseText === 'undefined' && typeof e.response === 'undefined'
+				)) {
 					if(aib.isAjaxStatusOK(e.status)) {
 						resolve(e);
 					} else {
@@ -114,17 +83,17 @@ function $ajax(url, params = null, isCORS = false) {
 		};
 		if(params) {
 			if(params.onprogress) {
-				obj.upload = { onprogress: params.onprogress };
+				newParams.upload = { onprogress: params.onprogress };
 				delete params.onprogress;
 			}
 			delete params.method;
-			Object.assign(obj, params);
+			Object.assign(newParams, params);
 		}
 		if(nav.hasNewGM) {
-			GM.xmlHttpRequest(obj);
-			cancelFn = emptyFn; // GreaseMonkey 4 cannot cancel xhr's
+			GM.xmlHttpRequest(newParams);
+			cancelFn = Function.prototype; // GreaseMonkey 4 cannot cancel xhr's
 		} else {
-			gmxhr = GM_xmlhttpRequest(obj);
+			gmxhr = GM_xmlhttpRequest(newParams);
 			cancelFn = () => {
 				if(needTO) {
 					clearTimeout(loadTO);
@@ -141,8 +110,11 @@ function $ajax(url, params = null, isCORS = false) {
 			xhr.abort();
 		};
 		let loadTO = needTO && setTimeout(timeoutFn, WAITING_TIME);
-		if(params && params.onprogress) {
+		if(params?.onprogress) {
 			xhr.upload.onprogress = params.onprogress;
+		}
+		if(aib._4chan) {
+			xhr.withCredentials = true;
 		}
 		xhr.onreadystatechange = ({ target }) => {
 			if(needTO) {
@@ -159,21 +131,21 @@ function $ajax(url, params = null, isCORS = false) {
 			}
 		};
 		try {
-			xhr.open((params && params.method) || 'GET', getAbsLink(url), true);
+			xhr.open(params?.method || 'GET', aib.getAbsLink(url), true);
 			if(params) {
 				if(params.responseType) {
 					xhr.responseType = params.responseType;
 				}
 				const { headers } = params;
 				if(headers) {
-					for(const h in headers) {
-						if($hasProp(headers, h)) {
-							xhr.setRequestHeader(h, headers[h]);
+					for(const header in headers) {
+						if($hasProp(headers, header)) {
+							xhr.setRequestHeader(header, headers[header]);
 						}
 					}
 				}
 			}
-			xhr.send(params && params.data || null);
+			xhr.send(params?.data || null);
 			cancelFn = () => {
 				if(needTO) {
 					clearTimeout(loadTO);
@@ -186,7 +158,7 @@ function $ajax(url, params = null, isCORS = false) {
 			return $ajax(url, params);
 		}
 	} else {
-		reject(new AjaxError(0, 'Ajax error: Can`t send any type of request.'));
+		reject(new AjaxError(0, 'Ajax error: Canʼt send any type of request.'));
 	}
 	return new CancelablePromise((res, rej) => {
 		resolve = res;
@@ -213,7 +185,7 @@ const AjaxCache = {
 	clearCache() {
 		this._data = new Map();
 	},
-	fixURL: url => `${ url }${ url.includes('?') ? '&' : '?' }nocache=${ Math.random() }`,
+	fixURL: url => `${ url }${ url.includes('?') ? '&' : '?' }nocache=${ Math.round(Math.random() * 1e12) }`,
 	runCachedAjax(url, useCache) {
 		const { hasCacheControl, params } = this._data.get(url) || {};
 		const ajaxURL = hasCacheControl === false ? this.fixURL(url) : url;
@@ -275,7 +247,8 @@ const AjaxCache = {
 };
 
 function getAjaxResponseEl(text, needForm) {
-	return !text.includes('</html>') ? null : needForm ? $q(aib.qDForm, $DOM(text)) : $DOM(text);
+	return !text.includes('</html>') ? null :
+		needForm ? $q(aib.qDelForm, $createDoc(text)) : $createDoc(text);
 }
 
 function ajaxLoad(url, needForm = true, useCache = false, checkArch = false) {
@@ -288,25 +261,25 @@ function ajaxLoad(url, needForm = true, useCache = false, checkArch = false) {
 	}, err => err.code === 304 ? null : CancelablePromise.reject(err));
 }
 
-function ajaxPostsLoad(brd, tNum, useCache, useJson = true) {
+function ajaxPostsLoad(board, tNum, useCache, useJson = true) {
 	if(useJson && aib.JsonBuilder) {
-		return AjaxCache.runCachedAjax(aib.getJsonApiUrl(brd, tNum), useCache).then(xhr => {
+		return AjaxCache.runCachedAjax(aib.getJsonApiUrl(board, tNum), useCache).then(xhr => {
 			try {
-				return new aib.JsonBuilder(JSON.parse(xhr.responseText), brd);
+				return new aib.JsonBuilder(JSON.parse(xhr.responseText), board);
 			} catch(err) {
 				if(err instanceof AjaxError) {
 					return CancelablePromise.reject(err);
 				}
 				console.warn(`API error: ${ err }. Switching to DOM parsing!`);
 				aib.JsonBuilder = null;
-				return ajaxPostsLoad(brd, tNum, useCache);
+				return ajaxPostsLoad(board, tNum, useCache);
 			}
 		}, err => err.code === 304 ? null : CancelablePromise.reject(err));
 	}
 	return aib.hasArchive ?
-		ajaxLoad(aib.getThrUrl(brd, tNum), true, useCache, true)
-			.then(data => data && data[0] ? new DOMPostsBuilder(data[0], data[1]) : null) :
-		ajaxLoad(aib.getThrUrl(brd, tNum), true, useCache)
+		ajaxLoad(aib.getThrUrl(board, tNum), true, useCache, true)
+			.then(data => data?.[0] ? new DOMPostsBuilder(data[0], data[1]) : null) :
+		ajaxLoad(aib.getThrUrl(board, tNum), true, useCache)
 			.then(form => form ? new DOMPostsBuilder(form) : null);
 }
 
