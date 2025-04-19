@@ -1265,6 +1265,7 @@ function getImageBoard(checkDomains, checkEngines) {
 	}
 	ibDomains['8chan.moe'] = _8chan;
 	ibDomains['8chan.se'] = _8chan;
+	ibDomains['alephchvkipd2houttjirmgivro5pxullvcgm4c47ptm7mhubbja6kad.onion'] = _8chan;
 
 	class _8kun extends Vichan {
 		getEmptyFile(field, name) {

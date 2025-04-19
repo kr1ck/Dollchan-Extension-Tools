@@ -6,7 +6,7 @@
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
 // @description     Doing some profit for imageboards
 // @icon            https://raw.github.com/kr1ck/Dollchan-Extension-Tools/master/Icon.png
-// @updateURL       https://raw.github.com/kr1ck/Dollchan-Extension-Tools/master/src/Dollchan_Extension_Tools.es6.user.js
+// @updateURL       https://raw.githubusercontent.com/kr1ck/Dollchan-Extension-Tools/refs/heads/master/src/Dollchan_Extension_Tools.es6.user.js
 // @nocompat        Chrome
 // @run-at          document-start
 // @grant           GM_getValue
@@ -8218,7 +8218,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
   var _this27 = this;
   var _marked = _regeneratorRuntime().mark(getFormElements);
   var version = '24.9.16.06';
-  var commit = 'f9526bd';
+  var commit = 'a526ac2';
 
 
   var doc = deWindow.document;
@@ -27592,6 +27592,7 @@ Spells.addSpell(9, '', false);
     }(Lynxchan);
     ibDomains['8chan.moe'] = _8chan;
     ibDomains['8chan.se'] = _8chan;
+    ibDomains['alephchvkipd2houttjirmgivro5pxullvcgm4c47ptm7mhubbja6kad.onion'] = _8chan;
     var _8kun = function (_Vichan) {
       function _8kun() {
         _classCallCheck(this, _8kun);
