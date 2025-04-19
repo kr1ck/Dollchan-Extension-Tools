@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            Dollchan Extension Tools
-// @version         24.9.16.06
+// @version         24.9.16.07
 // @namespace       http://www.freedollchan.org/scripts/*
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
@@ -680,15 +680,15 @@ var createMethod = function (TYPE) {
       value = self[index];
       result = boundFunction(value, index, O);
       if (TYPE) {
-        if (IS_MAP) target[index] = result; 
+        if (IS_MAP) target[index] = result;
         else if (result) switch (TYPE) {
-          case 3: return true;              
-          case 5: return value;             
-          case 6: return index;             
-          case 2: push(target, value);      
+          case 3: return true;
+          case 5: return value;
+          case 6: return index;
+          case 2: push(target, value);
         } else switch (TYPE) {
-          case 4: return false;             
-          case 7: push(target, value);      
+          case 4: return false;
+          case 7: push(target, value);
         }
       }
     }
@@ -801,7 +801,7 @@ try {
 module.exports = function (exec, SKIP_CLOSING) {
   try {
     if (!SKIP_CLOSING && !SAFE_CLOSING) return false;
-  } catch (error) { return false; } 
+  } catch (error) { return false; }
   var ITERATION_SUPPORT = false;
   try {
     var object = {};
@@ -1338,7 +1338,7 @@ module.exports = function (it) {
 },{"../internals/global-this":130,"../internals/is-object":149}],95:[function(require,module,exports){
 'use strict';
 var $TypeError = TypeError;
-var MAX_SAFE_INTEGER = 0x1FFFFFFFFFFFFF; 
+var MAX_SAFE_INTEGER = 0x1FFFFFFFFFFFFF;
 
 module.exports = function (it) {
   if (it > MAX_SAFE_INTEGER) throw $TypeError('Maximum allowed index exceeded');
@@ -1923,7 +1923,7 @@ module.exports = function (matched, str, position, captures, namedCaptures, repl
       case '<':
         capture = namedCaptures[stringSlice(ch, 1, -1)];
         break;
-      default: 
+      default:
         var n = +ch;
         if (n === 0) return match;
         if (n > m) {
@@ -2075,8 +2075,8 @@ var id = 0;
 
 var setMetadata = function (it) {
   defineProperty(it, METADATA, { value: {
-    objectID: 'O' + id++, 
-    weakData: {}          
+    objectID: 'O' + id++,
+    weakData: {}
   } });
 };
 
@@ -2934,7 +2934,7 @@ module.exports = !$assign || fails(function () {
   A[symbol] = 7;
   alphabet.split('').forEach(function (chr) { B[chr] = chr; });
   return $assign({}, A)[symbol] !== 7 || objectKeys($assign({}, B)).join('') !== alphabet;
-}) ? function assign(target, source) { 
+}) ? function assign(target, source) {
   var T = toObject(target);
   var argumentsLength = arguments.length;
   var index = 1;
@@ -3004,9 +3004,9 @@ var NullProtoObject = function () {
   } catch (error) {  }
   NullProtoObject = typeof document != 'undefined'
     ? document.domain && activeXDocument
-      ? NullProtoObjectViaActiveX(activeXDocument) 
+      ? NullProtoObjectViaActiveX(activeXDocument)
       : NullProtoObjectViaIFrame()
-    : NullProtoObjectViaActiveX(activeXDocument); 
+    : NullProtoObjectViaActiveX(activeXDocument);
   var length = enumBugKeys.length;
   while (length--) delete NullProtoObject[PROTOTYPE][enumBugKeys[length]];
   return NullProtoObject();
@@ -4346,7 +4346,7 @@ var min = Math.min;
 
 module.exports = function (argument) {
   var len = toIntegerOrInfinity(argument);
-  return len > 0 ? min(len, 0x1FFFFFFFFFFFFF) : 0; 
+  return len > 0 ? min(len, 0x1FFFFFFFFFFFFF) : 0;
 };
 
 },{"../internals/to-integer-or-infinity":235}],237:[function(require,module,exports){
@@ -4682,9 +4682,9 @@ var getInternalState = InternalStateModule.getterFor(ARRAY_ITERATOR);
 module.exports = defineIterator(Array, 'Array', function (iterated, kind) {
   setInternalState(this, {
     type: ARRAY_ITERATOR,
-    target: toIndexedObject(iterated), 
-    index: 0,                          
-    kind: kind                         
+    target: toIndexedObject(iterated),
+    index: 0,
+    kind: kind
   });
 }, function () {
   var state = getInternalState(this);
@@ -4751,7 +4751,7 @@ var ILL_FORMED_UNICODE = fails(function () {
 var stringifyWithSymbolsFix = function (it, replacer) {
   var args = arraySlice(arguments);
   var $replacer = getReplacerFunction(replacer);
-  if (!isCallable($replacer) && (it === undefined || isSymbol(it))) return; 
+  if (!isCallable($replacer) && (it === undefined || isSymbol(it))) return;
   args[1] = function (key, value) {
     if (isCallable($replacer)) value = call($replacer, this, $String(key), value);
     if (!isSymbol(value)) return value;
@@ -5133,7 +5133,7 @@ var callReaction = function (reaction, state) {
       if (handler === true) result = value;
       else {
         if (domain) domain.enter();
-        result = handler(value); 
+        result = handler(value);
         if (domain) {
           domain.exit();
           exited = true;
@@ -7465,7 +7465,7 @@ if (!Element.prototype.closest) {
 
 },{}],403:[function(require,module,exports){
 function ReplaceWithPolyfill() {
-  "use-strict"; 
+  "use-strict";
   var parent = this.parentNode,
     i = arguments.length,
     currentNode;
@@ -7563,7 +7563,7 @@ var runtime = (function (exports) {
   var Op = Object.prototype;
   var hasOwn = Op.hasOwnProperty;
   var defineProperty = Object.defineProperty || function (obj, key, desc) { obj[key] = desc.value; };
-  var undefined; 
+  var undefined;
   var $Symbol = typeof Symbol === "function" ? Symbol : {};
   var iteratorSymbol = $Symbol.iterator || "@@iterator";
   var asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator";
@@ -7736,7 +7736,7 @@ var runtime = (function (exports) {
     );
 
     return exports.isGeneratorFunction(outerFn)
-      ? iter 
+      ? iter
       : iter.next().then(function(result) {
           return result.done ? result.value : iter.next();
         });
@@ -8217,7 +8217,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
 
   var _this27 = this;
   var _marked = _regeneratorRuntime().mark(getFormElements);
-  var version = '24.9.16.06';
+  var version = '24.9.16.07';
   var commit = 'a526ac2';
 
 
@@ -8364,7 +8364,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
     favWinWidth: 500,
     vidWinDrag: 0,
     vidWinX: 'right: 0',
-    vidWinY: 'top: 0' 
+    vidWinY: 'top: 0'
   };
 
 
@@ -9025,7 +9025,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
 
   function readFile(_x, _x2) {
     return _readFile.apply(this, arguments);
-  } 
+  }
   function _readFile() {
     _readFile = _asyncToGenerator(_regeneratorRuntime().mark(function _callee48(file, asText) {
       return _regeneratorRuntime().wrap(function _callee48$(_context56) {
@@ -9217,7 +9217,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
   var TemporaryContent = function () {
     function TemporaryContent(key) {
       _classCallCheck(this, TemporaryContent);
-      var oClass = this.constructor; 
+      var oClass = this.constructor;
       if (oClass.purgeTO) {
         clearTimeout(oClass.purgeTO);
       }
@@ -9442,12 +9442,12 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
         for (i = 0; i < nameLen; ++i) {
           header[i] = filepath.charCodeAt(i) & 0xFF;
         }
-        TarBuilder._padSet(header, 100, '100777', 8); 
-        TarBuilder._padSet(header, 108, '0', 8); 
-        TarBuilder._padSet(header, 116, '0', 8); 
-        TarBuilder._padSet(header, 124, fileSize.toString(8), 13); 
-        TarBuilder._padSet(header, 136, Math.floor(Date.now() / 1e3).toString(8), 12); 
-        TarBuilder._padSet(header, 148, '        ', 8); 
+        TarBuilder._padSet(header, 100, '100777', 8);
+        TarBuilder._padSet(header, 108, '0', 8);
+        TarBuilder._padSet(header, 116, '0', 8);
+        TarBuilder._padSet(header, 124, fileSize.toString(8), 13);
+        TarBuilder._padSet(header, 136, Math.floor(Date.now() / 1e3).toString(8), 12);
+        TarBuilder._padSet(header, 148, '        ', 8);
         header[156] = 0x30;
         for (i = 0; i < 157; ++i) {
           checksum += header[i];
@@ -9481,13 +9481,13 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
         var nLen = num.length;
         len -= 2;
         while (nLen < len) {
-          data[offset++] = 0x20; 
+          data[offset++] = 0x20;
           len--;
         }
         while (i < nLen) {
           data[offset++] = num.charCodeAt(i++);
         }
-        data[offset] = 0x20; 
+        data[offset] = 0x20;
       }
     }]);
   }();
@@ -9516,7 +9516,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
           }
           if (_el2.id === segmentId) {
             this.segment = _el2;
-            break; 
+            break;
           } else if (_el2.id === voidId) {
             voids.push(_el2);
           } else {
@@ -9584,7 +9584,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       var shift = 8 * (7 - leadZeroes);
       if (size >>> shift !== 0 || offset + 4 > dataLength) {
         this.error = true;
-        return; 
+        return;
       }
       size = size << 32 - shift | elData.getUint32(offset + 4) >>> shift;
     } else {
@@ -9605,7 +9605,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
 
   function getStored(_x3) {
     return _getStored.apply(this, arguments);
-  } 
+  }
   function _getStored() {
     _getStored = _asyncToGenerator(_regeneratorRuntime().mark(function _callee49(id) {
       return _regeneratorRuntime().wrap(function _callee49$(_context57) {
@@ -9700,7 +9700,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
 
   function getStoredObj(_x4) {
     return _getStoredObj.apply(this, arguments);
-  } 
+  }
   function _getStoredObj() {
     _getStoredObj = _asyncToGenerator(_regeneratorRuntime().mark(function _callee50(id) {
       return _regeneratorRuntime().wrap(function _callee50$(_context58) {
@@ -9844,7 +9844,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               } else {
                 delete val[domain];
               }
-              rv = setStored('DESU_Config', JSON.stringify(val)); 
+              rv = setStored('DESU_Config', JSON.stringify(val));
               if (!(rv && !nav.isViolentmonkey)) {
                 _context3.next = 9;
                 break;
@@ -9864,7 +9864,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
 
   function toggleCfg(_x5) {
     return _toggleCfg.apply(this, arguments);
-  } 
+  }
   function _toggleCfg() {
     _toggleCfg = _asyncToGenerator(_regeneratorRuntime().mark(function _callee51(id) {
       return _regeneratorRuntime().wrap(function _callee51$(_context59) {
@@ -9882,7 +9882,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
   }
   function readCfg() {
     return _readCfg.apply(this, arguments);
-  } 
+  }
   function _readCfg() {
     _readCfg = _asyncToGenerator(_regeneratorRuntime().mark(function _callee52() {
       var obj, val, isGlobal, browserLang;
@@ -11233,11 +11233,11 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
     if (hasThreads) {
       var _loop = function _loop() {
           if (!$hasProp(boards, board)) {
-            return 0; 
+            return 0;
           }
           var threads = boards[board];
           if ($isEmpty(threads)) {
-            return 0; 
+            return 0;
           }
           var block = $bEnd(winBody, "<div class=\"de-fold-block\"><input type=\"checkbox\"><b>/".concat(board, "</b></div>"));
           block.firstChild.onclick = function (e) {
@@ -11335,7 +11335,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
           });
         }
         HiddenThreads.removeStorage(num, board);
-        HiddenPosts.set(num, num, false); 
+        HiddenPosts.set(num, num, false);
       });
       toggleWindow('hid', true);
     }));
@@ -11450,7 +11450,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
 
   function remove404Favorites(_x8) {
     return _remove404Favorites.apply(this, arguments);
-  } 
+  }
   function _remove404Favorites() {
     _remove404Favorites = _asyncToGenerator(_regeneratorRuntime().mark(function _callee53(favObj) {
       var els, len, i, el, host, board, num;
@@ -11481,7 +11481,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               num = +el.getAttribute('de-num');
               removeFavEntry(favObj, host, board, num);
               toggleThrFavBtn(host, board, num, false);
-              Thread.removeSavedData(board, num); 
+              Thread.removeSavedData(board, num);
             }
             saveRenewFavorites(favObj);
           case 10:
@@ -11557,7 +11557,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
             }
             parentEl.classList.add('de-fav-table-unfold');
             oldClassName = iconEl.getAttribute('class');
-            oldTitle = titleEl.title; 
+            oldTitle = titleEl.title;
             iconEl.setAttribute('class', 'de-fav-inf-icon de-fav-wait');
             titleEl.title = Lng.updating[lang];
             _context62.prev = 26;
@@ -11582,7 +11582,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
             if (!(_context62.t0 instanceof AjaxError) || _context62.t0.code === 0) {
               $popup('fav-refresh', Lng.noConnect[lang]);
             } else if (_context62.t0.code === 404) {
-              entryEl.setAttribute('de-removed', ''); 
+              entryEl.setAttribute('de-removed', '');
             }
             iconEl.setAttribute('class', 'de-fav-inf-icon de-fav-unavail');
             titleEl.title = entry.err = getErrorMessage(_context62.t0);
@@ -11777,7 +11777,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
         }
         switch (el.className) {
           case 'de-fav-link':
-            sesStorage['de-fav-win'] = '1'; 
+            sesStorage['de-fav-win'] = '1';
             sesStorage.removeItem('de-scroll-' + parentEl.getAttribute('de-board') + (parentEl.getAttribute('de-num') || ''));
             break;
           case 'de-fav-del-btn':
@@ -11858,7 +11858,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
               iconEl.setAttribute('class', 'de-fav-inf-icon de-fav-wait');
               titleEl.title = Lng.updating[lang];
             }
-            endPage = (aib.lastPage || 10) + 1; 
+            endPage = (aib.lastPage || 10) + 1;
             infoLoaded = 0;
             updateInf = function updateInf(inf, page) {
               inf.iconEl.setAttribute('class', inf.iconClass);
@@ -12795,7 +12795,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       var addText = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
       var size = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 2;
       var el = doc.createElement('div');
-      el.append(Cfg[id]); 
+      el.append(Cfg[id]);
       return "<label class=\"de-cfg-label\">\n\t\t<input class=\"de-cfg-inptxt\" info=\"".concat(id, "\" type=\"text\" size=\"").concat(size, "\" value=\"").concat(el.innerHTML, "\">").concat(addText && Lng.cfg[id] ? Lng.cfg[id][lang] : '', "</label>");
     },
     _getList: function _getList(arr) {
@@ -13651,7 +13651,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
         el.title = title;
       }
     }]);
-  }(); 
+  }();
   KeyEditListener.keyCodes = ['',
   ,,,,,,, 'Backspace', 'Tab',,,, 'Enter',,, 'Shift', 'Ctrl', 'Alt',,,,,,,,,,,,,, 'Space',,,,, '←', '↑', '→', '↓',,,,,,,, '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',, ';',, '=',,,, 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',,,,,, 'Num 0', 'Num 1', 'Num 2', 'Num 3', 'Num 4', 'Num 5', 'Num 6', 'Num 7', 'Num 8', 'Num 9', 'Num *', 'Num +',, 'Num -', 'Num .', 'Num /',,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,, '-',,,,,,,,,,,,, ';', '=', ',', '-', '.', '/', '`',,,,,,,,,,,,,,,,,,,,,,,,,,, '[', '\\', ']', '\''];
 
@@ -14559,7 +14559,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
         }
       }
     }]);
-  }(); 
+  }();
   function embedAudioLinks(data) {
     var isPost = data instanceof AbstractPost;
     if (Cfg.addMP3) {
@@ -14711,7 +14711,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
       }
       if (nav.hasNewGM) {
         GM.xmlHttpRequest(newParams);
-        cancelFn = Function.prototype; 
+        cancelFn = Function.prototype;
       } else {
         gmxhr = GM_xmlhttpRequest(newParams);
         cancelFn = function cancelFn() {
@@ -15412,7 +15412,7 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
             }
             return "".concat(spell, "(").concat(names.join(','), ")");
           }
-        case 11: 
+        case 11:
         case 15:
           {
             var temp_;
@@ -15432,9 +15432,9 @@ function _asyncToGenerator(n) { return function () { var t = this, e = arguments
             }
             return spell + ')';
           }
-        case 0: 
-        case 6: 
-        case 7: 
+        case 0:
+        case 6:
+        case 7:
         case 16:
           return "".concat(spell, "(").concat(val.replace(/([)\\])/g, '\\$1').replace(/\n/g, '\\n'), ")");
         case 17:
@@ -16104,22 +16104,22 @@ this.disableSpells();
           return [str[0] === '(' ? i + 2 : i, [spellType, spellIdx === 14 ? 0x3F : '', scope]];
         }
         switch (spellIdx) {
-          case 0: 
-          case 6: 
-          case 7: 
-          case 9: 
-          case 10: 
-          case 12: 
+          case 0:
+          case 6:
+          case 7:
+          case 9:
+          case 10:
+          case 12:
           case 16:
             m = SpellsCodegen._getText(str, true);
             if (m) {
               return [i + m[0], [spellType, spellIdx === 0 ? m[1].toLowerCase() : m[1], scope]];
             }
             break;
-          case 1: 
-          case 2: 
-          case 3: 
-          case 5: 
+          case 1:
+          case 2:
+          case 3:
+          case 5:
           case 13:
             m = this._getRegex(str, false);
             if (m) {
@@ -16175,7 +16175,7 @@ this.disableSpells();
               }
             }
             break;
-          case 11: 
+          case 11:
           case 15:
             {
               m = str.match(/^\(([\d-, ]+)\)/);
@@ -17817,7 +17817,7 @@ this.disableSpells();
   }
   function checkDelete(_x20) {
     return _checkDelete.apply(this, arguments);
-  } 
+  }
   function _checkDelete() {
     _checkDelete = _asyncToGenerator(_regeneratorRuntime().mark(function _callee56(data) {
       var err, els, threads, isThr, i, len, el;
@@ -18689,7 +18689,7 @@ this.disableSpells();
                       type: file.type,
                       isCustomName: true
                     };
-                    _this54._removeFileHelper(); 
+                    _this54._removeFileHelper();
                     if (FileInput._isThumbMode) {
                       _this54._addThumbTitle(newName, data.byteLength);
                     }
@@ -19660,9 +19660,9 @@ Spells.addSpell(9, '', false);
             if (isOutEvent) {
               clearTimeout(this._linkTO);
               if (!(aib.getPostOfEl(nav.fixEventEl(e.relatedTarget)) instanceof Pview) && Pview.top) {
-                Pview.top.markToDel(); 
+                Pview.top.markToDel();
               } else if (this.kid) {
-                this.kid.markToDel(); 
+                this.kid.markToDel();
               }
             } else {
               if (nav.isMobile) {
@@ -20780,7 +20780,7 @@ Spells.addSpell(9, '', false);
       _classCallCheck(this, PostNote);
       this.text = null;
       this._post = post;
-      this.isHideThr = this._post.isOp && !aib.t; 
+      this.isHideThr = this._post.isOp && !aib.t;
       if (!this.isHideThr) {
         this._noteEl = this.textEl = $bEnd(post.btns, '<span class="de-post-note"></span>');
         return;
@@ -21650,7 +21650,7 @@ Spells.addSpell(9, '', false);
         }, 2e3);
       }
     }]);
-  }(); 
+  }();
   var ImagesViewer = function () {
     function ImagesViewer(data) {
       _classCallCheck(this, ImagesViewer);
@@ -21746,7 +21746,7 @@ Spells.addSpell(9, '', false);
             }
           case 'touchstart':
             {
-              var _touchesLen = e.targetTouches.length; 
+              var _touchesLen = e.targetTouches.length;
               if (_touchesLen === 1) {
                 if (this.data.isVideo && ExpandableImage.isControlClick(e)) {
                   return;
@@ -21995,7 +21995,7 @@ Spells.addSpell(9, '', false);
         data.checkForRedirect(this._fullEl);
       }
     }]);
-  }(); 
+  }();
   var ExpandableImage = function () {
     function ExpandableImage(post, el, prev) {
       _classCallCheck(this, ExpandableImage);
@@ -22502,7 +22502,7 @@ Spells.addSpell(9, '', false);
         return Cfg.webmControl && e.clientY > e.target.getBoundingClientRect().bottom - 40;
       }
     }]);
-  }(); 
+  }();
   var EmbeddedImage = function (_ExpandableImage) {
     function EmbeddedImage() {
       _classCallCheck(this, EmbeddedImage);
@@ -22529,7 +22529,7 @@ Spells.addSpell(9, '', false);
         return this.el.src;
       }
     }]);
-  }(ExpandableImage); 
+  }(ExpandableImage);
   var AttachedImage = function (_ExpandableImage2) {
     function AttachedImage() {
       _classCallCheck(this, AttachedImage);
@@ -24844,7 +24844,7 @@ Spells.addSpell(9, '', false);
             favicon.startBlink(true);
           }
           if (eCode === -1 || eCode === 404 && lastECode === 404) {
-            Thread.removeSavedData(aib.b, aib.t); 
+            Thread.removeSavedData(aib.b, aib.t);
             updateTitle(eCode);
             _disableUpdater();
           } else {
@@ -25261,7 +25261,7 @@ Spells.addSpell(9, '', false);
     var isChrome = isWebkit && ua.includes('Chrome/');
     var isSafari = isWebkit && !isChrome;
     var hasPrestoStorage = !!prestoStorage && !ua.includes('Opera Mobi');
-    var canUseFetch = 'AbortController' in deWindow; 
+    var canUseFetch = 'AbortController' in deWindow;
     var hasNewGM = typeof GM !== 'undefined' && typeof GM.xmlHttpRequest === 'function';
     var hasGMXHR, hasOldGM, hasWebStorage, scriptHandler;
     if (hasNewGM) {
@@ -25281,7 +25281,7 @@ Spells.addSpell(9, '', false);
       try {
         hasOldGM = typeof GM_setValue === 'function' && (!isChrome || !GM_setValue.toString().includes('not supported'));
       } catch (err) {
-        hasOldGM = err.message === 'Permission denied to access property "toString"'; 
+        hasOldGM = err.message === 'Permission denied to access property "toString"';
       }
       hasWebStorage = !hasOldGM && (isFirefox || 'chrome' in deWindow) && (typeof chrome === "undefined" ? "undefined" : _typeof(chrome)) === 'object' && !!chrome && !!chrome.storage;
       scriptHandler = hasWebStorage ? 'WebExtension' : typeof GM_info === 'undefined' ? isFirefox ? 'Scriptish' : 'Unknown' : GM_info.scriptHandler ? "".concat(GM_info.scriptHandler, " ").concat(GM_info.version) : isFirefox ? 'Greasemonkey' : 'Unknown';
@@ -27572,7 +27572,7 @@ Spells.addSpell(9, '', false);
         }
         _this125 = _callSuper(this, _8chan, [].concat(args));
         _this125.qPosterId = '.spanId > .labelId';
-        _this125.JsonBuilder = null; 
+        _this125.JsonBuilder = null;
         _this125._8chan = true;
         return _this125;
       }
@@ -28745,7 +28745,7 @@ Spells.addSpell(9, '', false);
 
   function checkForUpdates(_x40, _x41) {
     return _checkForUpdates.apply(this, arguments);
-  } 
+  }
   function _checkForUpdates() {
     _checkForUpdates = _asyncToGenerator(_regeneratorRuntime().mark(function _callee58(isManual, lastUpdateTime) {
       var _v$;
@@ -28900,7 +28900,7 @@ Spells.addSpell(9, '', false);
       return "".concat(id, "::before { content: \"\"; display: inline-block; vertical-align: -3px; padding: 16px 16px 0 0; margin-right: 4px; background: url(").concat(src, ") no-repeat center; background-size: contain; white-space: initial; }");
     };
     var x = "\n\t/* Main panel */\n\t#de-panel { position: fixed; right: 0; bottom: 0; z-index: 9999; border-radius: 15px 0 0 0; cursor: default; display: flex; min-height: 25px; color: #F5F5F5; }\n\t#de-panel-logo { flex: none; margin: auto 3px auto 0; cursor: pointer; }\n\t#de-panel-buttons { flex: 0 1 auto; display: flex; flex-flow: row wrap; align-items: center; padding: 0 0 0 2px; margin: 0; border-left: 1px solid #616b86; }\n\t.de-panel-button { display: block; flex: none; margin: 0 1px; padding: 0 !important; min-width: auto; transition: all .3s ease; border: none !important; background-color: transparent !important; color: inherit !important; cursor: pointer; }\n\t.de-panel-button, #de-panel-logo, #de-panel-logo-svg, .de-panel-svg { width: 25px; height: 25px; }\n\t.de-panel-button-active { stroke: #32ff32 !important; fill: #32ff32 !important; }\n\t#de-panel-expimg, #de-panel-maskimg, #de-panel-preimg { stroke: currentColor; fill: currentColor; }\n\t#de-panel-goback { transform: rotate(180deg); will-change: transform; }\n\t#de-panel-godown { transform: rotate(90deg); will-change: transform; }\n\t#de-panel-goup { transform: rotate(-90deg); will-change: transform; }\n\t#de-panel-upd-on { fill: #32ff32; }\n\t#de-panel-upd-warn { fill: #fff441; }\n\t#de-panel-upd-off { fill: #ff3232; }\n\t#de-panel-audio-on > .de-panel-svg > .de-use-audio-off, #de-panel-audio-off > .de-panel-svg > .de-use-audio-on { display: none; }\n\t#de-panel-info { display: flex; flex: none; margin-left: 2px; font: 18px arial; }\n\t#de-panel-info > span { background-color: #fff2; margin-right: 4px; padding: 0 1px; border: 1px solid #fff3; border-radius: 4px; }\n\t#de-panel-info > span:empty { display: none; }\n\t#de-svg-icons, #de-svg-icons > svg { height: 0; width: 0; position: fixed; }\n\t.de-svg-fill { stroke: none; fill: currentColor; }\n\t.de-svg-stroke { stroke: currentColor; fill: none; }\n\tuse { fill: inherit; pointer-events: none; }\n\n\t/* Panel theme */\n\t.de-img-btn, #de-panel, .de-win-head ".concat([
-    '{ background: linear-gradient(to bottom, #7b849b, #616b86 8%, #121212 60%, #1f2740 100%); }', "{ background: linear-gradient(to bottom, #4b90df, #183d77 60%, #325f9e 100%); }\n\t\t#de-panel-buttons { border-color: #8fbbed; }", "{ background-color: #777; }\n\t\t#de-panel-buttons { border-color: #ccc; }", 
+    '{ background: linear-gradient(to bottom, #7b849b, #616b86 8%, #121212 60%, #1f2740 100%); }', "{ background: linear-gradient(to bottom, #4b90df, #183d77 60%, #325f9e 100%); }\n\t\t#de-panel-buttons { border-color: #8fbbed; }", "{ background-color: #777; }\n\t\t#de-panel-buttons { border-color: #ccc; }",
     '{ background-color: rgba(0,20,80,.72); }', "{ background: none; background-color: #333; border-radius: 0 !important; }\n\t\t#de-win-reply.de-win { border-radius: 0 !important; }\n\t\t#de-panel-buttons { border-color: #666; }", "{ background: linear-gradient(to bottom, #e854ca, #8c1273 60%, #832da2 100%); }\n\t\t#de-panel-buttons { border-color: #c15dad; }"][Cfg.scriptStyle], "\n\t.de-logo { background: linear-gradient(to bottom, #7b849b, #616b86 8%, #121212 60%, #1f2740 100%) }\n\t.de-panel-svg:hover, #de-panel-logo-svg:hover { margin: -2px; width: 29px; height: 29px; color: #d0e7ff !important; }\n\t.de-panel-button:hover { background-color: rgba(255,255,255,.15) !important; box-shadow: 0 0 3px rgba(200,200,200,0.5); color: inherit !important; }\r\n");
     if (Cfg.disabled) {
       $css(x).id = 'de-css';
