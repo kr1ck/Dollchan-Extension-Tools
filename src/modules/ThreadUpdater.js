@@ -404,9 +404,9 @@ function initThreadUpdater(title, enableUpdate) {
 				this._setUpdateStatus('on');
 			}
 			const thread = unsafeWindow.thread;
-			this._socketUrl = this._socketUrl || thread.socket?.url;
-			this._refreshParameters = thread.refreshParameters;
-			this._wsPort = thread.wsPort;
+			this._socketUrl = this._socketUrl || thread?.socket?.url;
+			this._refreshParameters = thread?.refreshParameters;
+			this._wsPort = thread?.wsPort;
 
 
 			if (thread && this._wsPort && this._refreshParameters?.threadId) {

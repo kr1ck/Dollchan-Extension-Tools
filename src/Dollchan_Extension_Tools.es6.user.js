@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name            Dollchan Extension Tools
-// @version         24.9.16.07
+// @version         24.9.16.08
 // @namespace       http://www.freedollchan.org/scripts/*
 // @author          Sthephan Shinkufag @ FreeDollChan
 // @copyright       © Dollchan Extension Team. See the LICENSE file for license rights and limitations (MIT).
@@ -27,8 +27,8 @@
 (function deMainFuncInner(deWindow, prestoStorage, FormData, scrollTo, localData) {
 'use strict';
 
-const version = '24.9.16.07';
-const commit = 'a526ac2';
+const version = '24.9.16.08';
+const commit = '57b377b';
 
 /* ==[ GlobalVars.js ]== */
 
@@ -15251,9 +15251,9 @@ function initThreadUpdater(title, enableUpdate) {
 				this._setUpdateStatus('on');
 			}
 			const thread = unsafeWindow.thread;
-			this._socketUrl = this._socketUrl || thread.socket?.url;
-			this._refreshParameters = thread.refreshParameters;
-			this._wsPort = thread.wsPort;
+			this._socketUrl = this._socketUrl || thread?.socket?.url;
+			this._refreshParameters = thread?.refreshParameters;
+			this._wsPort = thread?.wsPort;
 
 
 			if (thread && this._wsPort && this._refreshParameters?.threadId) {
